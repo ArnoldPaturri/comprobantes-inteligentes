@@ -6,7 +6,9 @@ import streamlit as st
 
 from agente_comprobantes.dominio import ExtraccionDocumento
 from agente_comprobantes.excepciones import ErrorAgenteComprobantes
-from agente_comprobantes.interfaz.componentes.editor_extraccion import mostrar_editor_extraccion
+from agente_comprobantes.interfaz.componentes.editor_extraccion import (
+    mostrar_editor_extraccion,
+)
 from agente_comprobantes.interfaz.contexto import ContextoAplicacion
 
 _PREVIEW_KEY = "_payment_preview"

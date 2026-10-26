@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-
 import streamlit as st
 
 from agente_comprobantes.dominio import (
@@ -17,6 +16,8 @@ from agente_comprobantes.interfaz.componentes.resultados_pago import mostrar_res
 from agente_comprobantes.interfaz.contexto import obtener_contexto_aplicacion
 from agente_comprobantes.interfaz.flujos.pago import (
     _INVOICE_KEY,
+    _MODE_WITH_INVOICE,
+    _MODE_WITHOUT_INVOICE,
     _MODE_KEY,
     _PATHS_KEY,
     _PREVIEW_KEY,
@@ -25,6 +26,7 @@ from agente_comprobantes.interfaz.flujos.pago import (
     limpiar_previsualizacion,
     mostrar_revision_pago,
 )
+
 
 def mostrar_pago() -> None:
     st.title("Registrar pago")
