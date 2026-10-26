@@ -1,11 +1,11 @@
 from __future__ import annotations
 
 from agente_comprobantes.dominio import (
-    DocumentExtraction,
-    DocumentType,
-    QuotationRecord,
-    QuotationStatus,
-    RegistrationResult,
+    ExtraccionDocumento,
+    TipoDocumento,
+    RegistroCotizacion,
+    EstadoCotizacion,
+    ResultadoRegistro,
 )
 from agente_comprobantes.servicios.estados import issue_messages, resolve_verification_status
 
@@ -16,8 +16,8 @@ class OperacionesCotizaciones:
         quotation_code: str,
         image_paths: list[str],
         *,
-        confirmed_extraction: DocumentExtraction | None = None,
-    ) -> RegistrationResult:
+        confirmed_extraction: ExtraccionDocumento | None = None,
+    ) -> ResultadoRegistro:
         self._repository.initialize()
         prepared = self._images.prepare(image_paths)
         extraction = (
@@ -25,10 +25,10 @@ class OperacionesCotizaciones:
             if confirmed_extraction is not None
             else self._provider.extract(
                 prepared,
-                DocumentType.QUOTATION,
+                TipoDocumento.QUOTATION,
             )
         )
-        validation = self._validator.validate(extraction, DocumentType.QUOTATION)
+        validation = self._validator.validate(extraction, TipoDocumento.QUOTATION)
         duplicates = self._duplicates.find_matches(
             extraction, prepared.source_hash, self._repository.list_document_references()
         )
@@ -40,7 +40,7 @@ class OperacionesCotizaciones:
                 + ", ".join(match.document_id for match in duplicates[:3])
             )
 
-        record = QuotationRecord(
+        record = RegistroCotizacion(
             quotation_code=quotation_code,
             provider=extraction.provider,
             provider_tax_id=extraction.provider_tax_id,
@@ -48,7 +48,7 @@ class OperacionesCotizaciones:
             quoted_amount=extraction.total_amount,
             currency=extraction.currency,
             quotation_date=extraction.document_date,
-            status=QuotationStatus.WAITING_INVOICE,
+            status=EstadoCotizacion.WAITING_INVOICE,
             verification_status=status,
             source_hash=prepared.source_hash,
             source_files=prepared.source_names,
@@ -56,9 +56,9 @@ class OperacionesCotizaciones:
             observations=self._unique(observations),
         )
         self._repository.add_quotation(record)
-        return RegistrationResult(
+        return ResultadoRegistro(
             document_id=record.quotation_code,
-            document_type=DocumentType.QUOTATION,
+            document_type=TipoDocumento.QUOTATION,
             verification_status=status,
             workbook_path=self._repository.location,
             validation=validation,

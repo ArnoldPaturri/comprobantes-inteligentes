@@ -5,9 +5,9 @@ import json
 import sys
 from pathlib import Path
 
-from agente_comprobantes.configuracion import Settings
-from agente_comprobantes.dominio import DocumentType
-from agente_comprobantes.excepciones import InvoiceAgentError
+from agente_comprobantes.configuracion import Configuracion
+from agente_comprobantes.dominio import TipoDocumento
+from agente_comprobantes.excepciones import ErrorAgenteComprobantes
 from agente_comprobantes.fabrica import build_agent, build_repository
 
 
@@ -34,7 +34,7 @@ def build_parser() -> argparse.ArgumentParser:
         required=True,
         choices=tuple(
             document_type.value
-            for document_type in DocumentType
+            for document_type in TipoDocumento
         ),
         help="Tipo de documento esperado.",
     )
@@ -95,8 +95,8 @@ def build_parser() -> argparse.ArgumentParser:
     return parser
 
 
-def _settings_from_args(args: argparse.Namespace) -> Settings:
-    return Settings(workbook_path=args.workbook) if args.workbook else Settings()
+def _settings_from_args(args: argparse.Namespace) -> Configuracion:
+    return Configuracion(workbook_path=args.workbook) if args.workbook else Configuracion()
 
 
 def main(argv: list[str] | None = None) -> None:
@@ -122,7 +122,7 @@ def main(argv: list[str] | None = None) -> None:
 
         if args.command == "extraer":
             result = agent.preview_extraction(
-                DocumentType(args.tipo),
+                TipoDocumento(args.tipo),
                 args.imagenes,
             )
         elif args.command == "cotizacion":
@@ -148,7 +148,7 @@ def main(argv: list[str] | None = None) -> None:
             )
 
         print(json.dumps(result.model_dump(mode="json"), ensure_ascii=False, indent=2))
-    except (InvoiceAgentError, ValueError) as exc:
+    except (ErrorAgenteComprobantes, ValueError) as exc:
         print(f"Error: {exc}", file=sys.stderr)
         raise SystemExit(1) from exc
     except KeyboardInterrupt:

@@ -1,5 +1,5 @@
-from agente_comprobantes.repositorios.base import DocumentRepository
-from agente_comprobantes.repositorios.repositorio_excel import ExcelRepository
+from agente_comprobantes.repositorios.base import RepositorioDocumentos
+from agente_comprobantes.repositorios.repositorio_excel import RepositorioExcel
 
-__all__ = ["DocumentRepository", "ExcelRepository"]
+__all__ = ["RepositorioDocumentos", "RepositorioExcel"]
 

@@ -1,33 +1,33 @@
 from agente_comprobantes.dominio import (
-    DuplicateMatch,
-    PaymentReconciliationResult,
-    ReconciliationResult,
-    Severity,
-    ValidationReport,
-    VerificationStatus,
+    CoincidenciaDuplicado,
+    ResultadoConciliacionPago,
+    ResultadoConciliacion,
+    Severidad,
+    InformeValidacion,
+    EstadoVerificacion,
 )
 
 
 def resolve_verification_status(
-    validation: ValidationReport,
-    duplicates: list[DuplicateMatch],
-    reconciliation: ReconciliationResult | PaymentReconciliationResult | None = None,
-) -> VerificationStatus:
+    validation: InformeValidacion,
+    duplicates: list[CoincidenciaDuplicado],
+    reconciliation: ResultadoConciliacion | ResultadoConciliacionPago | None = None,
+) -> EstadoVerificacion:
     issues = list(validation.issues)
     if reconciliation:
         issues.extend(reconciliation.issues)
-    if any(issue.severity == Severity.ERROR for issue in issues):
-        return VerificationStatus.ERROR
+    if any(issue.severity == Severidad.ERROR for issue in issues):
+        return EstadoVerificacion.ERROR
     if duplicates:
-        return VerificationStatus.POSSIBLE_DUPLICATE
+        return EstadoVerificacion.POSSIBLE_DUPLICATE
     if issues:
-        return VerificationStatus.REVIEW
-    return VerificationStatus.VERIFIED
+        return EstadoVerificacion.REVIEW
+    return EstadoVerificacion.VERIFIED
 
 
 def issue_messages(
-    validation: ValidationReport,
-    reconciliation: ReconciliationResult | PaymentReconciliationResult | None = None,
+    validation: InformeValidacion,
+    reconciliation: ResultadoConciliacion | ResultadoConciliacionPago | None = None,
 ) -> list[str]:
     messages = [issue.message for issue in validation.issues]
     if reconciliation:

@@ -1,14 +1,14 @@
 from decimal import ROUND_HALF_UP, Decimal
 from difflib import SequenceMatcher
 
-from agente_comprobantes.configuracion import Settings
+from agente_comprobantes.configuracion import Configuracion
 from agente_comprobantes.dominio import (
-    Diagnosis,
-    DocumentExtraction,
-    QuotationRecord,
-    ReconciliationResult,
-    Severity,
-    ValidationIssue,
+    Diagnostico,
+    ExtraccionDocumento,
+    RegistroCotizacion,
+    ResultadoConciliacion,
+    Severidad,
+    ObservacionValidacion,
 )
 from agente_comprobantes.servicios.normalizacion_texto import normalize_supplier
 
@@ -16,32 +16,32 @@ MONEY_PLACES = Decimal("0.01")
 PERCENT_PLACES = Decimal("0.0001")
 
 
-class ReconciliationService:
-    def __init__(self, settings: Settings) -> None:
+class ServicioConciliacionFacturas:
+    def __init__(self, settings: Configuracion) -> None:
         self._settings = settings
 
     def compare(
         self,
-        quotation: QuotationRecord,
-        invoice: DocumentExtraction,
-    ) -> ReconciliationResult:
-        issues: list[ValidationIssue] = []
+        quotation: RegistroCotizacion,
+        invoice: ExtraccionDocumento,
+    ) -> ResultadoConciliacion:
+        issues: list[ObservacionValidacion] = []
         provider_similarity = self._provider_similarity(quotation.provider, invoice.provider)
 
         if provider_similarity is None:
             issues.append(
-                ValidationIssue(
+                ObservacionValidacion(
                     code="SUPPLIER_NOT_COMPARABLE",
-                    severity=Severity.WARNING,
+                    severity=Severidad.WARNING,
                     field="provider",
                     message="No hay suficiente información para comparar proveedores.",
                 )
             )
         elif provider_similarity < self._settings.supplier_similarity_threshold:
             issues.append(
-                ValidationIssue(
+                ObservacionValidacion(
                     code="SUPPLIER_MISMATCH",
-                    severity=Severity.WARNING,
+                    severity=Severidad.WARNING,
                     field="provider",
                     message=(
                         "El proveedor de la factura no coincide suficientemente con el de "
@@ -52,9 +52,9 @@ class ReconciliationService:
 
         if quotation.currency and invoice.currency and quotation.currency != invoice.currency:
             issues.append(
-                ValidationIssue(
+                ObservacionValidacion(
                     code="CURRENCY_MISMATCH",
-                    severity=Severity.ERROR,
+                    severity=Severidad.ERROR,
                     field="currency",
                     message=(
                         f"Monedas diferentes: cotización {quotation.currency.value} y "
@@ -66,12 +66,12 @@ class ReconciliationService:
         quoted = quotation.quoted_amount
         invoiced = invoice.total_amount
         if quoted is None or invoiced is None:
-            return ReconciliationResult(
+            return ResultadoConciliacion(
                 quoted_amount=quoted,
                 invoiced_amount=invoiced,
                 difference=None,
                 deviation_percent=None,
-                diagnosis=Diagnosis.NOT_COMPARABLE,
+                diagnosis=Diagnostico.NOT_COMPARABLE,
                 provider_similarity=provider_similarity,
                 issues=issues,
             )
@@ -80,9 +80,9 @@ class ReconciliationService:
         if quoted == 0:
             deviation = None
             issues.append(
-                ValidationIssue(
+                ObservacionValidacion(
                     code="ZERO_QUOTED_AMOUNT",
-                    severity=Severity.WARNING,
+                    severity=Severidad.WARNING,
                     field="quoted_amount",
                     message="No se puede calcular el porcentaje porque el monto cotizado es cero.",
                 )
@@ -93,13 +93,13 @@ class ReconciliationService:
             )
 
         if difference < 0:
-            diagnosis = Diagnosis.BELOW
+            diagnosis = Diagnostico.BELOW
         elif difference > 0:
-            diagnosis = Diagnosis.ABOVE
+            diagnosis = Diagnostico.ABOVE
         else:
-            diagnosis = Diagnosis.MATCH
+            diagnosis = Diagnostico.MATCH
 
-        return ReconciliationResult(
+        return ResultadoConciliacion(
             quoted_amount=quoted,
             invoiced_amount=invoiced,
             difference=difference,

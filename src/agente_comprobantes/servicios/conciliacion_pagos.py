@@ -1,19 +1,19 @@
 from decimal import ROUND_HALF_UP, Decimal
 
 from agente_comprobantes.dominio import (
-    DocumentExtraction,
-    InvoiceRecord,
-    PaymentReconciliationResult,
-    PaymentStatus,
-    Severity,
-    ValidationIssue,
+    ExtraccionDocumento,
+    RegistroFactura,
+    ResultadoConciliacionPago,
+    EstadoPago,
+    Severidad,
+    ObservacionValidacion,
 )
 
 MONEY_PLACES = Decimal("0.01")
 PERCENT_PLACES = Decimal("0.01")
 DEFAULT_MIN_PAYMENT_RATIO = Decimal("0.10")
 
-class PaymentReconciliationService:
+class ServicioConciliacionPagos:
     """Compara pagos acumulados con una factura sin usar el modelo de IA."""
 
     def __init__(
@@ -29,20 +29,20 @@ class PaymentReconciliationService:
 
     def compare(
         self,
-        invoice: InvoiceRecord,
-        payment: DocumentExtraction,
+        invoice: RegistroFactura,
+        payment: ExtraccionDocumento,
         previously_paid: Decimal = Decimal("0"),
         apply_payment: bool = True,
-    ) -> PaymentReconciliationResult:
-        issues: list[ValidationIssue] = []
+    ) -> ResultadoConciliacionPago:
+        issues: list[ObservacionValidacion] = []
         invoice_amount = invoice.invoiced_amount
         payment_amount = payment.total_amount
 
         if invoice.currency and payment.currency and invoice.currency != payment.currency:
             issues.append(
-                ValidationIssue(
+                ObservacionValidacion(
                     code="PAYMENT_CURRENCY_MISMATCH",
-                    severity=Severity.ERROR,
+                    severity=Severidad.ERROR,
                     field="currency",
                     message=(
                         f"Monedas diferentes: factura {invoice.currency.value} y "
@@ -52,7 +52,7 @@ class PaymentReconciliationService:
             )
 
         if invoice_amount is None or payment_amount is None:
-            return PaymentReconciliationResult(
+            return ResultadoConciliacionPago(
                 invoice_amount=invoice_amount,
                 previously_paid_amount=previously_paid,
                 current_payment_amount=payment_amount,
@@ -68,7 +68,7 @@ class PaymentReconciliationService:
                 MONEY_PLACES,
                 rounding=ROUND_HALF_UP,
             )
-            return PaymentReconciliationResult(
+            return ResultadoConciliacionPago(
                 invoice_amount=invoice_amount,
                 previously_paid_amount=previously_paid,
                 current_payment_amount=payment_amount,
@@ -103,9 +103,9 @@ class PaymentReconciliationService:
                 )
 
                 issues.append(
-                    ValidationIssue(
+                    ObservacionValidacion(
                         code="PAYMENT_AMOUNT_SUSPICIOUSLY_LOW",
-                        severity=Severity.WARNING,
+                        severity=Severidad.WARNING,
                         field="total_amount",
                         message=(
                             f"El pago representa solo "
@@ -124,9 +124,9 @@ class PaymentReconciliationService:
 
         if remaining < 0:
             issues.append(
-                ValidationIssue(
+                ObservacionValidacion(
                     code="PAYMENT_EXCEEDS_INVOICE",
-                    severity=Severity.WARNING,
+                    severity=Severidad.WARNING,
                     field="total_amount",
                     message=(
                         "El pago acumulado excedería el monto facturado por "
@@ -134,13 +134,13 @@ class PaymentReconciliationService:
                     ),
                 )
             )
-            resulting_status = PaymentStatus.REVIEW
+            resulting_status = EstadoPago.REVIEW
         elif remaining == 0:
-            resulting_status = PaymentStatus.PAID
+            resulting_status = EstadoPago.PAID
         else:
-            resulting_status = PaymentStatus.PARTIALLY_PAID
+            resulting_status = EstadoPago.PARTIALLY_PAID
 
-        return PaymentReconciliationResult(
+        return ResultadoConciliacionPago(
             invoice_amount=invoice_amount,
             previously_paid_amount=previously_paid,
             current_payment_amount=payment_amount,
@@ -154,9 +154,9 @@ class PaymentReconciliationService:
 
     @staticmethod
     def reject_application(
-        reconciliation: PaymentReconciliationResult,
-        current_status: PaymentStatus,
-    ) -> PaymentReconciliationResult:
+        reconciliation: ResultadoConciliacionPago,
+        current_status: EstadoPago,
+    ) -> ResultadoConciliacionPago:
         """Conserva la trazabilidad, pero evita aplicar pagos dudosos o duplicados."""
 
         invoice_amount = reconciliation.invoice_amount

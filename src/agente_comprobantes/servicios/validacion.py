@@ -1,63 +1,63 @@
-from agente_comprobantes.configuracion import Settings
+from agente_comprobantes.configuracion import Configuracion
 from agente_comprobantes.dominio import (
-    DocumentExtraction,
-    DocumentType,
-    Severity,
-    ValidationIssue,
-    ValidationReport,
+    ExtraccionDocumento,
+    TipoDocumento,
+    Severidad,
+    ObservacionValidacion,
+    InformeValidacion,
 )
 
-REQUIRED_FIELDS: dict[DocumentType, tuple[str, ...]] = {
-    DocumentType.QUOTATION: ("provider", "concept", "total_amount"),
-    DocumentType.INVOICE: ("provider", "document_number", "document_date", "total_amount"),
-    DocumentType.RECEIPT: ("provider", "document_number", "document_date", "total_amount"),
-    DocumentType.BANK_TRANSFER: ("total_amount", "document_date", "operation_number"),
-    DocumentType.YAPE: ("total_amount", "document_date", "operation_number"),
-    DocumentType.PLIN: ("total_amount", "document_date", "operation_number"),
-    DocumentType.POS_VOUCHER: ("total_amount", "document_date", "operation_number"),
-    DocumentType.DEPOSIT: ("total_amount", "document_date", "operation_number"),
-    DocumentType.PAYMENT_RECEIPT: ("total_amount", "document_date"),
+REQUIRED_FIELDS: dict[TipoDocumento, tuple[str, ...]] = {
+    TipoDocumento.QUOTATION: ("provider", "concept", "total_amount"),
+    TipoDocumento.INVOICE: ("provider", "document_number", "document_date", "total_amount"),
+    TipoDocumento.RECEIPT: ("provider", "document_number", "document_date", "total_amount"),
+    TipoDocumento.BANK_TRANSFER: ("total_amount", "document_date", "operation_number"),
+    TipoDocumento.YAPE: ("total_amount", "document_date", "operation_number"),
+    TipoDocumento.PLIN: ("total_amount", "document_date", "operation_number"),
+    TipoDocumento.POS_VOUCHER: ("total_amount", "document_date", "operation_number"),
+    TipoDocumento.DEPOSIT: ("total_amount", "document_date", "operation_number"),
+    TipoDocumento.PAYMENT_RECEIPT: ("total_amount", "document_date"),
 }
 
 PAYMENT_DOCUMENT_TYPES = frozenset(
     {
-        DocumentType.BANK_TRANSFER,
-        DocumentType.YAPE,
-        DocumentType.PLIN,
-        DocumentType.POS_VOUCHER,
-        DocumentType.DEPOSIT,
-        DocumentType.PAYMENT_RECEIPT,
+        TipoDocumento.BANK_TRANSFER,
+        TipoDocumento.YAPE,
+        TipoDocumento.PLIN,
+        TipoDocumento.POS_VOUCHER,
+        TipoDocumento.DEPOSIT,
+        TipoDocumento.PAYMENT_RECEIPT,
     }
 )
 
 
-class ValidationService:
-    def __init__(self, settings: Settings) -> None:
+class ServicioValidacion:
+    def __init__(self, settings: Configuracion) -> None:
         self._settings = settings
 
     def validate(
         self,
-        extraction: DocumentExtraction,
-        expected_type: DocumentType,
-    ) -> ValidationReport:
+        extraction: ExtraccionDocumento,
+        expected_type: TipoDocumento,
+    ) -> InformeValidacion:
         return self._validate(extraction, expected_type, {expected_type})
 
-    def validate_payment(self, extraction: DocumentExtraction) -> ValidationReport:
+    def validate_payment(self, extraction: ExtraccionDocumento) -> InformeValidacion:
         """Acepta las variantes soportadas de un comprobante de pago."""
 
         return self._validate(
             extraction,
-            DocumentType.PAYMENT_RECEIPT,
+            TipoDocumento.PAYMENT_RECEIPT,
             PAYMENT_DOCUMENT_TYPES,
         )
 
     def _validate(
         self,
-        extraction: DocumentExtraction,
-        expected_type: DocumentType,
-        accepted_types: set[DocumentType] | frozenset[DocumentType],
-    ) -> ValidationReport:
-        issues: list[ValidationIssue] = []
+        extraction: ExtraccionDocumento,
+        expected_type: TipoDocumento,
+        accepted_types: set[TipoDocumento] | frozenset[TipoDocumento],
+    ) -> InformeValidacion:
+        issues: list[ObservacionValidacion] = []
 
         if extraction.document_type not in accepted_types:
             expected_label = (
@@ -66,9 +66,9 @@ class ValidationService:
                 else expected_type.value
             )
             issues.append(
-                ValidationIssue(
+                ObservacionValidacion(
                     code="DOCUMENT_TYPE_MISMATCH",
-                    severity=Severity.ERROR,
+                    severity=Severidad.ERROR,
                     field="document_type",
                     message=(
                         f"Se esperaba {expected_label}, pero la imagen parece "
@@ -85,9 +85,9 @@ class ValidationService:
         for field_name in REQUIRED_FIELDS.get(required_type, ()):
             if getattr(extraction, field_name) in (None, ""):
                 issues.append(
-                    ValidationIssue(
+                    ObservacionValidacion(
                         code="MISSING_CRITICAL_FIELD",
-                        severity=Severity.ERROR,
+                        severity=Severidad.ERROR,
                         field=field_name,
                         message=f"No se pudo extraer el campo obligatorio: {field_name}.",
                     )
@@ -95,9 +95,9 @@ class ValidationService:
 
         if extraction.total_amount is not None and extraction.total_amount < 0:
             issues.append(
-                ValidationIssue(
+                ObservacionValidacion(
                     code="NEGATIVE_AMOUNT",
-                    severity=Severity.ERROR,
+                    severity=Severidad.ERROR,
                     field="total_amount",
                     message="El monto total no puede ser negativo.",
                 )
@@ -105,9 +105,9 @@ class ValidationService:
 
         if extraction.provider_tax_id and len(extraction.provider_tax_id) != 11:
             issues.append(
-                ValidationIssue(
+                ObservacionValidacion(
                     code="INVALID_PERUVIAN_RUC",
-                    severity=Severity.WARNING,
+                    severity=Severidad.WARNING,
                     field="provider_tax_id",
                     message="El RUC detectado no contiene 11 dígitos.",
                 )
@@ -115,18 +115,18 @@ class ValidationService:
 
         if not 0 <= extraction.confidence <= 1:
             issues.append(
-                ValidationIssue(
+                ObservacionValidacion(
                     code="INVALID_CONFIDENCE",
-                    severity=Severity.ERROR,
+                    severity=Severidad.ERROR,
                     field="confidence",
                     message="La confianza debe estar entre 0 y 1.",
                 )
             )
         elif extraction.confidence < self._settings.min_extraction_confidence:
             issues.append(
-                ValidationIssue(
+                ObservacionValidacion(
                     code="LOW_CONFIDENCE",
-                    severity=Severity.WARNING,
+                    severity=Severidad.WARNING,
                     field="confidence",
                     message=f"Confianza de extracción baja ({extraction.confidence:.0%}).",
                 )
@@ -134,20 +134,20 @@ class ValidationService:
 
         for field_name in extraction.uncertain_fields:
             issues.append(
-                ValidationIssue(
+                ObservacionValidacion(
                     code="UNCERTAIN_FIELD",
-                    severity=Severity.WARNING,
+                    severity=Severidad.WARNING,
                     field=field_name,
                     message=f"El campo {field_name} requiere revisión visual.",
                 )
             )
 
-        return ValidationReport(issues=self._deduplicate(issues))
+        return InformeValidacion(issues=self._deduplicate(issues))
 
     @staticmethod
-    def _deduplicate(issues: list[ValidationIssue]) -> list[ValidationIssue]:
+    def _deduplicate(issues: list[ObservacionValidacion]) -> list[ObservacionValidacion]:
         seen: set[tuple[str, str | None]] = set()
-        result: list[ValidationIssue] = []
+        result: list[ObservacionValidacion] = []
         for issue in issues:
             key = (issue.code, issue.field)
             if key not in seen:

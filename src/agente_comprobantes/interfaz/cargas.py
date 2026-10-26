@@ -7,7 +7,7 @@ from typing import Protocol
 from uuid import uuid4
 
 
-class UploadedFileLike(Protocol):
+class ArchivoCargado(Protocol):
     name: str
 
     def getvalue(self) -> bytes: ...
@@ -28,7 +28,7 @@ def _safe_filename(filename: str) -> str:
 
 
 def save_uploaded_files(
-    uploaded_files: Iterable[UploadedFileLike],
+    uploaded_files: Iterable[ArchivoCargado],
     root: Path = Path("entrada/cargas"),
 ) -> list[str]:
     files = list(uploaded_files)

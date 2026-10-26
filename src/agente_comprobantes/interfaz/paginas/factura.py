@@ -6,11 +6,11 @@ from time import perf_counter
 import streamlit as st
 
 from agente_comprobantes.dominio import (
-    DocumentExtraction,
-    DocumentType,
-    QuotationRecord,
+    ExtraccionDocumento,
+    TipoDocumento,
+    RegistroCotizacion,
 )
-from agente_comprobantes.excepciones import InvoiceAgentError
+from agente_comprobantes.excepciones import ErrorAgenteComprobantes
 from agente_comprobantes.interfaz.cargas import save_uploaded_files
 from agente_comprobantes.interfaz.componentes.editor_extraccion import (
     render_extraction_editor,
@@ -33,7 +33,7 @@ def _clear_preview() -> None:
 
 
 def _quotation_label(
-    quotation: QuotationRecord,
+    quotation: RegistroCotizacion,
 ) -> str:
     provider = quotation.provider or "Proveedor no identificado"
 
@@ -88,7 +88,7 @@ def render_invoice() -> None:
     preview = st.session_state.get(_PREVIEW_KEY)
     has_preview = isinstance(
         preview,
-        DocumentExtraction,
+        ExtraccionDocumento,
     )
 
     selected_code = st.selectbox(
@@ -161,12 +161,12 @@ def render_invoice() -> None:
                 ):
                     extraction = (
                         context.agent.preview_extraction(
-                            DocumentType.INVOICE,
+                            TipoDocumento.INVOICE,
                             image_paths,
                         )
                     )
             except (
-                InvoiceAgentError,
+                ErrorAgenteComprobantes,
                 OSError,
                 ValueError,
             ) as exc:
@@ -244,7 +244,7 @@ def render_invoice() -> None:
                 confirmed_extraction=confirmed_extraction,
             )
     except (
-        InvoiceAgentError,
+        ErrorAgenteComprobantes,
         OSError,
         ValueError,
     ) as exc:

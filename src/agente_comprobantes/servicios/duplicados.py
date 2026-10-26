@@ -5,30 +5,30 @@ from decimal import Decimal
 from difflib import SequenceMatcher
 
 from agente_comprobantes.dominio import (
-    DocumentExtraction,
-    DocumentReference,
-    DuplicateMatch,
+    ExtraccionDocumento,
+    ReferenciaDocumento,
+    CoincidenciaDuplicado,
 )
 from agente_comprobantes.servicios.normalizacion_texto import normalize_supplier, normalize_text
 
 
-class DuplicateService:
+class ServicioDuplicados:
     """Detecta coincidencias; nunca elimina registros automáticamente."""
 
     def find_matches(
         self,
-        extraction: DocumentExtraction,
+        extraction: ExtraccionDocumento,
         source_hash: str,
-        existing: list[DocumentReference],
-    ) -> list[DuplicateMatch]:
-        matches: list[DuplicateMatch] = []
+        existing: list[ReferenciaDocumento],
+    ) -> list[CoincidenciaDuplicado]:
+        matches: list[CoincidenciaDuplicado] = []
         for candidate in existing:
             if candidate.document_type != extraction.document_type:
                 continue
             score, reasons = self._score(extraction, source_hash, candidate)
             if score >= 0.75:
                 matches.append(
-                    DuplicateMatch(
+                    CoincidenciaDuplicado(
                         document_id=candidate.document_id,
                         document_type=candidate.document_type,
                         score=round(score, 3),
@@ -39,9 +39,9 @@ class DuplicateService:
 
     def _score(
         self,
-        extraction: DocumentExtraction,
+        extraction: ExtraccionDocumento,
         source_hash: str,
-        candidate: DocumentReference,
+        candidate: ReferenciaDocumento,
     ) -> tuple[float, list[str]]:
         if source_hash == candidate.source_hash:
             return 1.0, ["Mismo contenido de imagen"]

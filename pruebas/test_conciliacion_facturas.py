@@ -1,26 +1,26 @@
 from decimal import Decimal
 
 from agente_comprobantes.dominio import (
-    Currency,
-    Diagnosis,
-    DocumentExtraction,
-    DocumentType,
-    QuotationRecord,
-    VerificationStatus,
+    Moneda,
+    Diagnostico,
+    ExtraccionDocumento,
+    TipoDocumento,
+    RegistroCotizacion,
+    EstadoVerificacion,
 )
-from agente_comprobantes.servicios.conciliacion_facturas import ReconciliationService
+from agente_comprobantes.servicios.conciliacion_facturas import ServicioConciliacionFacturas
 
 
-def quotation(amount: str = "9800.00", provider: str = "JJ Consultores SAC") -> QuotationRecord:
-    return QuotationRecord(
+def quotation(amount: str = "9800.00", provider: str = "JJ Consultores SAC") -> RegistroCotizacion:
+    return RegistroCotizacion(
         quotation_code="COT-001",
         provider=provider,
         provider_tax_id="20123456789",
         concept="Materiales",
         quoted_amount=amount,
-        currency=Currency.PEN,
+        currency=Moneda.PEN,
         quotation_date="2026-09-10",
-        verification_status=VerificationStatus.VERIFIED,
+        verification_status=EstadoVerificacion.VERIFIED,
         source_hash="a" * 64,
         source_files=["cotizacion.png"],
     )
@@ -29,27 +29,27 @@ def quotation(amount: str = "9800.00", provider: str = "JJ Consultores SAC") -> 
 def invoice(
     amount: str = "9800.01",
     provider: str = "J.J. Consultores S.A.C.",
-) -> DocumentExtraction:
-    return DocumentExtraction(
-        document_type=DocumentType.INVOICE,
+) -> ExtraccionDocumento:
+    return ExtraccionDocumento(
+        document_type=TipoDocumento.INVOICE,
         provider=provider,
         total_amount=amount,
-        currency=Currency.PEN,
+        currency=Moneda.PEN,
         confidence=0.95,
     )
 
 
 def test_calculates_difference_and_deviation(settings) -> None:
-    result = ReconciliationService(settings).compare(quotation(), invoice())
+    result = ServicioConciliacionFacturas(settings).compare(quotation(), invoice())
 
     assert result.difference == Decimal("0.01")
     assert result.deviation_percent == Decimal("0.0001")
-    assert result.diagnosis == Diagnosis.ABOVE
+    assert result.diagnosis == Diagnostico.ABOVE
     assert result.issues == []
 
 
 def test_marks_supplier_mismatch(settings) -> None:
-    result = ReconciliationService(settings).compare(
+    result = ServicioConciliacionFacturas(settings).compare(
         quotation(provider="Proveedor Uno SAC"),
         invoice(provider="Empresa Completamente Distinta EIRL"),
     )
@@ -58,7 +58,7 @@ def test_marks_supplier_mismatch(settings) -> None:
 
 
 def test_zero_quotation_amount_has_no_percentage(settings) -> None:
-    result = ReconciliationService(settings).compare(quotation(amount="0"), invoice(amount="5"))
+    result = ServicioConciliacionFacturas(settings).compare(quotation(amount="0"), invoice(amount="5"))
 
     assert result.difference == Decimal("5.00")
     assert result.deviation_percent is None

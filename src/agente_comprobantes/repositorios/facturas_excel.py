@@ -5,11 +5,11 @@ from decimal import Decimal
 from openpyxl import load_workbook
 
 from agente_comprobantes.dominio import (
-    InvoiceRecord,
-    QuotationRecord,
-    QuotationStatus,
-    ReconciliationResult,
-    VerificationStatus,
+    RegistroFactura,
+    RegistroCotizacion,
+    EstadoCotizacion,
+    ResultadoConciliacion,
+    EstadoVerificacion,
 )
 from agente_comprobantes.repositorios.esquemas_excel import COMPARISON_HEADERS, INVOICE_HEADERS
 
@@ -17,9 +17,9 @@ from agente_comprobantes.repositorios.esquemas_excel import COMPARISON_HEADERS, 
 class OperacionesFacturasExcel:
     def add_invoice(
         self,
-        invoice: InvoiceRecord,
-        quotation: QuotationRecord,
-        reconciliation: ReconciliationResult,
+        invoice: RegistroFactura,
+        quotation: RegistroCotizacion,
+        reconciliation: ResultadoConciliacion,
     ) -> None:
         self.initialize()
         workbook = load_workbook(self._path)
@@ -66,11 +66,11 @@ class OperacionesFacturasExcel:
             },
         )
         self._update_quotation_status(
-            workbook["COTIZACIONES"], invoice.quotation_code, QuotationStatus.INVOICED
+            workbook["COTIZACIONES"], invoice.quotation_code, EstadoCotizacion.INVOICED
         )
         self._save_atomic(workbook)
 
-    def get_invoice(self, invoice_id: str) -> InvoiceRecord | None:
+    def get_invoice(self, invoice_id: str) -> RegistroFactura | None:
         normalized = invoice_id.strip().upper()
         for row in self.read_sheet("FACTURAS"):
             if str(row["ID Factura"]).strip().upper() == normalized:
@@ -80,7 +80,7 @@ class OperacionesFacturasExcel:
     def list_invoices(
         self,
         quotation_code: str | None = None,
-    ) -> list[InvoiceRecord]:
+    ) -> list[RegistroFactura]:
         self.initialize()
 
         invoices = [
@@ -110,7 +110,7 @@ class OperacionesFacturasExcel:
         for row in self.read_sheet("PAGOS"):
             if str(row["ID Factura"]).strip().upper() != normalized:
                 continue
-            if str(row["Estado Verificación"]) != VerificationStatus.VERIFIED.value:
+            if str(row["Estado Verificación"]) != EstadoVerificacion.VERIFIED.value:
                 continue
             amount = row["Monto Pagado"]
             if amount not in (None, ""):

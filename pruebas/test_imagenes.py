@@ -2,15 +2,15 @@ import base64
 
 import pytest
 
-from agente_comprobantes.excepciones import ImageValidationError
-from agente_comprobantes.servicios.imagenes import ImageService
+from agente_comprobantes.excepciones import ErrorValidacionImagen
+from agente_comprobantes.servicios.imagenes import ServicioImagenes
 
 
 def test_prepares_multiple_images_as_one_document(settings, make_image) -> None:
     first = make_image("page-1.png", text="Página 1")
     second = make_image("page-2.png", color="lightgray", text="Página 2")
 
-    result = ImageService(settings).prepare([first, second])
+    result = ServicioImagenes(settings).prepare([first, second])
 
     assert result.source_names == ["page-1.png", "page-2.png"]
     assert len(result.images) == 2
@@ -24,15 +24,15 @@ def test_prepares_multiple_images_as_one_document(settings, make_image) -> None:
 
 
 def test_rejects_missing_image(settings) -> None:
-    with pytest.raises(ImageValidationError, match="No existe"):
-        ImageService(settings).prepare(["does-not-exist.png"])
+    with pytest.raises(ErrorValidacionImagen, match="No existe"):
+        ServicioImagenes(settings).prepare(["does-not-exist.png"])
 
 
 def test_rejects_more_than_twenty_images(settings, make_image) -> None:
     images = [make_image(name=f"{index}.png") for index in range(21)]
 
-    with pytest.raises(ImageValidationError, match="Máximo 20"):
-        ImageService(settings).prepare(images)
+    with pytest.raises(ErrorValidacionImagen, match="Máximo 20"):
+        ServicioImagenes(settings).prepare(images)
 
 
 def test_keeps_jpeg_output_for_jpeg_source(settings, make_image) -> None:
@@ -41,7 +41,7 @@ def test_keeps_jpeg_output_for_jpeg_source(settings, make_image) -> None:
         text="Monto: 30 117.62",
     )
 
-    result = ImageService(settings).prepare([source])
+    result = ServicioImagenes(settings).prepare([source])
 
     prepared_image = result.images[0]
 

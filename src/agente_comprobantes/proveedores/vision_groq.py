@@ -8,13 +8,13 @@ from typing import Any
 
 from pydantic import ValidationError
 
-from agente_comprobantes.configuracion import Settings
-from agente_comprobantes.dominio import DocumentExtraction, DocumentType
-from agente_comprobantes.excepciones import ExtractionError
+from agente_comprobantes.configuracion import Configuracion
+from agente_comprobantes.dominio import ExtraccionDocumento, TipoDocumento
+from agente_comprobantes.excepciones import ErrorExtraccion
 from agente_comprobantes.prompts import EXTRACTION_SCHEMA, build_extraction_prompt
-from agente_comprobantes.proveedores.base import VisionProvider
+from agente_comprobantes.proveedores.base import ProveedorVision
 from agente_comprobantes.proveedores.parseo import parse_json_object
-from agente_comprobantes.servicios.imagenes import PreparedDocument
+from agente_comprobantes.servicios.imagenes import DocumentoPreparado
 
 MAX_GROQ_IMAGES = 3
 
@@ -40,12 +40,12 @@ GROQ_EXTRACTION_SCHEMA = _schema_without_formats(
 )
 
 
-class GroqVisionProvider(VisionProvider):
+class ProveedorVisionGroq(ProveedorVision):
     """Adaptador de visión para Qwen mediante Groq."""
 
     def __init__(
         self,
-        settings: Settings,
+        settings: Configuracion,
         client: Any | None = None,
     ) -> None:
         self._settings = settings
@@ -54,7 +54,7 @@ class GroqVisionProvider(VisionProvider):
             try:
                 from groq import Groq
             except ImportError as exc:  # pragma: no cover
-                raise ExtractionError(
+                raise ErrorExtraccion(
                     "No está instalado el SDK de Groq. "
                     "Ejecuta pip install -r requirements.txt."
                 ) from exc
@@ -69,11 +69,11 @@ class GroqVisionProvider(VisionProvider):
 
     def extract(
         self,
-        document: PreparedDocument,
-        expected_type: DocumentType,
-    ) -> DocumentExtraction:
+        document: DocumentoPreparado,
+        expected_type: TipoDocumento,
+    ) -> ExtraccionDocumento:
         if len(document.images) > MAX_GROQ_IMAGES:
-            raise ExtractionError(
+            raise ErrorExtraccion(
                 "Groq admite como máximo 3 imágenes por solicitud. "
                 "Este documento debe procesarse con Cohere."
             )
@@ -126,11 +126,11 @@ class GroqVisionProvider(VisionProvider):
             raw_text = self._response_text(response)
             payload = parse_json_object(raw_text)
 
-            return DocumentExtraction.model_validate(payload)
+            return ExtraccionDocumento.model_validate(payload)
 
         except json.JSONDecodeError as exc:
             diagnostic_path = self._save_diagnostic(raw_text, exc)
-            raise ExtractionError(
+            raise ErrorExtraccion(
                 "Groq devolvió texto que no es un JSON válido. "
                 f"Diagnóstico guardado en: {diagnostic_path}"
             ) from exc
@@ -138,12 +138,12 @@ class GroqVisionProvider(VisionProvider):
         except ValidationError as exc:
             diagnostic_path = self._save_diagnostic(raw_text, exc)
             details = self._validation_summary(exc)
-            raise ExtractionError(
+            raise ErrorExtraccion(
                 "El JSON de Groq contiene valores inesperados: "
                 f"{details}. Diagnóstico guardado en: {diagnostic_path}"
             ) from exc
 
-        except ExtractionError:
+        except ErrorExtraccion:
             raise
 
         except Exception as exc:
@@ -155,7 +155,7 @@ class GroqVisionProvider(VisionProvider):
             else:
                 detail = error_name
 
-            raise ExtractionError(
+            raise ErrorExtraccion(
                 f"No se pudo extraer el documento con Groq: {detail}"
             ) from exc
 
@@ -164,12 +164,12 @@ class GroqVisionProvider(VisionProvider):
         try:
             text = response.choices[0].message.content
         except (AttributeError, IndexError, TypeError) as exc:
-            raise ExtractionError(
+            raise ErrorExtraccion(
                 "Groq devolvió una respuesta inesperada."
             ) from exc
 
         if not text:
-            raise ExtractionError(
+            raise ErrorExtraccion(
                 "Groq devolvió una respuesta vacía."
             )
 

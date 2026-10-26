@@ -1,17 +1,17 @@
 from __future__ import annotations
 
-from agente_comprobantes.dominio import DocumentReference, DocumentType
+from agente_comprobantes.dominio import ReferenciaDocumento, TipoDocumento
 
 
 class ReferenciasExcel:
-    def list_document_references(self) -> list[DocumentReference]:
+    def list_document_references(self) -> list[ReferenciaDocumento]:
         self.initialize()
-        references: list[DocumentReference] = []
+        references: list[ReferenciaDocumento] = []
         for row in self.read_sheet("COTIZACIONES"):
             references.append(
-                DocumentReference(
+                ReferenciaDocumento(
                     document_id=str(row["Cód. Cotización"]),
-                    document_type=DocumentType.QUOTATION,
+                    document_type=TipoDocumento.QUOTATION,
                     provider=self._optional_str(row["Proveedor"]),
                     provider_tax_id=self._optional_str(row["RUC Proveedor"]),
                     concept=self._optional_str(row["Concepto / Descripción"]),
@@ -23,9 +23,9 @@ class ReferenciasExcel:
             )
         for row in self.read_sheet("FACTURAS"):
             references.append(
-                DocumentReference(
+                ReferenciaDocumento(
                     document_id=str(row["ID Factura"]),
-                    document_type=DocumentType.INVOICE,
+                    document_type=TipoDocumento.INVOICE,
                     provider=self._optional_str(row["Proveedor"]),
                     provider_tax_id=self._optional_str(row["RUC Proveedor"]),
                     concept=self._optional_str(row["Concepto / Descripción"]),
@@ -41,7 +41,7 @@ class ReferenciasExcel:
             if payment_type is None:
                 continue
             references.append(
-                DocumentReference(
+                ReferenciaDocumento(
                     document_id=str(row["ID Pago"]),
                     document_type=payment_type,
                     document_date=row["Fecha Pago"],

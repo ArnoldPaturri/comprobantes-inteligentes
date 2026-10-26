@@ -2,16 +2,16 @@ from abc import ABC, abstractmethod
 from decimal import Decimal
 
 from agente_comprobantes.dominio import (
-    DocumentReference,
-    InvoiceRecord,
-    PaymentReconciliationResult,
-    PaymentRecord,
-    QuotationRecord,
-    ReconciliationResult,
+    ReferenciaDocumento,
+    RegistroFactura,
+    ResultadoConciliacionPago,
+    RegistroPago,
+    RegistroCotizacion,
+    ResultadoConciliacion,
 )
 
 
-class DocumentRepository(ABC):
+class RepositorioDocumentos(ABC):
     """Contrato de persistencia independiente de Excel o Google Sheets."""
 
     @property
@@ -24,35 +24,35 @@ class DocumentRepository(ABC):
         raise NotImplementedError
 
     @abstractmethod
-    def get_quotation(self, quotation_code: str) -> QuotationRecord | None:
+    def get_quotation(self, quotation_code: str) -> RegistroCotizacion | None:
         raise NotImplementedError
 
     @abstractmethod
-    def list_quotations(self) -> list[QuotationRecord]:
+    def list_quotations(self) -> list[RegistroCotizacion]:
         raise NotImplementedError
     
     @abstractmethod
-    def add_quotation(self, quotation: QuotationRecord) -> None:
+    def add_quotation(self, quotation: RegistroCotizacion) -> None:
         raise NotImplementedError
 
     @abstractmethod
     def add_invoice(
         self,
-        invoice: InvoiceRecord,
-        quotation: QuotationRecord,
-        reconciliation: ReconciliationResult,
+        invoice: RegistroFactura,
+        quotation: RegistroCotizacion,
+        reconciliation: ResultadoConciliacion,
     ) -> None:
         raise NotImplementedError
 
     @abstractmethod
-    def get_invoice(self, invoice_id: str) -> InvoiceRecord | None:
+    def get_invoice(self, invoice_id: str) -> RegistroFactura | None:
         raise NotImplementedError
 
     @abstractmethod
     def list_invoices(
         self,
         quotation_code: str | None = None,
-    ) -> list[InvoiceRecord]:
+    ) -> list[RegistroFactura]:
         raise NotImplementedError
 
     @abstractmethod
@@ -60,36 +60,36 @@ class DocumentRepository(ABC):
         raise NotImplementedError
 
     @abstractmethod
-    def get_payment(self, payment_id: str) -> PaymentRecord | None:
+    def get_payment(self, payment_id: str) -> RegistroPago | None:
         raise NotImplementedError
 
     @abstractmethod
     def list_pending_payments(
         self,
         quotation_code: str,
-    ) -> list[PaymentRecord]:
+    ) -> list[RegistroPago]:
         raise NotImplementedError
 
     @abstractmethod
     def add_payment(
         self,
-        payment: PaymentRecord,
-        invoice: InvoiceRecord | None = None,
-        reconciliation: PaymentReconciliationResult | None = None,
+        payment: RegistroPago,
+        invoice: RegistroFactura | None = None,
+        reconciliation: ResultadoConciliacionPago | None = None,
     ) -> None:
         raise NotImplementedError
 
     @abstractmethod
     def link_payment(
         self,
-        payment: PaymentRecord,
-        invoice: InvoiceRecord,
-        reconciliation: PaymentReconciliationResult,
+        payment: RegistroPago,
+        invoice: RegistroFactura,
+        reconciliation: ResultadoConciliacionPago,
     ) -> None:
         raise NotImplementedError
 
     @abstractmethod
-    def list_document_references(self) -> list[DocumentReference]:
+    def list_document_references(self) -> list[ReferenciaDocumento]:
         raise NotImplementedError
 
     @abstractmethod

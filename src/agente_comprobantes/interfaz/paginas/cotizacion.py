@@ -5,10 +5,10 @@ from pathlib import Path
 import streamlit as st
 
 from agente_comprobantes.dominio import (
-    DocumentExtraction,
-    DocumentType,
+    ExtraccionDocumento,
+    TipoDocumento,
 )
-from agente_comprobantes.excepciones import InvoiceAgentError
+from agente_comprobantes.excepciones import ErrorAgenteComprobantes
 from agente_comprobantes.interfaz.cargas import save_uploaded_files
 from agente_comprobantes.interfaz.componentes.editor_extraccion import (
     render_extraction_editor,
@@ -46,7 +46,7 @@ def render_quotation() -> None:
             st.json(last_result)
 
     preview = st.session_state.get(_PREVIEW_KEY)
-    has_preview = isinstance(preview, DocumentExtraction)
+    has_preview = isinstance(preview, ExtraccionDocumento)
 
     quotation_code = st.text_input(
         "Código interno de cotización",
@@ -107,11 +107,11 @@ def render_quotation() -> None:
                 ):
                     extraction = (
                         context.agent.preview_extraction(
-                            DocumentType.QUOTATION,
+                            TipoDocumento.QUOTATION,
                             image_paths,
                         )
                     )
-            except (InvoiceAgentError, OSError, ValueError) as exc:
+            except (ErrorAgenteComprobantes, OSError, ValueError) as exc:
                 st.error(f"No se pudo analizar: {exc}")
                 return
 
@@ -162,7 +162,7 @@ def render_quotation() -> None:
                 image_paths,
                 confirmed_extraction=confirmed_extraction,
             )
-    except (InvoiceAgentError, OSError, ValueError) as exc:
+    except (ErrorAgenteComprobantes, OSError, ValueError) as exc:
         st.error(f"No se pudo registrar: {exc}")
         return
 

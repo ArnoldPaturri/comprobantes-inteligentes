@@ -3,13 +3,13 @@ from __future__ import annotations
 from uuid import uuid4
 
 from agente_comprobantes.dominio import (
-    DocumentExtraction,
-    DocumentType,
-    InvoiceRecord,
-    PaymentStatus,
-    RegistrationResult,
+    ExtraccionDocumento,
+    TipoDocumento,
+    RegistroFactura,
+    EstadoPago,
+    ResultadoRegistro,
 )
-from agente_comprobantes.excepciones import RecordNotFoundError
+from agente_comprobantes.excepciones import ErrorRegistroNoEncontrado
 from agente_comprobantes.servicios.estados import issue_messages, resolve_verification_status
 
 
@@ -19,12 +19,12 @@ class OperacionesFacturas:
         quotation_code: str,
         image_paths: list[str],
         *,
-        confirmed_extraction: DocumentExtraction | None = None,
-    ) -> RegistrationResult:
+        confirmed_extraction: ExtraccionDocumento | None = None,
+    ) -> ResultadoRegistro:
         self._repository.initialize()
         quotation = self._repository.get_quotation(quotation_code)
         if quotation is None:
-            raise RecordNotFoundError(
+            raise ErrorRegistroNoEncontrado(
                 f"No existe la cotización {quotation_code.strip().upper()}. "
                 "Regístrala antes de procesar la factura."
             )
@@ -35,10 +35,10 @@ class OperacionesFacturas:
             if confirmed_extraction is not None
             else self._provider.extract(
                 prepared,
-                DocumentType.INVOICE,
+                TipoDocumento.INVOICE,
             )
         )
-        validation = self._validator.validate(extraction, DocumentType.INVOICE)
+        validation = self._validator.validate(extraction, TipoDocumento.INVOICE)
         duplicates = self._duplicates.find_matches(
             extraction, prepared.source_hash, self._repository.list_document_references()
         )
@@ -55,7 +55,7 @@ class OperacionesFacturas:
             )
 
         invoice_id = f"FAC-{uuid4().hex[:10].upper()}"
-        record = InvoiceRecord(
+        record = RegistroFactura(
             invoice_id=invoice_id,
             quotation_code=quotation.quotation_code,
             provider=extraction.provider,
@@ -66,7 +66,7 @@ class OperacionesFacturas:
             currency=extraction.currency,
             invoice_date=extraction.document_date,
             verification_status=status,
-            payment_status=PaymentStatus.PENDING,
+            payment_status=EstadoPago.PENDING,
             source_hash=prepared.source_hash,
             source_files=prepared.source_names,
             uncertain_fields=extraction.uncertain_fields,
@@ -74,9 +74,9 @@ class OperacionesFacturas:
             observations=self._unique(observations),
         )
         self._repository.add_invoice(record, quotation, reconciliation)
-        return RegistrationResult(
+        return ResultadoRegistro(
             document_id=invoice_id,
-            document_type=DocumentType.INVOICE,
+            document_type=TipoDocumento.INVOICE,
             verification_status=status,
             workbook_path=self._repository.location,
             validation=validation,

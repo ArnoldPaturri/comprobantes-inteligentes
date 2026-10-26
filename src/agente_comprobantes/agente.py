@@ -3,14 +3,14 @@ from __future__ import annotations
 from agente_comprobantes.casos_uso.cotizaciones import OperacionesCotizaciones
 from agente_comprobantes.casos_uso.facturas import OperacionesFacturas
 from agente_comprobantes.casos_uso.pagos import OperacionesPagos
-from agente_comprobantes.dominio import DocumentExtraction, DocumentType
-from agente_comprobantes.proveedores.base import VisionProvider
-from agente_comprobantes.repositorios.base import DocumentRepository
-from agente_comprobantes.servicios.conciliacion_facturas import ReconciliationService
-from agente_comprobantes.servicios.conciliacion_pagos import PaymentReconciliationService
-from agente_comprobantes.servicios.duplicados import DuplicateService
-from agente_comprobantes.servicios.imagenes import ImageService
-from agente_comprobantes.servicios.validacion import ValidationService
+from agente_comprobantes.dominio import ExtraccionDocumento, TipoDocumento
+from agente_comprobantes.proveedores.base import ProveedorVision
+from agente_comprobantes.repositorios.base import RepositorioDocumentos
+from agente_comprobantes.servicios.conciliacion_facturas import ServicioConciliacionFacturas
+from agente_comprobantes.servicios.conciliacion_pagos import ServicioConciliacionPagos
+from agente_comprobantes.servicios.duplicados import ServicioDuplicados
+from agente_comprobantes.servicios.imagenes import ServicioImagenes
+from agente_comprobantes.servicios.validacion import ServicioValidacion
 
 
 class AgenteComprobantes(OperacionesCotizaciones, OperacionesFacturas, OperacionesPagos):
@@ -18,13 +18,13 @@ class AgenteComprobantes(OperacionesCotizaciones, OperacionesFacturas, Operacion
 
     def __init__(
         self,
-        provider: VisionProvider,
-        repository: DocumentRepository,
-        image_service: ImageService,
-        validation_service: ValidationService,
-        duplicate_service: DuplicateService,
-        reconciliation_service: ReconciliationService,
-        payment_reconciliation_service: PaymentReconciliationService,
+        provider: ProveedorVision,
+        repository: RepositorioDocumentos,
+        image_service: ServicioImagenes,
+        validation_service: ServicioValidacion,
+        duplicate_service: ServicioDuplicados,
+        reconciliation_service: ServicioConciliacionFacturas,
+        payment_reconciliation_service: ServicioConciliacionPagos,
     ) -> None:
         self._provider = provider
         self._repository = repository
@@ -36,9 +36,9 @@ class AgenteComprobantes(OperacionesCotizaciones, OperacionesFacturas, Operacion
 
     def preview_extraction(
         self,
-        expected_type: DocumentType,
+        expected_type: TipoDocumento,
         image_paths: list[str],
-    ) -> DocumentExtraction:
+    ) -> ExtraccionDocumento:
         """Extrae un documento sin validar, conciliar ni guardar registros."""
         prepared = self._images.prepare(image_paths)
         return self._provider.extract(

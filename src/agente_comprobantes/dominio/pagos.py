@@ -6,27 +6,27 @@ from decimal import Decimal
 from pydantic import Field, field_validator
 
 from agente_comprobantes.dominio.enumeraciones import (
-    Currency,
-    DocumentType,
-    PaymentLinkStatus,
-    VerificationStatus,
+    Moneda,
+    TipoDocumento,
+    EstadoVinculacionPago,
+    EstadoVerificacion,
 )
-from agente_comprobantes.dominio.modelo_base import DomainModel
+from agente_comprobantes.dominio.modelo_base import ModeloDominio
 from agente_comprobantes.dominio.normalizacion import _parse_date, _parse_decimal
 
 
-class PaymentRecord(DomainModel):
+class RegistroPago(ModeloDominio):
     payment_id: str
     quotation_code: str
     invoice_id: str | None = None
-    payment_type: DocumentType
+    payment_type: TipoDocumento
     payment_entity: str | None = None
     operation_number: str | None = None
     paid_amount: Decimal | None = None
-    currency: Currency | None = None
+    currency: Moneda | None = None
     payment_date: date | None = None
-    verification_status: VerificationStatus
-    reconciliation_status: PaymentLinkStatus = PaymentLinkStatus.PENDING_INVOICE
+    verification_status: EstadoVerificacion
+    reconciliation_status: EstadoVinculacionPago = EstadoVinculacionPago.PENDING_INVOICE
     source_hash: str
     source_files: list[str]
     duplicate_of: list[str] = Field(default_factory=list)

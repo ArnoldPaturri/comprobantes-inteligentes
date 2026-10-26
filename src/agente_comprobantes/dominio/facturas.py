@@ -5,12 +5,12 @@ from decimal import Decimal
 
 from pydantic import Field, field_validator
 
-from agente_comprobantes.dominio.enumeraciones import Currency, PaymentStatus, VerificationStatus
-from agente_comprobantes.dominio.modelo_base import DomainModel
+from agente_comprobantes.dominio.enumeraciones import Moneda, EstadoPago, EstadoVerificacion
+from agente_comprobantes.dominio.modelo_base import ModeloDominio
 from agente_comprobantes.dominio.normalizacion import _parse_date, _parse_decimal
 
 
-class InvoiceRecord(DomainModel):
+class RegistroFactura(ModeloDominio):
     invoice_id: str
     quotation_code: str
     provider: str | None = None
@@ -18,10 +18,10 @@ class InvoiceRecord(DomainModel):
     invoice_number: str | None = None
     concept: str | None = None
     invoiced_amount: Decimal | None = None
-    currency: Currency | None = None
+    currency: Moneda | None = None
     invoice_date: date | None = None
-    verification_status: VerificationStatus
-    payment_status: PaymentStatus = PaymentStatus.PENDING
+    verification_status: EstadoVerificacion
+    payment_status: EstadoPago = EstadoPago.PENDING
     source_hash: str
     source_files: list[str]
     uncertain_fields: list[str] = Field(default_factory=list)

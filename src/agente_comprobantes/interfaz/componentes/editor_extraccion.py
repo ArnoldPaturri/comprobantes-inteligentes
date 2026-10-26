@@ -5,8 +5,8 @@ from typing import Any
 import streamlit as st
 
 from agente_comprobantes.dominio import (
-    Currency,
-    DocumentExtraction,
+    Moneda,
+    ExtraccionDocumento,
 )
 
 
@@ -15,10 +15,10 @@ def _as_text(value: Any) -> str:
 
 
 def render_extraction_editor(
-    extraction: DocumentExtraction,
+    extraction: ExtraccionDocumento,
     *,
     key_prefix: str,
-) -> DocumentExtraction | None:
+) -> ExtraccionDocumento | None:
     if extraction.uncertain_fields:
         st.warning(
             "Campos que requieren revisión: "
@@ -32,7 +32,7 @@ def render_extraction_editor(
 
     currency_options = [
         "",
-        *(currency.value for currency in Currency),
+        *(currency.value for currency in Moneda),
     ]
     current_currency = (
         extraction.currency.value
@@ -156,7 +156,7 @@ def render_extraction_editor(
     ]
 
     try:
-        return DocumentExtraction.model_validate(payload)
+        return ExtraccionDocumento.model_validate(payload)
     except ValueError as exc:
         st.error(
             "Revisa los valores ingresados: "

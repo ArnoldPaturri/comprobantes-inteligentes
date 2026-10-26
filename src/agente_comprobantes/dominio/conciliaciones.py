@@ -4,31 +4,31 @@ from decimal import Decimal
 
 from pydantic import Field, field_validator
 
-from agente_comprobantes.dominio.enumeraciones import Diagnosis, PaymentStatus
-from agente_comprobantes.dominio.modelo_base import DomainModel
+from agente_comprobantes.dominio.enumeraciones import Diagnostico, EstadoPago
+from agente_comprobantes.dominio.modelo_base import ModeloDominio
 from agente_comprobantes.dominio.normalizacion import _parse_decimal
-from agente_comprobantes.dominio.validacion import ValidationIssue
+from agente_comprobantes.dominio.validacion import ObservacionValidacion
 
 
-class ReconciliationResult(DomainModel):
+class ResultadoConciliacion(ModeloDominio):
     quoted_amount: Decimal | None
     invoiced_amount: Decimal | None
     difference: Decimal | None
     deviation_percent: Decimal | None
-    diagnosis: Diagnosis
+    diagnosis: Diagnostico
     provider_similarity: float | None = None
-    issues: list[ValidationIssue] = Field(default_factory=list)
+    issues: list[ObservacionValidacion] = Field(default_factory=list)
 
-class PaymentReconciliationResult(DomainModel):
+class ResultadoConciliacionPago(ModeloDominio):
     invoice_amount: Decimal | None
     previously_paid_amount: Decimal = Decimal("0")
     current_payment_amount: Decimal | None
     applied_amount: Decimal = Decimal("0")
     accumulated_paid_amount: Decimal = Decimal("0")
     remaining_amount: Decimal | None
-    resulting_payment_status: PaymentStatus
+    resulting_payment_status: EstadoPago
     applied: bool = True
-    issues: list[ValidationIssue] = Field(default_factory=list)
+    issues: list[ObservacionValidacion] = Field(default_factory=list)
 
     _normalize_invoice_amount = field_validator("invoice_amount", mode="before")(_parse_decimal)
     _normalize_previous_amount = field_validator(

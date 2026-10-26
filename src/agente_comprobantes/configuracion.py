@@ -12,7 +12,7 @@ ARCHIVO_ANTERIOR = PROJECT_ROOT / "output" / "registros.xlsx"
 ARCHIVO_NUEVO = PROJECT_ROOT / "salida" / "registros.xlsx"
 
 
-class Settings(BaseSettings):
+class Configuracion(BaseSettings):
     """Configuración central leída desde variables de entorno o ``.env``."""
 
     model_config = SettingsConfigDict(
@@ -85,5 +85,5 @@ class Settings(BaseSettings):
         return self.groq_api_key.get_secret_value()
 
 @lru_cache(maxsize=1)
-def get_settings() -> Settings:
-    return Settings()
+def get_settings() -> Configuracion:
+    return Configuracion()

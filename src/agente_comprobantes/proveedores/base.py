@@ -1,17 +1,17 @@
 from abc import ABC, abstractmethod
 
-from agente_comprobantes.dominio import DocumentExtraction, DocumentType
-from agente_comprobantes.servicios.imagenes import PreparedDocument
+from agente_comprobantes.dominio import ExtraccionDocumento, TipoDocumento
+from agente_comprobantes.servicios.imagenes import DocumentoPreparado
 
 
-class VisionProvider(ABC):
+class ProveedorVision(ABC):
     """Puerto de salida para proveedores multimodales."""
 
     @abstractmethod
     def extract(
         self,
-        document: PreparedDocument,
-        expected_type: DocumentType,
-    ) -> DocumentExtraction:
+        document: DocumentoPreparado,
+        expected_type: TipoDocumento,
+    ) -> ExtraccionDocumento:
         raise NotImplementedError
 

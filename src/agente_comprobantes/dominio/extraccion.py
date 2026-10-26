@@ -7,8 +7,8 @@ from typing import Any
 
 from pydantic import Field, field_validator, model_validator
 
-from agente_comprobantes.dominio.enumeraciones import Currency, DocumentType
-from agente_comprobantes.dominio.modelo_base import DomainModel
+from agente_comprobantes.dominio.enumeraciones import Moneda, TipoDocumento
+from agente_comprobantes.dominio.modelo_base import ModeloDominio
 from agente_comprobantes.dominio.normalizacion import (
     PROVIDER_LABEL_PATTERN,
     _is_missing,
@@ -18,14 +18,14 @@ from agente_comprobantes.dominio.normalizacion import (
 )
 
 
-class DocumentExtraction(DomainModel):
+class ExtraccionDocumento(ModeloDominio):
     """Salida normalizada del proveedor de visión.
 
     Los campos ausentes son válidos: se revisan después mediante reglas según el
     tipo de documento. El modelo nunca debe completar un dato que no sea legible.
     """
 
-    document_type: DocumentType
+    document_type: TipoDocumento
     provider: str | None = None
     provider_tax_id: str | None = None
     concept: str | None = None
@@ -33,7 +33,7 @@ class DocumentExtraction(DomainModel):
     document_date: date | None = None
     total_amount_raw: str | None = None
     total_amount: Decimal | None = None
-    currency: Currency | None = None
+    currency: Moneda | None = None
     operation_number: str | None = None
     payment_entity: str | None = None
     quotation_reference: str | None = None
@@ -80,8 +80,8 @@ class DocumentExtraction(DomainModel):
 
     @field_validator("document_type", mode="before")
     @classmethod
-    def normalize_document_type(cls, value: Any) -> DocumentType:
-        if isinstance(value, DocumentType):
+    def normalize_document_type(cls, value: Any) -> TipoDocumento:
+        if isinstance(value, TipoDocumento):
             return value
         text = str(value or "").strip().upper().replace(" ", "_").replace("-", "_")
         text = "".join(
@@ -90,28 +90,28 @@ class DocumentExtraction(DomainModel):
             if not unicodedata.combining(character)
         )
         aliases = {
-            "QUOTATION": DocumentType.QUOTATION,
-            "PRESUPUESTO": DocumentType.QUOTATION,
-            "FACTURA_ELECTRONICA": DocumentType.INVOICE,
-            "INVOICE": DocumentType.INVOICE,
-            "RECIBO": DocumentType.RECEIPT,
-            "TRANSFERENCIA": DocumentType.BANK_TRANSFER,
-            "TRANSFERENCIA_BCP": DocumentType.BANK_TRANSFER,
-            "COMPROBANTE_DE_PAGO": DocumentType.PAYMENT_RECEIPT,
+            "QUOTATION": TipoDocumento.QUOTATION,
+            "PRESUPUESTO": TipoDocumento.QUOTATION,
+            "FACTURA_ELECTRONICA": TipoDocumento.INVOICE,
+            "INVOICE": TipoDocumento.INVOICE,
+            "RECIBO": TipoDocumento.RECEIPT,
+            "TRANSFERENCIA": TipoDocumento.BANK_TRANSFER,
+            "TRANSFERENCIA_BCP": TipoDocumento.BANK_TRANSFER,
+            "COMPROBANTE_DE_PAGO": TipoDocumento.PAYMENT_RECEIPT,
         }
         if text in aliases:
             return aliases[text]
         try:
-            return DocumentType(text)
+            return TipoDocumento(text)
         except ValueError:
-            return DocumentType.UNKNOWN
+            return TipoDocumento.UNKNOWN
 
     @field_validator("currency", mode="before")
     @classmethod
-    def normalize_currency(cls, value: Any) -> Currency | None:
+    def normalize_currency(cls, value: Any) -> Moneda | None:
         if _is_missing(value):
             return None
-        if isinstance(value, Currency):
+        if isinstance(value, Moneda):
             return value
 
         text = str(value).strip().upper()
@@ -126,30 +126,30 @@ class DocumentExtraction(DomainModel):
             or "SOL" in normalized
             or normalized.startswith("S/")
         ):
-            return Currency.PEN
+            return Moneda.PEN
 
         if (
             "USD" in normalized
             or "DOLAR" in normalized
             or "US$" in normalized
         ):
-            return Currency.USD
+            return Moneda.USD
 
         if (
             "EUR" in normalized
             or "EURO" in normalized
             or "€" in normalized
         ):
-            return Currency.EUR
+            return Moneda.EUR
 
         if normalized in {
             "OTRA",
             "OTHER",
             "DESCONOCIDA",
         }:
-            return Currency.OTHER
+            return Moneda.OTHER
 
-        return Currency.OTHER
+        return Moneda.OTHER
 
     @field_validator("provider", mode="before")
     @classmethod

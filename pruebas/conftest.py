@@ -3,12 +3,12 @@ from pathlib import Path
 import pytest
 from PIL import Image, ImageDraw
 
-from agente_comprobantes.configuracion import Settings
+from agente_comprobantes.configuracion import Configuracion
 
 
 @pytest.fixture
-def settings(tmp_path: Path) -> Settings:
-    return Settings(
+def settings(tmp_path: Path) -> Configuracion:
+    return Configuracion(
         workbook_path=tmp_path / "registros.xlsx",
         min_extraction_confidence=0.75,
         supplier_similarity_threshold=0.82,

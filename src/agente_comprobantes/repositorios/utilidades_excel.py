@@ -12,17 +12,17 @@ from openpyxl.styles import Alignment, Font, PatternFill
 from openpyxl.utils import get_column_letter
 
 from agente_comprobantes.dominio import (
-    Currency,
-    DocumentType,
-    InvoiceRecord,
-    PaymentLinkStatus,
-    PaymentRecord,
-    PaymentStatus,
-    QuotationRecord,
-    QuotationStatus,
-    VerificationStatus,
+    Moneda,
+    TipoDocumento,
+    RegistroFactura,
+    EstadoVinculacionPago,
+    RegistroPago,
+    EstadoPago,
+    RegistroCotizacion,
+    EstadoCotizacion,
+    EstadoVerificacion,
 )
-from agente_comprobantes.excepciones import RepositoryError
+from agente_comprobantes.excepciones import ErrorRepositorio
 from agente_comprobantes.repositorios.esquemas_excel import ILLEGAL_EXCEL_CHARACTER_PATTERN
 
 
@@ -33,7 +33,7 @@ class UtilidadesExcel:
         workbook = load_workbook(self._path, data_only=True, read_only=True)
         try:
             if sheet_name not in workbook.sheetnames:
-                raise RepositoryError(f"No existe la hoja {sheet_name}.")
+                raise ErrorRepositorio(f"No existe la hoja {sheet_name}.")
             sheet = workbook[sheet_name]
             rows = sheet.iter_rows(values_only=True)
             headers = next(rows, None)
@@ -69,7 +69,7 @@ class UtilidadesExcel:
             return False
 
         if actual != expected[: len(actual)]:
-            raise RepositoryError(
+            raise ErrorRepositorio(
                 f"La hoja {sheet.title} existe, pero sus columnas "
                 "no coinciden con el contrato."
             )
@@ -142,7 +142,7 @@ class UtilidadesExcel:
         return value
 
     @staticmethod
-    def _update_quotation_status(sheet: Any, code: str, status: QuotationStatus) -> None:
+    def _update_quotation_status(sheet: Any, code: str, status: EstadoCotizacion) -> None:
         headers = {cell.value: cell.column for cell in sheet[1]}
         code_col = headers["Cód. Cotización"]
         status_col = headers["Estado"]
@@ -156,7 +156,7 @@ class UtilidadesExcel:
     def _update_invoice_payment_status(
         sheet: Any,
         invoice_id: str,
-        status: PaymentStatus,
+        status: EstadoPago,
     ) -> None:
         headers = {cell.value: cell.column for cell in sheet[1]}
         id_col = headers["ID Factura"]
@@ -172,7 +172,7 @@ class UtilidadesExcel:
         sheet: Any,
         quotation_code: str,
         invoice_number: str | None,
-        status: PaymentStatus,
+        status: EstadoPago,
     ) -> None:
         headers = {cell.value: cell.column for cell in sheet[1]}
         quotation_col = headers["Cód. Cotización"]
@@ -204,11 +204,11 @@ class UtilidadesExcel:
             workbook.close()
             if temporary_path and temporary_path.exists():
                 temporary_path.unlink()
-            raise RepositoryError(f"No se pudo guardar el Excel: {self._path}") from exc
+            raise ErrorRepositorio(f"No se pudo guardar el Excel: {self._path}") from exc
 
     @staticmethod
-    def _quotation_from_row(row: dict[str, object]) -> QuotationRecord:
-        return QuotationRecord(
+    def _quotation_from_row(row: dict[str, object]) -> RegistroCotizacion:
+        return RegistroCotizacion(
             quotation_code=str(row["Cód. Cotización"]),
             provider=UtilidadesExcel._optional_str(row["Proveedor"]),
             provider_tax_id=UtilidadesExcel._optional_str(row["RUC Proveedor"]),
@@ -216,8 +216,8 @@ class UtilidadesExcel:
             quoted_amount=row["Monto Cotizado"],
             currency=UtilidadesExcel._optional_currency(row["Moneda"]),
             quotation_date=row["Fecha Cotización"],
-            status=QuotationStatus(str(row["Estado"])),
-            verification_status=VerificationStatus(str(row["Estado Verificación"])),
+            status=EstadoCotizacion(str(row["Estado"])),
+            verification_status=EstadoVerificacion(str(row["Estado Verificación"])),
             source_hash=str(row["Hash Documento"]),
             source_files=UtilidadesExcel._split(row["Archivos Origen"]),
             uncertain_fields=UtilidadesExcel._split(row["Campos Inciertos"]),
@@ -226,8 +226,8 @@ class UtilidadesExcel:
         )
 
     @staticmethod
-    def _invoice_from_row(row: dict[str, object]) -> InvoiceRecord:
-        return InvoiceRecord(
+    def _invoice_from_row(row: dict[str, object]) -> RegistroFactura:
+        return RegistroFactura(
             invoice_id=str(row["ID Factura"]),
             quotation_code=str(row["Cód. Cotización"]),
             provider=UtilidadesExcel._optional_str(row["Proveedor"]),
@@ -237,8 +237,8 @@ class UtilidadesExcel:
             invoiced_amount=row["Monto Facturado"],
             currency=UtilidadesExcel._optional_currency(row["Moneda"]),
             invoice_date=row["Fecha Factura"],
-            verification_status=VerificationStatus(str(row["Estado Verificación"])),
-            payment_status=PaymentStatus(str(row["Estado de Pago"])),
+            verification_status=EstadoVerificacion(str(row["Estado Verificación"])),
+            payment_status=EstadoPago(str(row["Estado de Pago"])),
             source_hash=str(row["Hash Documento"]),
             source_files=UtilidadesExcel._split(row["Archivos Origen"]),
             uncertain_fields=UtilidadesExcel._split(row["Campos Inciertos"]),
@@ -250,14 +250,14 @@ class UtilidadesExcel:
     @staticmethod
     def _payment_from_row(
         row: dict[str, object],
-    ) -> PaymentRecord:
-        return PaymentRecord(
+    ) -> RegistroPago:
+        return RegistroPago(
             payment_id=str(row["ID Pago"]),
             quotation_code=str(row["Cód. Cotización"]),
             invoice_id=UtilidadesExcel._optional_str(
                 row["ID Factura"]
             ),
-            payment_type=DocumentType(
+            payment_type=TipoDocumento(
                 str(row["Tipo de Pago"])
             ),
             payment_entity=UtilidadesExcel._optional_str(
@@ -271,10 +271,10 @@ class UtilidadesExcel:
                 row["Moneda"]
             ),
             payment_date=row["Fecha Pago"],
-            verification_status=VerificationStatus(
+            verification_status=EstadoVerificacion(
                 str(row["Estado Verificación"])
             ),
-            reconciliation_status=PaymentLinkStatus(
+            reconciliation_status=EstadoVinculacionPago(
                 str(row["Estado Conciliación"])
             ),
             source_hash=str(row["Hash Documento"]),
@@ -297,12 +297,12 @@ class UtilidadesExcel:
         return None if value in (None, "") else str(value)
 
     @staticmethod
-    def _optional_currency(value: object) -> Currency | None:
-        return None if value in (None, "") else Currency(str(value))
+    def _optional_currency(value: object) -> Moneda | None:
+        return None if value in (None, "") else Moneda(str(value))
 
     @staticmethod
-    def _optional_document_type(value: object) -> DocumentType | None:
-        return None if value in (None, "") else DocumentType(str(value))
+    def _optional_document_type(value: object) -> TipoDocumento | None:
+        return None if value in (None, "") else TipoDocumento(str(value))
 
     @staticmethod
     def _split(value: object) -> list[str]:

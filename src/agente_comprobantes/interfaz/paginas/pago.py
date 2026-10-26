@@ -5,12 +5,12 @@ from pathlib import Path
 import streamlit as st
 
 from agente_comprobantes.dominio import (
-    DocumentExtraction,
-    DocumentType,
-    InvoiceRecord,
-    QuotationRecord,
+    ExtraccionDocumento,
+    TipoDocumento,
+    RegistroFactura,
+    RegistroCotizacion,
 )
-from agente_comprobantes.excepciones import InvoiceAgentError
+from agente_comprobantes.excepciones import ErrorAgenteComprobantes
 from agente_comprobantes.interfaz.cargas import save_uploaded_files
 from agente_comprobantes.interfaz.componentes.editor_extraccion import (
     render_extraction_editor,
@@ -38,7 +38,7 @@ def _clear_preview() -> None:
 
 
 def _quotation_label(
-    quotation: QuotationRecord,
+    quotation: RegistroCotizacion,
 ) -> str:
     provider = quotation.provider or "Proveedor no identificado"
     amount = (
@@ -56,7 +56,7 @@ def _quotation_label(
 
 
 def _invoice_label(
-    invoice: InvoiceRecord,
+    invoice: RegistroFactura,
 ) -> str:
     number = invoice.invoice_number or "Sin número"
     amount = (
@@ -108,7 +108,7 @@ def render_payment() -> None:
     preview = st.session_state.get(_PREVIEW_KEY)
     has_preview = isinstance(
         preview,
-        DocumentExtraction,
+        ExtraccionDocumento,
     )
 
     quotation_by_code = {
@@ -221,12 +221,12 @@ def render_payment() -> None:
                 ):
                     extraction = (
                         context.agent.preview_extraction(
-                            DocumentType.PAYMENT_RECEIPT,
+                            TipoDocumento.PAYMENT_RECEIPT,
                             image_paths,
                         )
                     )
             except (
-                InvoiceAgentError,
+                ErrorAgenteComprobantes,
                 OSError,
                 ValueError,
             ) as exc:
@@ -312,7 +312,7 @@ def render_payment() -> None:
                 confirmed_extraction=confirmed_extraction,
             )
     except (
-        InvoiceAgentError,
+        ErrorAgenteComprobantes,
         OSError,
         ValueError,
     ) as exc:

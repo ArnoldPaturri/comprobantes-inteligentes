@@ -1,26 +1,26 @@
-class InvoiceAgentError(Exception):
+class ErrorAgenteComprobantes(Exception):
     """Error base controlado por la aplicación."""
 
 
-class ImageValidationError(InvoiceAgentError):
+class ErrorValidacionImagen(ErrorAgenteComprobantes):
     pass
 
 
-class ExtractionError(InvoiceAgentError):
+class ErrorExtraccion(ErrorAgenteComprobantes):
     pass
 
 
-class RepositoryError(InvoiceAgentError):
+class ErrorRepositorio(ErrorAgenteComprobantes):
     pass
 
 
-class RecordNotFoundError(RepositoryError):
+class ErrorRegistroNoEncontrado(ErrorRepositorio):
     pass
 
 
-class InvalidRecordStateError(InvoiceAgentError):
+class ErrorEstadoRegistro(ErrorAgenteComprobantes):
     pass
 
 
-class DuplicateCodeError(RepositoryError):
+class ErrorCodigoDuplicado(ErrorRepositorio):
     pass

@@ -3,15 +3,15 @@ from __future__ import annotations
 from uuid import uuid4
 
 from agente_comprobantes.dominio import (
-    DocumentExtraction,
-    DocumentType,
-    PaymentLinkResult,
-    PaymentLinkStatus,
-    PaymentRecord,
-    RegistrationResult,
-    VerificationStatus,
+    ExtraccionDocumento,
+    TipoDocumento,
+    ResultadoVinculacionPago,
+    EstadoVinculacionPago,
+    RegistroPago,
+    ResultadoRegistro,
+    EstadoVerificacion,
 )
-from agente_comprobantes.excepciones import InvalidRecordStateError, RecordNotFoundError
+from agente_comprobantes.excepciones import ErrorEstadoRegistro, ErrorRegistroNoEncontrado
 from agente_comprobantes.servicios.estados import issue_messages, resolve_verification_status
 
 
@@ -22,13 +22,13 @@ class OperacionesPagos:
         image_paths: list[str],
         invoice_id: str | None = None,
         *,
-        confirmed_extraction: DocumentExtraction | None = None,
-    ) -> RegistrationResult:
+        confirmed_extraction: ExtraccionDocumento | None = None,
+    ) -> ResultadoRegistro:
         self._repository.initialize()
 
         quotation = self._repository.get_quotation(quotation_code)
         if quotation is None:
-            raise RecordNotFoundError(
+            raise ErrorRegistroNoEncontrado(
                 f"No existe la cotización "
                 f"{quotation_code.strip().upper()}. "
                 "Regístrala antes de procesar el pago."
@@ -40,21 +40,21 @@ class OperacionesPagos:
             invoice = self._repository.get_invoice(invoice_id)
 
             if invoice is None:
-                raise RecordNotFoundError(
+                raise ErrorRegistroNoEncontrado(
                     f"No existe la factura {invoice_id.strip().upper()}."
                 )
 
             if invoice.quotation_code != quotation.quotation_code:
-                raise InvalidRecordStateError(
+                raise ErrorEstadoRegistro(
                     f"La factura {invoice.invoice_id} no pertenece a "
                     f"la cotización {quotation.quotation_code}."
                 )
 
             if invoice.verification_status in {
-                VerificationStatus.POSSIBLE_DUPLICATE,
-                VerificationStatus.ERROR,
+                EstadoVerificacion.POSSIBLE_DUPLICATE,
+                EstadoVerificacion.ERROR,
             }:
-                raise InvalidRecordStateError(
+                raise ErrorEstadoRegistro(
                     f"La factura {invoice.invoice_id} tiene estado "
                     f"{invoice.verification_status.value} y no puede "
                     "recibir pagos."
@@ -66,7 +66,7 @@ class OperacionesPagos:
             if confirmed_extraction is not None
             else self._provider.extract(
                 prepared,
-                DocumentType.PAYMENT_RECEIPT,
+                TipoDocumento.PAYMENT_RECEIPT,
             )
         )
         validation = self._validator.validate_payment(extraction)
@@ -102,7 +102,7 @@ class OperacionesPagos:
             )
 
             if (
-                status != VerificationStatus.VERIFIED
+                status != EstadoVerificacion.VERIFIED
                 and payment_reconciliation.applied
             ):
                 payment_reconciliation = (
@@ -113,9 +113,9 @@ class OperacionesPagos:
                 )
 
             reconciliation_status = (
-                PaymentLinkStatus.RECONCILED
+                EstadoVinculacionPago.RECONCILED
                 if payment_reconciliation.applied
-                else PaymentLinkStatus.REVIEW
+                else EstadoVinculacionPago.REVIEW
             )
         else:
             status = resolve_verification_status(
@@ -124,9 +124,9 @@ class OperacionesPagos:
             )
 
             reconciliation_status = (
-                PaymentLinkStatus.PENDING_INVOICE
-                if status == VerificationStatus.VERIFIED
-                else PaymentLinkStatus.REVIEW
+                EstadoVinculacionPago.PENDING_INVOICE
+                if status == EstadoVerificacion.VERIFIED
+                else EstadoVinculacionPago.REVIEW
             )
 
         observations = [
@@ -162,7 +162,7 @@ class OperacionesPagos:
 
         payment_id = f"PAG-{uuid4().hex[:10].upper()}"
 
-        record = PaymentRecord(
+        record = RegistroPago(
             payment_id=payment_id,
             quotation_code=quotation.quotation_code,
             invoice_id=invoice.invoice_id if invoice else None,
@@ -189,7 +189,7 @@ class OperacionesPagos:
             payment_reconciliation,
         )
 
-        return RegistrationResult(
+        return ResultadoRegistro(
             document_id=payment_id,
             document_type=extraction.document_type,
             verification_status=status,
@@ -203,28 +203,28 @@ class OperacionesPagos:
         self,
         payment_id: str,
         invoice_id: str,
-    ) -> PaymentLinkResult:
+    ) -> ResultadoVinculacionPago:
         self._repository.initialize()
 
         payment = self._repository.get_payment(payment_id)
         if payment is None:
-            raise RecordNotFoundError(
+            raise ErrorRegistroNoEncontrado(
                 f"No existe el pago "
                 f"{payment_id.strip().upper()}."
             )
 
         invoice = self._repository.get_invoice(invoice_id)
         if invoice is None:
-            raise RecordNotFoundError(
+            raise ErrorRegistroNoEncontrado(
                 f"No existe la factura "
                 f"{invoice_id.strip().upper()}."
             )
 
         if (
             payment.verification_status
-            != VerificationStatus.VERIFIED
+            != EstadoVerificacion.VERIFIED
         ):
-            raise InvalidRecordStateError(
+            raise ErrorEstadoRegistro(
                 f"El pago {payment.payment_id} tiene estado "
                 f"{payment.verification_status.value} "
                 "y no puede conciliarse."
@@ -232,32 +232,32 @@ class OperacionesPagos:
 
         if (
             payment.reconciliation_status
-            != PaymentLinkStatus.PENDING_INVOICE
+            != EstadoVinculacionPago.PENDING_INVOICE
         ):
-            raise InvalidRecordStateError(
+            raise ErrorEstadoRegistro(
                 f"El pago {payment.payment_id} tiene estado "
                 f"de conciliación "
                 f"{payment.reconciliation_status.value}."
             )
 
         if invoice.verification_status in {
-            VerificationStatus.POSSIBLE_DUPLICATE,
-            VerificationStatus.ERROR,
+            EstadoVerificacion.POSSIBLE_DUPLICATE,
+            EstadoVerificacion.ERROR,
         }:
-            raise InvalidRecordStateError(
+            raise ErrorEstadoRegistro(
                 f"La factura {invoice.invoice_id} tiene estado "
                 f"{invoice.verification_status.value} "
                 "y no puede recibir pagos."
             )
 
         if payment.quotation_code != invoice.quotation_code:
-            raise InvalidRecordStateError(
+            raise ErrorEstadoRegistro(
                 f"El pago {payment.payment_id} y la factura "
                 f"{invoice.invoice_id} pertenecen a "
                 "cotizaciones diferentes."
             )
 
-        extraction = DocumentExtraction(
+        extraction = ExtraccionDocumento(
             document_type=payment.payment_type,
             document_date=payment.payment_date,
             total_amount=payment.paid_amount,
@@ -290,9 +290,9 @@ class OperacionesPagos:
             )
 
         reconciliation_status = (
-            PaymentLinkStatus.RECONCILED
+            EstadoVinculacionPago.RECONCILED
             if applied
-            else PaymentLinkStatus.REVIEW
+            else EstadoVinculacionPago.REVIEW
         )
 
         observations = [
@@ -332,7 +332,7 @@ class OperacionesPagos:
             reconciliation,
         )
 
-        return PaymentLinkResult(
+        return ResultadoVinculacionPago(
             payment_id=payment.payment_id,
             invoice_id=invoice.invoice_id,
             quotation_code=payment.quotation_code,

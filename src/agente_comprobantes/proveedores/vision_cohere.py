@@ -8,27 +8,27 @@ from typing import Any
 
 from pydantic import ValidationError
 
-from agente_comprobantes.configuracion import Settings
-from agente_comprobantes.dominio import DocumentExtraction, DocumentType
-from agente_comprobantes.excepciones import ExtractionError
+from agente_comprobantes.configuracion import Configuracion
+from agente_comprobantes.dominio import ExtraccionDocumento, TipoDocumento
+from agente_comprobantes.excepciones import ErrorExtraccion
 from agente_comprobantes.prompts import EXTRACTION_SCHEMA, build_extraction_prompt
-from agente_comprobantes.proveedores.base import VisionProvider
+from agente_comprobantes.proveedores.base import ProveedorVision
 from agente_comprobantes.proveedores.parseo import parse_json_object
-from agente_comprobantes.servicios.imagenes import PreparedDocument
+from agente_comprobantes.servicios.imagenes import DocumentoPreparado
 
 
-class CohereVisionProvider(VisionProvider):
+class ProveedorVisionCohere(ProveedorVision):
     """Adaptador para Command A Vision mediante Chat API V2."""
 
     RETRYABLE_STATUS_CODES = {408, 409, 429, 500, 502, 503, 504}
 
-    def __init__(self, settings: Settings, client: Any | None = None) -> None:
+    def __init__(self, settings: Configuracion, client: Any | None = None) -> None:
         self._settings = settings
         if client is None:
             try:
                 import cohere
             except ImportError as exc:  # pragma: no cover - depende del entorno
-                raise ExtractionError(
+                raise ErrorExtraccion(
                     "No está instalado el SDK de Cohere. Ejecuta pip install -r requirements.txt."
                 ) from exc
             client = cohere.ClientV2(
@@ -39,9 +39,9 @@ class CohereVisionProvider(VisionProvider):
 
     def extract(
         self,
-        document: PreparedDocument,
-        expected_type: DocumentType,
-    ) -> DocumentExtraction:
+        document: DocumentoPreparado,
+        expected_type: TipoDocumento,
+    ) -> ExtraccionDocumento:
         content: list[dict[str, Any]] = [
             {
                 "type": "text",
@@ -72,17 +72,17 @@ class CohereVisionProvider(VisionProvider):
                 )
                 raw_text = self._response_text(response)
                 payload = parse_json_object(raw_text)
-                return DocumentExtraction.model_validate(payload)
+                return ExtraccionDocumento.model_validate(payload)
             except json.JSONDecodeError as exc:
                 diagnostic_path = self._save_diagnostic(raw_text, exc)
-                raise ExtractionError(
+                raise ErrorExtraccion(
                     "Cohere devolvió texto que no es un JSON válido. "
                     f"Diagnóstico guardado en: {diagnostic_path}"
                 ) from exc
             except ValidationError as exc:
                 diagnostic_path = self._save_diagnostic(raw_text, exc)
                 details = self._validation_summary(exc)
-                raise ExtractionError(
+                raise ErrorExtraccion(
                     "El JSON de Cohere contiene valores con formato inesperado: "
                     f"{details}. Diagnóstico guardado en: {diagnostic_path}"
                 ) from exc
@@ -93,7 +93,7 @@ class CohereVisionProvider(VisionProvider):
                 time.sleep(min(2 ** (attempt - 1), 8))
 
         message = self._safe_error_message(last_error)
-        raise ExtractionError(
+        raise ErrorExtraccion(
             f"No se pudo extraer el documento con Cohere: {message}"
         ) from last_error
 
@@ -109,7 +109,7 @@ class CohereVisionProvider(VisionProvider):
                 raise ValueError("bloque sin texto")
             return str(text)
         except (AttributeError, KeyError, TypeError, ValueError) as exc:
-            raise ExtractionError("Respuesta vacía o inesperada del proveedor.") from exc
+            raise ErrorExtraccion("Respuesta vacía o inesperada del proveedor.") from exc
 
     @staticmethod
     def _save_diagnostic(self, raw_text: str | None, exc: Exception) -> Path:

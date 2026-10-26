@@ -9,8 +9,8 @@ from pathlib import Path
 
 from PIL import Image, ImageOps, UnidentifiedImageError
 
-from agente_comprobantes.configuracion import Settings
-from agente_comprobantes.excepciones import ImageValidationError
+from agente_comprobantes.configuracion import Configuracion
+from agente_comprobantes.excepciones import ErrorValidacionImagen
 
 SUPPORTED_FORMATS = {
     "JPEG": "image/jpeg",
@@ -22,7 +22,7 @@ SUPPORTED_FORMATS = {
 }
 
 @dataclass(frozen=True, slots=True)
-class PreparedImage:
+class ImagenPreparada:
     source_name: str
     data_url: str
     original_sha256: str
@@ -31,8 +31,8 @@ class PreparedImage:
 
 
 @dataclass(frozen=True, slots=True)
-class PreparedDocument:
-    images: tuple[PreparedImage, ...]
+class DocumentoPreparado:
+    images: tuple[ImagenPreparada, ...]
     source_hash: str
 
     @property
@@ -44,16 +44,16 @@ class PreparedDocument:
         return sum(image.payload_bytes for image in self.images)
 
 
-class ImageService:
-    def __init__(self, settings: Settings) -> None:
+class ServicioImagenes:
+    def __init__(self, settings: Configuracion) -> None:
         self._settings = settings
 
-    def prepare(self, paths: Iterable[str | Path]) -> PreparedDocument:
+    def prepare(self, paths: Iterable[str | Path]) -> DocumentoPreparado:
         image_paths = [Path(path).expanduser().resolve() for path in paths]
         if not image_paths:
-            raise ImageValidationError("Debes proporcionar al menos una imagen.")
+            raise ErrorValidacionImagen("Debes proporcionar al menos una imagen.")
         if len(image_paths) > self._settings.max_images_per_document:
-            raise ImageValidationError(
+            raise ErrorValidacionImagen(
                 f"Máximo {self._settings.max_images_per_document} imágenes por documento."
             )
 
@@ -61,7 +61,7 @@ class ImageService:
         max_bytes = self._settings.max_payload_mb * 1024 * 1024
         total_bytes = sum(image.payload_bytes for image in prepared)
         if total_bytes > max_bytes:
-            raise ImageValidationError(
+            raise ErrorValidacionImagen(
                 f"Las imágenes procesadas pesan {total_bytes / 1024 / 1024:.2f} MB; "
                 f"el máximo es {self._settings.max_payload_mb} MB."
             )
@@ -69,7 +69,7 @@ class ImageService:
         combined = hashlib.sha256()
         for image in prepared:
             combined.update(image.content_sha256.encode("ascii"))
-        return PreparedDocument(images=prepared, source_hash=combined.hexdigest())
+        return DocumentoPreparado(images=prepared, source_hash=combined.hexdigest())
 
     
     @staticmethod
@@ -121,9 +121,9 @@ class ImageService:
         )
 
     
-    def _prepare_one(self, path: Path) -> PreparedImage:
+    def _prepare_one(self, path: Path) -> ImagenPreparada:
         if not path.is_file():
-            raise ImageValidationError(f"No existe la imagen: {path}")
+            raise ErrorValidacionImagen(f"No existe la imagen: {path}")
 
         original = path.read_bytes()
         original_hash = hashlib.sha256(original).hexdigest()
@@ -131,13 +131,13 @@ class ImageService:
             with Image.open(io.BytesIO(original)) as opened:
                 source_format = (opened.format or "").upper()
                 if source_format not in SUPPORTED_FORMATS:
-                    raise ImageValidationError(
+                    raise ErrorValidacionImagen(
                         f"Formato no soportado en {path.name}: {source_format or 'desconocido'}."
                     )
                 
                 frame_count = getattr(opened, "n_frames", 1)
                 if frame_count > 1:
-                    raise ImageValidationError(
+                    raise ErrorValidacionImagen(
                         f"{path.name} contiene {frame_count} cuadros o páginas. "
                         "Por ahora debes separarlos en archivos individuales."
                     )
@@ -173,12 +173,12 @@ class ImageService:
             Image.DecompressionBombError,
         ) as exc:
         
-            raise ImageValidationError(f"Imagen inválida o dañada: {path.name}") from exc
+            raise ErrorValidacionImagen(f"Imagen inválida o dañada: {path.name}") from exc
 
         payload = output.getvalue()
         content_hash = hashlib.sha256(payload).hexdigest()
         encoded = base64.b64encode(payload).decode("ascii")
-        return PreparedImage(
+        return ImagenPreparada(
             source_name=path.name,
             data_url=f"data:{output_mime_type};base64,{encoded}",
             original_sha256=original_hash,

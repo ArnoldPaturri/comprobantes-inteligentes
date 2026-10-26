@@ -3,17 +3,17 @@ from __future__ import annotations
 from openpyxl import load_workbook
 
 from agente_comprobantes.dominio import (
-    InvoiceRecord,
-    PaymentLinkStatus,
-    PaymentReconciliationResult,
-    PaymentRecord,
+    RegistroFactura,
+    EstadoVinculacionPago,
+    ResultadoConciliacionPago,
+    RegistroPago,
 )
-from agente_comprobantes.excepciones import RepositoryError
+from agente_comprobantes.excepciones import ErrorRepositorio
 from agente_comprobantes.repositorios.esquemas_excel import PAYMENT_HEADERS
 
 
 class OperacionesPagosExcel:
-    def get_payment(self, payment_id: str) -> PaymentRecord | None:
+    def get_payment(self, payment_id: str) -> RegistroPago | None:
         normalized = payment_id.strip().upper()
 
         for row in self.read_sheet("PAGOS"):
@@ -25,9 +25,9 @@ class OperacionesPagosExcel:
     def list_pending_payments(
         self,
         quotation_code: str,
-    ) -> list[PaymentRecord]:
+    ) -> list[RegistroPago]:
         normalized = quotation_code.strip().upper()
-        pending: list[PaymentRecord] = []
+        pending: list[RegistroPago] = []
 
         for row in self.read_sheet("PAGOS"):
             row_quotation = str(
@@ -39,7 +39,7 @@ class OperacionesPagosExcel:
 
             if (
                 str(row["Estado Conciliación"] or "")
-                != PaymentLinkStatus.PENDING_INVOICE.value
+                != EstadoVinculacionPago.PENDING_INVOICE.value
             ):
                 continue
 
@@ -49,9 +49,9 @@ class OperacionesPagosExcel:
 
     def add_payment(
         self,
-        payment: PaymentRecord,
-        invoice: InvoiceRecord | None = None,
-        reconciliation: PaymentReconciliationResult | None = None,
+        payment: RegistroPago,
+        invoice: RegistroFactura | None = None,
+        reconciliation: ResultadoConciliacionPago | None = None,
     ) -> None:
         self.initialize()
         workbook = load_workbook(self._path)
@@ -98,9 +98,9 @@ class OperacionesPagosExcel:
 
     def link_payment(
         self,
-        payment: PaymentRecord,
-        invoice: InvoiceRecord,
-        reconciliation: PaymentReconciliationResult,
+        payment: RegistroPago,
+        invoice: RegistroFactura,
+        reconciliation: ResultadoConciliacionPago,
     ) -> None:
         self.initialize()
         workbook = load_workbook(self._path)
@@ -141,7 +141,7 @@ class OperacionesPagosExcel:
             break
         else:
             workbook.close()
-            raise RepositoryError(
+            raise ErrorRepositorio(
                 f"No existe el pago {payment.payment_id}."
             )
 

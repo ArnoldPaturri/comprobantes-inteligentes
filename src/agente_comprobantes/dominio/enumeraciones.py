@@ -1,7 +1,7 @@
 from enum import StrEnum
 
 
-class DocumentType(StrEnum):
+class TipoDocumento(StrEnum):
     QUOTATION = "COTIZACION"
     INVOICE = "FACTURA"
     RECEIPT = "BOLETA"
@@ -18,43 +18,43 @@ class DocumentType(StrEnum):
     UNKNOWN = "DESCONOCIDO"
 
 
-class Currency(StrEnum):
+class Moneda(StrEnum):
     PEN = "PEN"
     USD = "USD"
     EUR = "EUR"
     OTHER = "OTRA"
 
 
-class Severity(StrEnum):
+class Severidad(StrEnum):
     WARNING = "ADVERTENCIA"
     ERROR = "ERROR"
 
 
-class VerificationStatus(StrEnum):
+class EstadoVerificacion(StrEnum):
     VERIFIED = "VERIFICADO"
     REVIEW = "REVISAR"
     POSSIBLE_DUPLICATE = "POSIBLE DUPLICADO"
     ERROR = "ERROR"
 
 
-class QuotationStatus(StrEnum):
+class EstadoCotizacion(StrEnum):
     WAITING_INVOICE = "ESPERANDO FACTURA"
     INVOICED = "FACTURADA"
     PARTIALLY_INVOICED = "FACTURADA PARCIALMENTE"
 
 
-class PaymentStatus(StrEnum):
+class EstadoPago(StrEnum):
     PENDING = "PENDIENTE"
     PAID = "PAGADO"
     PARTIALLY_PAID = "PAGO PARCIAL"
     REVIEW = "REVISAR"
 
-class PaymentLinkStatus(StrEnum):
+class EstadoVinculacionPago(StrEnum):
     PENDING_INVOICE = "PENDIENTE DE FACTURA"
     RECONCILED = "CONCILIADO"
     REVIEW = "REVISAR"
     
-class Diagnosis(StrEnum):
+class Diagnostico(StrEnum):
     BELOW = "FACTURADO POR DEBAJO DE LO COTIZADO"
     MATCH = "COINCIDE CON COTIZACION"
     ABOVE = "FACTURADO POR ENCIMA DE LO COTIZADO"

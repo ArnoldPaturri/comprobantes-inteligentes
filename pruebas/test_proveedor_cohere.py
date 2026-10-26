@@ -1,9 +1,9 @@
 import json
 from types import SimpleNamespace
 
-from agente_comprobantes.dominio import DocumentType
-from agente_comprobantes.proveedores.vision_cohere import CohereVisionProvider
-from agente_comprobantes.servicios.imagenes import ImageService
+from agente_comprobantes.dominio import TipoDocumento
+from agente_comprobantes.proveedores.vision_cohere import ProveedorVisionCohere
+from agente_comprobantes.servicios.imagenes import ServicioImagenes
 
 
 class FakeCohereClient:
@@ -34,12 +34,12 @@ class FakeCohereClient:
 
 def test_provider_sends_schema_and_all_images(settings, make_image) -> None:
     client = FakeCohereClient()
-    provider = CohereVisionProvider(settings, client=client)
-    prepared = ImageService(settings).prepare(
+    provider = ProveedorVisionCohere(settings, client=client)
+    prepared = ServicioImagenes(settings).prepare(
         [make_image("one.png"), make_image("two.png", color="gray")]
     )
 
-    result = provider.extract(prepared, DocumentType.INVOICE)
+    result = provider.extract(prepared, TipoDocumento.INVOICE)
 
     assert result.document_number == "F001-1"
     assert client.kwargs["model"] == "command-a-vision-07-2025"

@@ -4,7 +4,7 @@ from pathlib import Path
 
 from openpyxl import Workbook, load_workbook
 
-from agente_comprobantes.repositorios.base import DocumentRepository
+from agente_comprobantes.repositorios.base import RepositorioDocumentos
 from agente_comprobantes.repositorios.cotizaciones_excel import OperacionesCotizacionesExcel
 from agente_comprobantes.repositorios.esquemas_excel import SHEETS
 from agente_comprobantes.repositorios.facturas_excel import OperacionesFacturasExcel
@@ -13,13 +13,13 @@ from agente_comprobantes.repositorios.referencias_excel import ReferenciasExcel
 from agente_comprobantes.repositorios.utilidades_excel import UtilidadesExcel
 
 
-class ExcelRepository(
+class RepositorioExcel(
     OperacionesCotizacionesExcel,
     OperacionesFacturasExcel,
     OperacionesPagosExcel,
     ReferenciasExcel,
     UtilidadesExcel,
-    DocumentRepository,
+    RepositorioDocumentos,
 ):
     """Repositorio Excel compuesto por operaciones y utilidades especializadas."""
 

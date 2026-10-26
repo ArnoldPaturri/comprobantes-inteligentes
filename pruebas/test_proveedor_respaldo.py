@@ -1,14 +1,14 @@
-from agente_comprobantes.dominio import DocumentExtraction, DocumentType
-from agente_comprobantes.excepciones import ExtractionError
-from agente_comprobantes.proveedores.base import VisionProvider
-from agente_comprobantes.proveedores.respaldo import FallbackVisionProvider
-from agente_comprobantes.servicios.imagenes import PreparedDocument
+from agente_comprobantes.dominio import ExtraccionDocumento, TipoDocumento
+from agente_comprobantes.excepciones import ErrorExtraccion
+from agente_comprobantes.proveedores.base import ProveedorVision
+from agente_comprobantes.proveedores.respaldo import ProveedorVisionRespaldo
+from agente_comprobantes.servicios.imagenes import DocumentoPreparado
 
 
-class StubProvider(VisionProvider):
+class StubProvider(ProveedorVision):
     def __init__(
         self,
-        result: DocumentExtraction | None = None,
+        result: ExtraccionDocumento | None = None,
         error: str | None = None,
     ) -> None:
         self.result = result
@@ -17,20 +17,20 @@ class StubProvider(VisionProvider):
 
     def extract(
         self,
-        document: PreparedDocument,
-        expected_type: DocumentType,
-    ) -> DocumentExtraction:
+        document: DocumentoPreparado,
+        expected_type: TipoDocumento,
+    ) -> ExtraccionDocumento:
         self.calls += 1
 
         if self.error is not None:
-            raise ExtractionError(self.error)
+            raise ErrorExtraccion(self.error)
 
         assert self.result is not None
         return self.result
 
 
-def _document() -> PreparedDocument:
-    return PreparedDocument(
+def _document() -> DocumentoPreparado:
+    return DocumentoPreparado(
         images=(),
         source_hash="a" * 64,
     )
@@ -38,13 +38,13 @@ def _document() -> PreparedDocument:
 
 def test_uses_second_provider_when_first_fails() -> None:
     first = StubProvider(error="timeout")
-    expected = DocumentExtraction(
-        document_type=DocumentType.QUOTATION,
+    expected = ExtraccionDocumento(
+        document_type=TipoDocumento.QUOTATION,
         confidence=0.95,
     )
     second = StubProvider(result=expected)
 
-    provider = FallbackVisionProvider(
+    provider = ProveedorVisionRespaldo(
         [
             ("primero", first),
             ("segundo", second),
@@ -53,7 +53,7 @@ def test_uses_second_provider_when_first_fails() -> None:
 
     result = provider.extract(
         _document(),
-        DocumentType.QUOTATION,
+        TipoDocumento.QUOTATION,
     )
 
     assert result == expected
@@ -62,14 +62,14 @@ def test_uses_second_provider_when_first_fails() -> None:
 
 
 def test_does_not_call_fallback_after_success() -> None:
-    expected = DocumentExtraction(
-        document_type=DocumentType.QUOTATION,
+    expected = ExtraccionDocumento(
+        document_type=TipoDocumento.QUOTATION,
         confidence=0.95,
     )
     first = StubProvider(result=expected)
     second = StubProvider(error="no debería ejecutarse")
 
-    provider = FallbackVisionProvider(
+    provider = ProveedorVisionRespaldo(
         [
             ("primero", first),
             ("segundo", second),
@@ -78,7 +78,7 @@ def test_does_not_call_fallback_after_success() -> None:
 
     result = provider.extract(
         _document(),
-        DocumentType.QUOTATION,
+        TipoDocumento.QUOTATION,
     )
 
     assert result == expected

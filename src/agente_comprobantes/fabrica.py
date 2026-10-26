@@ -1,43 +1,43 @@
 from agente_comprobantes.agente import AgenteComprobantes
-from agente_comprobantes.configuracion import Settings
+from agente_comprobantes.configuracion import Configuracion
 from agente_comprobantes.proveedores import (
-    CohereVisionProvider,
-    FallbackVisionProvider,
-    GroqVisionProvider,
-    VisionProvider,
+    ProveedorVisionCohere,
+    ProveedorVisionRespaldo,
+    ProveedorVisionGroq,
+    ProveedorVision,
 )
-from agente_comprobantes.repositorios import DocumentRepository, ExcelRepository
-from agente_comprobantes.servicios.conciliacion_facturas import ReconciliationService
-from agente_comprobantes.servicios.conciliacion_pagos import PaymentReconciliationService
-from agente_comprobantes.servicios.duplicados import DuplicateService
-from agente_comprobantes.servicios.imagenes import ImageService
-from agente_comprobantes.servicios.validacion import ValidationService
+from agente_comprobantes.repositorios import RepositorioDocumentos, RepositorioExcel
+from agente_comprobantes.servicios.conciliacion_facturas import ServicioConciliacionFacturas
+from agente_comprobantes.servicios.conciliacion_pagos import ServicioConciliacionPagos
+from agente_comprobantes.servicios.duplicados import ServicioDuplicados
+from agente_comprobantes.servicios.imagenes import ServicioImagenes
+from agente_comprobantes.servicios.validacion import ServicioValidacion
 
 
-def build_repository(settings: Settings) -> ExcelRepository:
-    return ExcelRepository(settings.resolved_workbook_path())
+def build_repository(settings: Configuracion) -> RepositorioExcel:
+    return RepositorioExcel(settings.resolved_workbook_path())
 
 def build_vision_provider(
-    settings: Settings,
-) -> VisionProvider:
+    settings: Configuracion,
+) -> ProveedorVision:
     selected = settings.vision_provider
 
     if selected == "groq":
-        return GroqVisionProvider(settings)
+        return ProveedorVisionGroq(settings)
 
     if selected == "cohere":
-        return CohereVisionProvider(settings)
+        return ProveedorVisionCohere(settings)
 
-    providers: list[tuple[str, VisionProvider]] = []
+    providers: list[tuple[str, ProveedorVision]] = []
 
     if settings.has_groq_api_key():
         providers.append(
-            ("Groq", GroqVisionProvider(settings))
+            ("Groq", ProveedorVisionGroq(settings))
         )
 
     if settings.has_cohere_api_key():
         providers.append(
-            ("Cohere", CohereVisionProvider(settings))
+            ("Cohere", ProveedorVisionCohere(settings))
         )
 
     if not providers:
@@ -49,19 +49,19 @@ def build_vision_provider(
     if len(providers) == 1:
         return providers[0][1]
 
-    return FallbackVisionProvider(providers)
+    return ProveedorVisionRespaldo(providers)
 
 def build_agent(
-    settings: Settings,
-    provider: VisionProvider | None = None,
-    repository: DocumentRepository | None = None,
+    settings: Configuracion,
+    provider: ProveedorVision | None = None,
+    repository: RepositorioDocumentos | None = None,
 ) -> AgenteComprobantes:
     return AgenteComprobantes(
         provider=provider or build_vision_provider(settings),
         repository=repository or build_repository(settings),
-        image_service=ImageService(settings),
-        validation_service=ValidationService(settings),
-        duplicate_service=DuplicateService(),
-        reconciliation_service=ReconciliationService(settings),
-        payment_reconciliation_service=PaymentReconciliationService(),
+        image_service=ServicioImagenes(settings),
+        validation_service=ServicioValidacion(settings),
+        duplicate_service=ServicioDuplicados(),
+        reconciliation_service=ServicioConciliacionFacturas(settings),
+        payment_reconciliation_service=ServicioConciliacionPagos(),
     )

@@ -5,21 +5,21 @@ from decimal import Decimal
 
 from pydantic import Field, field_validator
 
-from agente_comprobantes.dominio.enumeraciones import Currency, QuotationStatus, VerificationStatus
-from agente_comprobantes.dominio.modelo_base import DomainModel
+from agente_comprobantes.dominio.enumeraciones import Moneda, EstadoCotizacion, EstadoVerificacion
+from agente_comprobantes.dominio.modelo_base import ModeloDominio
 from agente_comprobantes.dominio.normalizacion import _parse_date, _parse_decimal
 
 
-class QuotationRecord(DomainModel):
+class RegistroCotizacion(ModeloDominio):
     quotation_code: str
     provider: str | None = None
     provider_tax_id: str | None = None
     concept: str | None = None
     quoted_amount: Decimal | None = None
-    currency: Currency | None = None
+    currency: Moneda | None = None
     quotation_date: date | None = None
-    status: QuotationStatus = QuotationStatus.WAITING_INVOICE
-    verification_status: VerificationStatus
+    status: EstadoCotizacion = EstadoCotizacion.WAITING_INVOICE
+    verification_status: EstadoVerificacion
     source_hash: str
     source_files: list[str]
     uncertain_fields: list[str] = Field(default_factory=list)

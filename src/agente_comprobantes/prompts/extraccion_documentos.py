@@ -1,11 +1,11 @@
-from agente_comprobantes.dominio.enumeraciones import DocumentType
+from agente_comprobantes.dominio.enumeraciones import TipoDocumento
 
 
 def _nullable(value_schema: dict) -> dict:
     return {"anyOf": [value_schema, {"type": "null"}]}
 
 
-DOCUMENT_TYPE_VALUES = [item.value for item in DocumentType]
+DOCUMENT_TYPE_VALUES = [item.value for item in TipoDocumento]
 
 EXTRACTION_SCHEMA = {
     "type": "object",
@@ -50,7 +50,7 @@ EXTRACTION_SCHEMA = {
 
 
 def build_extraction_prompt(
-    expected_type: DocumentType,
+    expected_type: TipoDocumento,
     page_count: int,
 ) -> str:
     return f"""

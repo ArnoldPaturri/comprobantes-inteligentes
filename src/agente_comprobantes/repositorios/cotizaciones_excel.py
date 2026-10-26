@@ -2,20 +2,20 @@ from __future__ import annotations
 
 from openpyxl import load_workbook
 
-from agente_comprobantes.dominio import QuotationRecord
-from agente_comprobantes.excepciones import DuplicateCodeError
+from agente_comprobantes.dominio import RegistroCotizacion
+from agente_comprobantes.excepciones import ErrorCodigoDuplicado
 from agente_comprobantes.repositorios.esquemas_excel import QUOTATION_HEADERS
 
 
 class OperacionesCotizacionesExcel:
-    def get_quotation(self, quotation_code: str) -> QuotationRecord | None:
+    def get_quotation(self, quotation_code: str) -> RegistroCotizacion | None:
         normalized = quotation_code.strip().upper()
         for row in self.read_sheet("COTIZACIONES"):
             if str(row["Cód. Cotización"]).strip().upper() == normalized:
                 return self._quotation_from_row(row)
         return None
 
-    def list_quotations(self) -> list[QuotationRecord]:
+    def list_quotations(self) -> list[RegistroCotizacion]:
         self.initialize()
 
         quotations = [
@@ -29,10 +29,10 @@ class OperacionesCotizacionesExcel:
             reverse=True,
         )
 
-    def add_quotation(self, quotation: QuotationRecord) -> None:
+    def add_quotation(self, quotation: RegistroCotizacion) -> None:
         self.initialize()
         if self.get_quotation(quotation.quotation_code):
-            raise DuplicateCodeError(
+            raise ErrorCodigoDuplicado(
                 f"Ya existe la cotización {quotation.quotation_code}; no se creó otra fila."
             )
 
