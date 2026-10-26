@@ -1,5 +1,8 @@
 from __future__ import annotations
 
+from invoice_agent.casos_uso.cotizaciones import OperacionesCotizaciones
+from invoice_agent.casos_uso.facturas import OperacionesFacturas
+from invoice_agent.casos_uso.pagos import OperacionesPagos
 from invoice_agent.domain import DocumentExtraction, DocumentType
 from invoice_agent.providers.base import VisionProvider
 from invoice_agent.repositories.base import DocumentRepository
@@ -8,9 +11,6 @@ from invoice_agent.services.image_service import ImageService
 from invoice_agent.services.payment_reconciliation_service import PaymentReconciliationService
 from invoice_agent.services.reconciliation_service import ReconciliationService
 from invoice_agent.services.validation_service import ValidationService
-from invoice_agent.casos_uso.cotizaciones import OperacionesCotizaciones
-from invoice_agent.casos_uso.facturas import OperacionesFacturas
-from invoice_agent.casos_uso.pagos import OperacionesPagos
 
 
 class ReceiptAgent(OperacionesCotizaciones, OperacionesFacturas, OperacionesPagos):

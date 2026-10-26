@@ -1,8 +1,14 @@
 from __future__ import annotations
 
-from invoice_agent.services.status_service import issue_messages
-from invoice_agent.services.status_service import resolve_verification_status
-from invoice_agent.domain import DocumentExtraction, DocumentType, QuotationRecord, QuotationStatus, RegistrationResult
+from invoice_agent.domain import (
+    DocumentExtraction,
+    DocumentType,
+    QuotationRecord,
+    QuotationStatus,
+    RegistrationResult,
+)
+from invoice_agent.services.status_service import issue_messages, resolve_verification_status
+
 
 class OperacionesCotizaciones:
     def register_quotation(

@@ -2,10 +2,12 @@ from __future__ import annotations
 
 from datetime import date
 from decimal import Decimal
+
 from pydantic import field_validator
+
 from invoice_agent.domain.enums import Currency, DocumentType
 from invoice_agent.domain.modelo_base import DomainModel
-from invoice_agent.domain.normalizacion import _parse_decimal, _parse_date
+from invoice_agent.domain.normalizacion import _parse_date, _parse_decimal
 
 
 class DuplicateMatch(DomainModel):

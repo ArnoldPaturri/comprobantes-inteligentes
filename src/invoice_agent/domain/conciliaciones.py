@@ -1,7 +1,9 @@
 from __future__ import annotations
 
 from decimal import Decimal
+
 from pydantic import Field, field_validator
+
 from invoice_agent.domain.enums import Diagnosis, PaymentStatus
 from invoice_agent.domain.modelo_base import DomainModel
 from invoice_agent.domain.normalizacion import _parse_decimal

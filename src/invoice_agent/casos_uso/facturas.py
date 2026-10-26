@@ -1,10 +1,17 @@
 from __future__ import annotations
 
 from uuid import uuid4
+
+from invoice_agent.domain import (
+    DocumentExtraction,
+    DocumentType,
+    InvoiceRecord,
+    PaymentStatus,
+    RegistrationResult,
+)
 from invoice_agent.exceptions import RecordNotFoundError
-from invoice_agent.services.status_service import issue_messages
-from invoice_agent.services.status_service import resolve_verification_status
-from invoice_agent.domain import DocumentExtraction, DocumentType, InvoiceRecord, PaymentStatus, RegistrationResult
+from invoice_agent.services.status_service import issue_messages, resolve_verification_status
+
 
 class OperacionesFacturas:
     def register_invoice(

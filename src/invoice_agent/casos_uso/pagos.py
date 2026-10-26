@@ -1,11 +1,19 @@
 from __future__ import annotations
 
 from uuid import uuid4
-from invoice_agent.exceptions import InvalidRecordStateError
-from invoice_agent.exceptions import RecordNotFoundError
-from invoice_agent.services.status_service import issue_messages
-from invoice_agent.services.status_service import resolve_verification_status
-from invoice_agent.domain import DocumentExtraction, DocumentType, PaymentLinkResult, PaymentLinkStatus, PaymentRecord, RegistrationResult, VerificationStatus
+
+from invoice_agent.domain import (
+    DocumentExtraction,
+    DocumentType,
+    PaymentLinkResult,
+    PaymentLinkStatus,
+    PaymentRecord,
+    RegistrationResult,
+    VerificationStatus,
+)
+from invoice_agent.exceptions import InvalidRecordStateError, RecordNotFoundError
+from invoice_agent.services.status_service import issue_messages, resolve_verification_status
+
 
 class OperacionesPagos:
     def register_payment(
