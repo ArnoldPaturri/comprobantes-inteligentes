@@ -4,13 +4,13 @@ from pathlib import Path
 
 from openpyxl import Workbook, load_workbook
 
-from invoice_agent.repositories.base import DocumentRepository
-from invoice_agent.repositories.cotizaciones_excel import OperacionesCotizacionesExcel
-from invoice_agent.repositories.esquemas_excel import SHEETS
-from invoice_agent.repositories.facturas_excel import OperacionesFacturasExcel
-from invoice_agent.repositories.pagos_excel import OperacionesPagosExcel
-from invoice_agent.repositories.referencias_excel import ReferenciasExcel
-from invoice_agent.repositories.utilidades_excel import UtilidadesExcel
+from agente_comprobantes.repositorios.base import DocumentRepository
+from agente_comprobantes.repositorios.cotizaciones_excel import OperacionesCotizacionesExcel
+from agente_comprobantes.repositorios.esquemas_excel import SHEETS
+from agente_comprobantes.repositorios.facturas_excel import OperacionesFacturasExcel
+from agente_comprobantes.repositorios.pagos_excel import OperacionesPagosExcel
+from agente_comprobantes.repositorios.referencias_excel import ReferenciasExcel
+from agente_comprobantes.repositorios.utilidades_excel import UtilidadesExcel
 
 
 class ExcelRepository(

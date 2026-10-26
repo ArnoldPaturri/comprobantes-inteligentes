@@ -1,4 +1,4 @@
-from invoice_agent.domain import (
+from agente_comprobantes.dominio import (
     DuplicateMatch,
     PaymentReconciliationResult,
     ReconciliationResult,

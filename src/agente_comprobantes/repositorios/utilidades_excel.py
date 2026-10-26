@@ -11,7 +11,7 @@ from openpyxl import load_workbook
 from openpyxl.styles import Alignment, Font, PatternFill
 from openpyxl.utils import get_column_letter
 
-from invoice_agent.domain import (
+from agente_comprobantes.dominio import (
     Currency,
     DocumentType,
     InvoiceRecord,
@@ -22,8 +22,8 @@ from invoice_agent.domain import (
     QuotationStatus,
     VerificationStatus,
 )
-from invoice_agent.exceptions import RepositoryError
-from invoice_agent.repositories.esquemas_excel import ILLEGAL_EXCEL_CHARACTER_PATTERN
+from agente_comprobantes.excepciones import RepositoryError
+from agente_comprobantes.repositorios.esquemas_excel import ILLEGAL_EXCEL_CHARACTER_PATTERN
 
 
 class UtilidadesExcel:

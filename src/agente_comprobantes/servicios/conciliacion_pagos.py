@@ -1,6 +1,6 @@
 from decimal import ROUND_HALF_UP, Decimal
 
-from invoice_agent.domain import (
+from agente_comprobantes.dominio import (
     DocumentExtraction,
     InvoiceRecord,
     PaymentReconciliationResult,

@@ -4,12 +4,12 @@ from datetime import timedelta
 from decimal import Decimal
 from difflib import SequenceMatcher
 
-from invoice_agent.domain import (
+from agente_comprobantes.dominio import (
     DocumentExtraction,
     DocumentReference,
     DuplicateMatch,
 )
-from invoice_agent.services.text_normalizer import normalize_supplier, normalize_text
+from agente_comprobantes.servicios.normalizacion_texto import normalize_supplier, normalize_text
 
 
 class DuplicateService:

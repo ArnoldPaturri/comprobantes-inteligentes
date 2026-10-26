@@ -9,8 +9,8 @@ from pathlib import Path
 
 from PIL import Image, ImageOps, UnidentifiedImageError
 
-from invoice_agent.config import Settings
-from invoice_agent.exceptions import ImageValidationError
+from agente_comprobantes.configuracion import Settings
+from agente_comprobantes.excepciones import ImageValidationError
 
 SUPPORTED_FORMATS = {
     "JPEG": "image/jpeg",

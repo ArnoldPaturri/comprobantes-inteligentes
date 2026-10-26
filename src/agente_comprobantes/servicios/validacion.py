@@ -1,5 +1,5 @@
-from invoice_agent.config import Settings
-from invoice_agent.domain import (
+from agente_comprobantes.configuracion import Settings
+from agente_comprobantes.dominio import (
     DocumentExtraction,
     DocumentType,
     Severity,

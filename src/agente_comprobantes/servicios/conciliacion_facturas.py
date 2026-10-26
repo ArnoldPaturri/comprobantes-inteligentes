@@ -1,8 +1,8 @@
 from decimal import ROUND_HALF_UP, Decimal
 from difflib import SequenceMatcher
 
-from invoice_agent.config import Settings
-from invoice_agent.domain import (
+from agente_comprobantes.configuracion import Settings
+from agente_comprobantes.dominio import (
     Diagnosis,
     DocumentExtraction,
     QuotationRecord,
@@ -10,7 +10,7 @@ from invoice_agent.domain import (
     Severity,
     ValidationIssue,
 )
-from invoice_agent.services.text_normalizer import normalize_supplier
+from agente_comprobantes.servicios.normalizacion_texto import normalize_supplier
 
 MONEY_PLACES = Decimal("0.01")
 PERCENT_PLACES = Decimal("0.0001")
