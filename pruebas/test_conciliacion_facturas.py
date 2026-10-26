@@ -1,6 +1,6 @@
 from decimal import Decimal
 
-from invoice_agent.domain import (
+from agente_comprobantes.dominio import (
     Currency,
     Diagnosis,
     DocumentExtraction,
@@ -8,7 +8,7 @@ from invoice_agent.domain import (
     QuotationRecord,
     VerificationStatus,
 )
-from invoice_agent.services.reconciliation_service import ReconciliationService
+from agente_comprobantes.servicios.conciliacion_facturas import ReconciliationService
 
 
 def quotation(amount: str = "9800.00", provider: str = "JJ Consultores SAC") -> QuotationRecord:

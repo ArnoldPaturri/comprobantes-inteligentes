@@ -3,7 +3,7 @@ from pathlib import Path
 import pytest
 from PIL import Image, ImageDraw
 
-from invoice_agent.config import Settings
+from agente_comprobantes.configuracion import Settings
 
 
 @pytest.fixture

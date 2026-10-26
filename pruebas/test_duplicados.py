@@ -1,10 +1,10 @@
-from invoice_agent.domain import (
+from agente_comprobantes.dominio import (
     Currency,
     DocumentExtraction,
     DocumentReference,
     DocumentType,
 )
-from invoice_agent.services.duplicate_service import DuplicateService
+from agente_comprobantes.servicios.duplicados import DuplicateService
 
 
 def test_detects_same_invoice_by_tax_id_and_number() -> None:

@@ -2,7 +2,7 @@ from decimal import Decimal
 
 import pytest
 
-from invoice_agent.domain import (
+from agente_comprobantes.dominio import (
     Currency,
     Diagnosis,
     DocumentExtraction,
@@ -11,10 +11,10 @@ from invoice_agent.domain import (
     PaymentStatus,
     VerificationStatus,
 )
-from invoice_agent.exceptions import RecordNotFoundError
-from invoice_agent.factory import build_agent
-from invoice_agent.repositories.excel_repository import ExcelRepository
-from tests.fakes import FakeVisionProvider
+from agente_comprobantes.excepciones import RecordNotFoundError
+from agente_comprobantes.fabrica import build_agent
+from agente_comprobantes.repositorios.repositorio_excel import ExcelRepository
+from pruebas.simuladores import FakeVisionProvider
 
 
 def test_end_to_end_with_fake_provider(settings, make_image) -> None:

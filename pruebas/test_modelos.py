@@ -1,7 +1,7 @@
 from datetime import date
 from decimal import Decimal
 
-from invoice_agent.domain import Currency, DocumentExtraction, DocumentType
+from agente_comprobantes.dominio import Currency, DocumentExtraction, DocumentType
 
 
 def test_extraction_normalizes_localized_amount_and_date() -> None:

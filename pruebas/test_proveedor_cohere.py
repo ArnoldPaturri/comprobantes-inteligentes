@@ -1,9 +1,9 @@
 import json
 from types import SimpleNamespace
 
-from invoice_agent.domain import DocumentType
-from invoice_agent.providers.cohere_vision import CohereVisionProvider
-from invoice_agent.services.image_service import ImageService
+from agente_comprobantes.dominio import DocumentType
+from agente_comprobantes.proveedores.vision_cohere import CohereVisionProvider
+from agente_comprobantes.servicios.imagenes import ImageService
 
 
 class FakeCohereClient:

@@ -1,8 +1,8 @@
 from collections import deque
 
-from invoice_agent.domain import DocumentExtraction, DocumentType
-from invoice_agent.providers.base import VisionProvider
-from invoice_agent.services.image_service import PreparedDocument
+from agente_comprobantes.dominio import DocumentExtraction, DocumentType
+from agente_comprobantes.proveedores.base import VisionProvider
+from agente_comprobantes.servicios.imagenes import PreparedDocument
 
 
 class FakeVisionProvider(VisionProvider):

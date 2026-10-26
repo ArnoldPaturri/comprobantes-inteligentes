@@ -2,8 +2,8 @@ import base64
 
 import pytest
 
-from invoice_agent.exceptions import ImageValidationError
-from invoice_agent.services.image_service import ImageService
+from agente_comprobantes.excepciones import ImageValidationError
+from agente_comprobantes.servicios.imagenes import ImageService
 
 
 def test_prepares_multiple_images_as_one_document(settings, make_image) -> None:

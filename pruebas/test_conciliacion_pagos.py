@@ -1,6 +1,6 @@
 from decimal import Decimal
 
-from invoice_agent.domain import (
+from agente_comprobantes.dominio import (
     Currency,
     DocumentExtraction,
     DocumentType,
@@ -9,7 +9,7 @@ from invoice_agent.domain import (
     Severity,
     VerificationStatus,
 )
-from invoice_agent.services.payment_reconciliation_service import (
+from agente_comprobantes.servicios.conciliacion_pagos import (
     PaymentReconciliationService,
 )
 
