@@ -2,19 +2,29 @@ from __future__ import annotations
 
 import os
 import tempfile
-from datetime import date
-from datetime import datetime
+from datetime import date, datetime
 from decimal import Decimal
 from pathlib import Path
 from typing import Any
+
 from openpyxl import load_workbook
-from openpyxl.styles import Alignment
-from openpyxl.styles import Font
-from openpyxl.styles import PatternFill
+from openpyxl.styles import Alignment, Font, PatternFill
 from openpyxl.utils import get_column_letter
+
+from invoice_agent.domain import (
+    Currency,
+    DocumentType,
+    InvoiceRecord,
+    PaymentLinkStatus,
+    PaymentRecord,
+    PaymentStatus,
+    QuotationRecord,
+    QuotationStatus,
+    VerificationStatus,
+)
 from invoice_agent.exceptions import RepositoryError
 from invoice_agent.repositories.esquemas_excel import ILLEGAL_EXCEL_CHARACTER_PATTERN
-from invoice_agent.domain import Currency, DocumentType, InvoiceRecord, PaymentLinkStatus, PaymentRecord, PaymentStatus, QuotationRecord, QuotationStatus, VerificationStatus
+
 
 class UtilidadesExcel:
     def read_sheet(self, sheet_name: str) -> list[dict[str, object]]:

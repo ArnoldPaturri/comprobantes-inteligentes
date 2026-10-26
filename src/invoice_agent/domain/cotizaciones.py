@@ -2,10 +2,12 @@ from __future__ import annotations
 
 from datetime import date, datetime
 from decimal import Decimal
+
 from pydantic import Field, field_validator
+
 from invoice_agent.domain.enums import Currency, QuotationStatus, VerificationStatus
 from invoice_agent.domain.modelo_base import DomainModel
-from invoice_agent.domain.normalizacion import _parse_decimal, _parse_date
+from invoice_agent.domain.normalizacion import _parse_date, _parse_decimal
 
 
 class QuotationRecord(DomainModel):

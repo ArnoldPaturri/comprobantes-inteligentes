@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import re
 
+
 ILLEGAL_EXCEL_CHARACTER_PATTERN = re.compile(
     r"[\x00-\x08\x0B-\x0C\x0E-\x1F]"
 )
