@@ -5,6 +5,8 @@ from __future__ import annotations
 import streamlit as st
 
 from agente_comprobantes.configuracion import Configuracion
+from agente_comprobantes.control_financiero.adjuntos import guardar_adjunto_existente
+from agente_comprobantes.control_financiero.archivos import almacen_para_excel
 from agente_comprobantes.control_financiero.modelos import OperacionFlete
 from agente_comprobantes.control_financiero.presentacion import formatear_importe
 from agente_comprobantes.control_financiero.repositorio_json import (
@@ -13,6 +15,7 @@ from agente_comprobantes.control_financiero.repositorio_json import (
 from agente_comprobantes.control_financiero.revision_pagos import (
     guardar_revision_pago,
 )
+from agente_comprobantes.interfaz.componentes.visor_adjuntos import mostrar_respaldo
 
 
 def mostrar_revision_pagos(operacion: OperacionFlete) -> None:
@@ -45,10 +48,19 @@ def mostrar_revision_pagos(operacion: OperacionFlete) -> None:
     datos[1].write(seleccionado.referencia or "No identificada")
     datos[2].write("**Archivo de origen**")
     datos[2].write(seleccionado.documento_respaldo or "No disponible")
-    st.info(
-        "Para revisarlo, consulta el comprobante original fuera de esta pantalla. "
-        "Un nombre de archivo o el resultado del OCR no acreditan por sí solos el pago."
+    mostrar_respaldo(
+        seleccionado.documento_respaldo,
+        clave=f"pago_{operacion.identificador}_{indice}",
     )
+    if not (seleccionado.documento_respaldo or "").startswith("adjunto:"):
+        st.warning(
+            "Primero adjunta el comprobante real. El OCR y el nombre del archivo "
+            "no constituyen una validación documental."
+        )
+        _cargar_comprobante_pago(operacion, indice)
+        return
+
+    _cargar_comprobante_pago(operacion, indice)
     accion = (
         "Retirar validación documental"
         if seleccionado.verificada else "Validar evidencia documental"
@@ -88,3 +100,50 @@ def mostrar_revision_pagos(operacion: OperacionFlete) -> None:
         "El Excel de origen no fue modificado."
     )
     st.rerun()
+
+
+def _cargar_comprobante_pago(operacion: OperacionFlete, indice: int) -> None:
+    with st.expander("Adjuntar o reemplazar comprobante original"):
+        with st.form(f"adjuntar_pago_{operacion.identificador}_{indice}"):
+            archivo = st.file_uploader(
+                "Selecciona PDF, PNG o JPG",
+                type=["pdf", "png", "jpg", "jpeg"],
+                max_upload_size=8,
+                key=f"archivo_pago_{operacion.identificador}_{indice}",
+            )
+            motivo = st.text_area(
+                "Sustento de la carga",
+                placeholder="Documento original revisado y vinculado con esta factura.",
+            )
+            confirmado = st.checkbox(
+                "Confirmo que el respaldo corresponde al pago seleccionado; "
+                "si se reemplaza uno anterior, se retirará su validación."
+            )
+            enviado = st.form_submit_button("Guardar comprobante")
+        if not enviado:
+            return
+        if archivo is None:
+            st.error("Adjunta un archivo para guardar.")
+            return
+        try:
+            guardar_adjunto_existente(
+                RepositorioControlFletes(
+                    Configuracion().ruta_archivo_excel().with_name("control_fletes.json")
+                ),
+                almacen_para_excel(Configuracion().ruta_archivo_excel()),
+                operacion.identificador,
+                destino="pago",
+                indice=indice,
+                nombre=archivo.name,
+                contenido=archivo.getvalue(),
+                motivo=motivo,
+                confirmacion=confirmado,
+                version_esperada=len(operacion.revisiones),
+            )
+        except (ValueError, OSError) as exc:
+            st.error(str(exc))
+            return
+        st.session_state["_mensaje_revision"] = (
+            "Archivo real vinculado al pago. Requiere una nueva revisión documental."
+        )
+        st.rerun()

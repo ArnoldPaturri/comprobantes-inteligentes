@@ -36,3 +36,6 @@ htmlcov/
 *.db
 *.sqlite
 *.sqlite3
+
+# Adjuntos privados de conciliación (junto al libro de Excel)
+adjuntos_financieros/

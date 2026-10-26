@@ -172,3 +172,32 @@ almacenamiento o carga física del documento en esta pantalla.
 **Alcance:** las restricciones de duplicados son por expediente; todavía
 no existe control transaccional global o de concurrencia multiusuario.
 El archivo JSON debe emplearse solo con un operador a la vez.
+
+
+## Adjuntos originales — carga y vista previa (versión local)
+
+La sección **Revisar pagos** y la de **Detracciones y notas** admiten ahora
+un archivo real PDF, JPG o PNG de máximo 8 MB. La extensión debe coincidir
+con el contenido; se verifica integridad de imágenes y se conserva cada
+adjunto con nombre derivado de su SHA-256 en `adjuntos_financieros/`,
+junto al Excel activo, fuera de Git.
+
+En lugar del nombre anterior se guarda `adjunto:<hash>.<ext>`. Esas
+referencias se resuelven únicamente dentro del directorio de adjuntos;
+un nombre procedente del OCR no se abre como una ruta local. El visor
+muestra imágenes y PDF dentro de la aplicación; el PDF necesita
+`streamlit[pdf]`, incluido en `requirements.txt`.
+
+- Los nuevos ajustes se incorporan **sin acreditar**.
+- Si se adjunta un archivo a una evidencia existente, cualquier
+  acreditación previa se retira y se registra la operación en el historial.
+- El archivo se guarda de forma independiente; no se modifica
+  `registros.xlsx` ni se autentican automáticamente los documentos.
+- Los adjuntos existentes de versiones previas permanecen representados
+  por su nombre; para obtener vista previa deben anexarse nuevamente.
+
+**Limitaciones:** no existe antivirus, autenticación de usuarios, auditoría
+inalterable, lectura OCR del contenido recién adjuntado ni integración
+bancaria o tributaria. Recomendado por ahora para uso local y de prueba.
+Una interrupción entre guardar el archivo y el JSON podría dejar un
+archivo sin referencia, pero nunca debe reemplazar el Excel.
