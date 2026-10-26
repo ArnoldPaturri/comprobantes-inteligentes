@@ -4,8 +4,6 @@ from pathlib import Path
 
 import streamlit as st
 
-from invoice_agent.ui.components.resultados_pago import mostrar_resultado_pago
-
 from invoice_agent.domain import (
     DocumentExtraction,
     DocumentType,
@@ -16,6 +14,7 @@ from invoice_agent.exceptions import InvoiceAgentError
 from invoice_agent.ui.components.extraction_editor import (
     render_extraction_editor,
 )
+from invoice_agent.ui.components.resultados_pago import mostrar_resultado_pago
 from invoice_agent.ui.context import get_app_context
 from invoice_agent.ui.uploads import save_uploaded_files
 
