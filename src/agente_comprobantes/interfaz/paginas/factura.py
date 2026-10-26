@@ -19,9 +19,9 @@ from agente_comprobantes.interfaz.flujos.factura import (
     _PREVIEW_KEY,
     _QUOTATION_KEY,
     _RESULT_KEY,
-    limpiar_previsualizacion,
     mostrar_revision_factura,
 )
+
 
 def _etiqueta_cotizacion(
     quotation: RegistroCotizacion,
