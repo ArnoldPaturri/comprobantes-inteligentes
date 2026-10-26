@@ -246,7 +246,9 @@ def crear_archivo_xlsx(hojas: list[HojaReporte]) -> bytes:
     ET.SubElement(
         tipos, f"{{{TYPES}}}Override",
         {"PartName": "/xl/workbook.xml",
-         "ContentType": "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet.main+xml"},
+         "ContentType": (
+             "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet.main+xml"
+         )},
     )
     ET.SubElement(
         tipos, f"{{{TYPES}}}Override",
@@ -257,7 +259,9 @@ def crear_archivo_xlsx(hojas: list[HojaReporte]) -> bytes:
         ET.SubElement(
             tipos, f"{{{TYPES}}}Override",
             {"PartName": f"/xl/worksheets/sheet{i}.xml",
-             "ContentType": "application/vnd.openxmlformats-officedocument.spreadsheetml.worksheet+xml"},
+             "ContentType": (
+                 "application/vnd.openxmlformats-officedocument.spreadsheetml.worksheet+xml"
+             )},
         )
     salida = BytesIO()
     with ZipFile(salida, "w", ZIP_DEFLATED) as paquete:
