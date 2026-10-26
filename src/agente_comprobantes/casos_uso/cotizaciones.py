@@ -7,7 +7,10 @@ from agente_comprobantes.dominio import (
     ResultadoRegistro,
     TipoDocumento,
 )
-from agente_comprobantes.servicios.estados import mensajes_observaciones, resolver_estado_verificacion
+from agente_comprobantes.servicios.estados import (
+    mensajes_observaciones,
+    resolver_estado_verificacion,
+)
 
 
 class OperacionesCotizaciones:
