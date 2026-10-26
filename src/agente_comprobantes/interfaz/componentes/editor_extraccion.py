@@ -4,7 +4,7 @@ from typing import Any
 
 import streamlit as st
 
-from invoice_agent.domain import (
+from agente_comprobantes.dominio import (
     Currency,
     DocumentExtraction,
 )

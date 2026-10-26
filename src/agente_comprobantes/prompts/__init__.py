@@ -1,4 +1,4 @@
-from invoice_agent.prompts.document_extraction import (
+from agente_comprobantes.prompts.extraccion_documentos import (
     EXTRACTION_SCHEMA,
     build_extraction_prompt,
 )

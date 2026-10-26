@@ -4,16 +4,16 @@ from pathlib import Path
 
 import streamlit as st
 
-from invoice_agent.domain import (
+from agente_comprobantes.dominio import (
     DocumentExtraction,
     DocumentType,
 )
-from invoice_agent.exceptions import InvoiceAgentError
-from invoice_agent.ui.components.extraction_editor import (
+from agente_comprobantes.excepciones import InvoiceAgentError
+from agente_comprobantes.interfaz.componentes.editor_extraccion import (
     render_extraction_editor,
 )
-from invoice_agent.ui.context import get_app_context
-from invoice_agent.ui.uploads import save_uploaded_files
+from agente_comprobantes.interfaz.contexto import get_app_context
+from agente_comprobantes.interfaz.cargas import save_uploaded_files
 
 _PREVIEW_KEY = "_quotation_preview"
 _PATHS_KEY = "_quotation_paths"

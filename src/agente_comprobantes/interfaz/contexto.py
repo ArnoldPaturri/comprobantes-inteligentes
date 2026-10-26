@@ -2,10 +2,10 @@ from dataclasses import dataclass
 
 import streamlit as st
 
-from invoice_agent.agent import ReceiptAgent
-from invoice_agent.config import Settings
-from invoice_agent.factory import build_agent, build_repository
-from invoice_agent.repositories import ExcelRepository
+from agente_comprobantes.agente import ReceiptAgent
+from agente_comprobantes.configuracion import Settings
+from agente_comprobantes.fabrica import build_agent, build_repository
+from agente_comprobantes.repositorios import ExcelRepository
 
 _CONTEXT_KEY = "_invoice_agent_context"
 

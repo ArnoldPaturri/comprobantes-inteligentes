@@ -1,4 +1,4 @@
-from invoice_agent.domain.enums import DocumentType
+from agente_comprobantes.dominio.enumeraciones import DocumentType
 
 
 def _nullable(value_schema: dict) -> dict:
