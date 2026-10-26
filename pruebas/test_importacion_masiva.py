@@ -1,9 +1,12 @@
 """Pruebas de importación masiva segura desde Excel."""
 from decimal import Decimal
 from io import BytesIO
+from zipfile import ZIP_DEFLATED, ZipFile
 
 import pytest
-from openpyxl import Workbook
+from openpyxl import Workbook, load_workbook
+
+from agente_comprobantes.control_financiero import importacion_masiva
 
 from agente_comprobantes.control_financiero.importacion_masiva import (
     confirmar_importacion,
@@ -135,4 +138,63 @@ def test_archivo_invalido_no_escribe(tmp_path) -> None:
     repo = RepositorioControlFletes(tmp_path / "control.json")
     with pytest.raises(ValueError, match="xlsx"):
         preparar_importacion(b"not an excel file", repo)
+    assert not (tmp_path / "control.json").exists()
+
+
+def _alterar_dimension(datos: bytes, *, modo: str) -> bytes:
+    """Reproduce metadatos de dimensiones omitidos o erróneos."""
+    import re
+
+    salida = BytesIO()
+    with ZipFile(BytesIO(datos)) as origen, ZipFile(salida, "w", ZIP_DEFLATED) as destino:
+        for elemento in origen.infolist():
+            contenido = origen.read(elemento.filename)
+            if elemento.filename == "xl/worksheets/sheet1.xml":
+                patron = rb'<dimension ref="[^"]+"\s*/>'
+                sustitucion = b"" if modo == "omitida" else b'<dimension ref="A1:A1"/>'
+                contenido, cantidad = re.subn(patron, sustitucion, contenido, count=1)
+                assert cantidad == 1
+            destino.writestr(elemento, contenido)
+    return salida.getvalue()
+
+
+def test_hoja_sin_dimension_max_row_none_importa_vista_previa(tmp_path) -> None:
+    repo = RepositorioControlFletes(tmp_path / "control.json")
+    datos = _alterar_dimension(excel([HEADERS, fila()]), modo="omitida")
+    libro = load_workbook(BytesIO(datos), read_only=True)
+    try:
+        assert libro.active.max_row is None
+    finally:
+        libro.close()
+    previa = preparar_importacion(datos, repo)
+    assert previa.encabezado == 4
+    assert len(previa.listas) == 1
+    assert previa.listas[0].numero_factura == "F001-12"
+    assert not (tmp_path / "control.json").exists()
+
+
+def test_dimension_incorrecta_no_oculta_registros(tmp_path) -> None:
+    repo = RepositorioControlFletes(tmp_path / "control.json")
+    datos = _alterar_dimension(
+        excel([HEADERS, fila(), fila("F001-13", "Transportes Norte", 800, 0)]),
+        modo="corta",
+    )
+    previa = preparar_importacion(datos, repo)
+    assert previa.encabezado == 4
+    assert len(previa.listas) == 2
+
+
+def test_limite_de_filas_no_depende_de_max_row(monkeypatch, tmp_path) -> None:
+    repo = RepositorioControlFletes(tmp_path / "control.json")
+    monkeypatch.setattr(importacion_masiva, "MAX_FILAS", 2)
+    datos = _alterar_dimension(
+        excel([
+            HEADERS, fila(),
+            fila("F001-13", "Transportes Norte", 800, 0),
+            fila("F001-14", "Transportes Centro", 600, 0),
+        ]),
+        modo="omitida",
+    )
+    with pytest.raises(ValueError, match="límite por importación"):
+        preparar_importacion(datos, repo)
     assert not (tmp_path / "control.json").exists()

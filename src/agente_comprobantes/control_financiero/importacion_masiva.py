@@ -8,6 +8,7 @@ from __future__ import annotations
 
 import hashlib
 import io
+from itertools import islice
 import re
 import unicodedata
 from dataclasses import dataclass
@@ -177,8 +178,12 @@ def _encabezados(valores: tuple[object, ...]) -> dict[str, int]:
 def _detectar(libro) -> tuple[object, int, dict[str, int]]:
     mejor = None
     for ws in libro.worksheets:
+        # En modo lectura, algunas hojas de Excel no declaran su dimensión
+        # o declaran un rango menor al contenido real. Se lee el XML real
+        # sin confiar en ws.max_row (que incluso puede ser None).
+        ws.reset_dimensions()
         for pos, fila in enumerate(
-            ws.iter_rows(min_row=1, max_row=min(ws.max_row, 25), values_only=True),
+            ws.iter_rows(min_row=1, max_row=25, values_only=True),
             start=1,
         ):
             columnas = _encabezados(fila)
@@ -268,17 +273,20 @@ def preparar_importacion(
 
     try:
         ws, encabezado, columnas = _detectar(libro)
-        if ws.max_row - encabezado > MAX_FILAS:
-            raise ValueError(f"El límite por importación es {MAX_FILAS} filas.")
         existentes = repositorio.listar()
         ids = {op.identificador.strip().casefold() for op in existentes}
         claves = {_clave(op.numero_factura, op.proveedor or "") for op in existentes}
         vistos: set[str] = set()
         filas: list[FilaImportada] = []
         for numero, valores in enumerate(
-            ws.iter_rows(min_row=encabezado + 1, values_only=True),
+            islice(
+                ws.iter_rows(min_row=encabezado + 1, values_only=True),
+                MAX_FILAS + 1,
+            ),
             start=encabezado + 1,
         ):
+            if numero - encabezado > MAX_FILAS:
+                raise ValueError(f"El límite por importación es {MAX_FILAS} filas.")
             if not any(x is not None and _texto(x) for x in valores):
                 continue
             campos = {campo: valores[i] if i < len(valores) else None
