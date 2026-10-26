@@ -228,3 +228,28 @@ Contiene `operaciones.csv`, `observaciones.csv`, `historial.csv`,
 
 Próxima fase: informe XLSX con formato ejecutivo, y mapeo de columnas según
 el libro real de operaciones, cuando se confirme el contrato de datos.
+
+
+## Informe ejecutivo Excel (.xlsx)
+
+El panel incorpora el botón **Descargar informe ejecutivo (.xlsx)**, que
+crea un libro nuevo en memoria con cinco pestañas: **Resumen ejecutivo**,
+**Operaciones**, **Observaciones**, **Historial** y **Leer primero**.
+
+- El resumen por moneda incluye únicamente fletes confirmados y cuenta cada
+  presupuesto de cotización una sola vez. Los filtros de búsqueda y estado
+  solo afectan el detalle; el resumen no fracciona presupuestos.
+- Los movimientos declarados y acreditados tienen columnas independientes.
+  Las operaciones no clasificadas se conservan en el detalle.
+- Los importes son celdas numéricas y los campos netos, acreditados y
+  saldos se expresan mediante fórmulas de Excel con resultados guardados.
+- La identidad visual utiliza púrpura y verde azulado inspirados en Odoo.
+  La hoja de instrucciones advierte que una evidencia documental registrada
+  no equivale a una validación bancaria, SUNAT ni deuda pendiente.
+- Los textos OCR y de usuarios se escriben como texto literal; no se permite
+  que se conviertan en fórmulas ejecutables.
+
+El informe es un documento **de consulta**, generado sin modificar los
+registros Excel, JSON o los comprobantes guardados. Es una primera versión
+de presentación ejecutiva y todavía no replica fórmulas personalizadas
+de las hojas originales de Google Sheets.
