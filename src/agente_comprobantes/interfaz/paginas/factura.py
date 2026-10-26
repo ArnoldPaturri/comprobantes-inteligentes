@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-from pathlib import Path
 from time import perf_counter
 
 import streamlit as st
@@ -12,25 +11,17 @@ from agente_comprobantes.dominio import (
 )
 from agente_comprobantes.excepciones import ErrorAgenteComprobantes
 from agente_comprobantes.interfaz.cargas import guardar_archivos_cargados
-from agente_comprobantes.interfaz.componentes.editor_extraccion import (
-    mostrar_editor_extraccion,
-)
 from agente_comprobantes.interfaz.componentes.resultados_factura import mostrar_resultado_factura
 from agente_comprobantes.interfaz.contexto import obtener_contexto_aplicacion
-
-_PREVIEW_KEY = "_invoice_preview"
-_PATHS_KEY = "_invoice_paths"
-_QUOTATION_KEY = "_invoice_quotation_code"
-_RESULT_KEY = "_invoice_result"
-_ELAPSED_KEY = "_invoice_elapsed_seconds"
-
-
-def _limpiar_previsualizacion() -> None:
-    st.session_state.pop(_PREVIEW_KEY, None)
-    st.session_state.pop(_PATHS_KEY, None)
-    st.session_state.pop(_QUOTATION_KEY, None)
-    st.session_state.pop(_ELAPSED_KEY, None)
-
+from agente_comprobantes.interfaz.flujos.factura import (
+    _ELAPSED_KEY,
+    _PATHS_KEY,
+    _PREVIEW_KEY,
+    _QUOTATION_KEY,
+    _RESULT_KEY,
+    limpiar_previsualizacion,
+    mostrar_revision_factura,
+)
 
 def _etiqueta_cotizacion(
     quotation: RegistroCotizacion,
@@ -191,70 +182,4 @@ def mostrar_factura() -> None:
 
         return
 
-    image_paths = st.session_state.get(
-        _PATHS_KEY,
-        [],
-    )
-    confirmed_code = st.session_state.get(
-        _QUOTATION_KEY,
-        "",
-    )
-    elapsed = st.session_state.get(_ELAPSED_KEY)
-
-    st.info(
-        f"Revisando factura para: {confirmed_code}"
-    )
-
-    if isinstance(elapsed, (int, float)):
-        st.caption(
-            "Extracción completada en "
-            f"{elapsed:.1f} segundos."
-        )
-
-    with st.expander("Ver imágenes analizadas"):
-        for image_path in image_paths:
-            st.image(
-                image_path,
-                caption=Path(image_path).name,
-                width=400,
-            )
-
-    if st.button(
-        "Descartar análisis y comenzar nuevamente",
-        use_container_width=True,
-    ):
-        _limpiar_previsualizacion()
-        st.rerun()
-
-    confirmed_extraction = mostrar_editor_extraccion(
-        preview,
-        key_prefix="invoice",
-    )
-
-    if confirmed_extraction is None:
-        return
-
-    try:
-        with st.spinner(
-            "Registrando y comparando la factura..."
-        ):
-            result = context.agent.registrar_factura(
-                confirmed_code,
-                image_paths,
-                confirmed_extraction=confirmed_extraction,
-            )
-    except (
-        ErrorAgenteComprobantes,
-        OSError,
-        ValueError,
-    ) as exc:
-        st.error(
-            f"No se pudo registrar la factura: {exc}"
-        )
-        return
-
-    st.session_state[_RESULT_KEY] = (
-        result.model_dump(mode="json")
-    )
-    _limpiar_previsualizacion()
-    st.rerun()
+    mostrar_revision_factura(preview, context)

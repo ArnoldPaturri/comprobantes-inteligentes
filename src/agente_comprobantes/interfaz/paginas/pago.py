@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-from pathlib import Path
 
 import streamlit as st
 
@@ -10,34 +9,22 @@ from agente_comprobantes.dominio import (
 )
 from agente_comprobantes.excepciones import ErrorAgenteComprobantes
 from agente_comprobantes.interfaz.cargas import guardar_archivos_cargados
-from agente_comprobantes.interfaz.componentes.editor_extraccion import (
-    mostrar_editor_extraccion,
-)
 from agente_comprobantes.interfaz.componentes.etiquetas_pago import (
     etiqueta_cotizacion,
     etiqueta_factura,
 )
 from agente_comprobantes.interfaz.componentes.resultados_pago import mostrar_resultado_pago
 from agente_comprobantes.interfaz.contexto import obtener_contexto_aplicacion
-
-_PREVIEW_KEY = "_payment_preview"
-_PATHS_KEY = "_payment_paths"
-_QUOTATION_KEY = "_payment_quotation"
-_INVOICE_KEY = "_payment_invoice"
-_MODE_KEY = "_payment_mode"
-_RESULT_KEY = "_payment_result"
-
-_MODE_WITH_INVOICE = "Aplicar a una factura existente"
-_MODE_WITHOUT_INVOICE = "Registrar antes de recibir la factura"
-
-
-def _limpiar_previsualizacion() -> None:
-    st.session_state.pop(_PREVIEW_KEY, None)
-    st.session_state.pop(_PATHS_KEY, None)
-    st.session_state.pop(_QUOTATION_KEY, None)
-    st.session_state.pop(_INVOICE_KEY, None)
-    st.session_state.pop(_MODE_KEY, None)
-
+from agente_comprobantes.interfaz.flujos.pago import (
+    _INVOICE_KEY,
+    _MODE_KEY,
+    _PATHS_KEY,
+    _PREVIEW_KEY,
+    _QUOTATION_KEY,
+    _RESULT_KEY,
+    limpiar_previsualizacion,
+    mostrar_revision_pago,
+)
 
 def mostrar_pago() -> None:
     st.title("Registrar pago")
@@ -65,7 +52,7 @@ def mostrar_pago() -> None:
             use_container_width=True,
         ):
             st.session_state.pop(_RESULT_KEY, None)
-            _limpiar_previsualizacion()
+            limpiar_previsualizacion()
             st.rerun()
 
         return
@@ -214,80 +201,4 @@ def mostrar_pago() -> None:
 
         return
 
-    image_paths = st.session_state.get(
-        _PATHS_KEY,
-        [],
-    )
-    confirmed_quotation = st.session_state.get(
-        _QUOTATION_KEY,
-        "",
-    )
-    confirmed_invoice = st.session_state.get(
-        _INVOICE_KEY
-    )
-    confirmed_mode = st.session_state.get(
-        _MODE_KEY,
-        "",
-    )
-
-    st.info(
-        f"Cotización: {confirmed_quotation}\n\n"
-        f"Flujo: {confirmed_mode}"
-    )
-
-    if confirmed_invoice:
-        st.info(
-            f"Factura seleccionada: {confirmed_invoice}"
-        )
-    else:
-        st.warning(
-            "Este pago quedará pendiente hasta que se "
-            "registre su factura."
-        )
-
-    with st.expander("Ver imágenes analizadas"):
-        for image_path in image_paths:
-            st.image(
-                image_path,
-                caption=Path(image_path).name,
-                width=400,
-            )
-
-    if st.button(
-        "Descartar análisis y comenzar nuevamente",
-        use_container_width=True,
-    ):
-        _limpiar_previsualizacion()
-        st.rerun()
-
-    confirmed_extraction = mostrar_editor_extraccion(
-        preview,
-        key_prefix="payment",
-    )
-
-    if confirmed_extraction is None:
-        return
-
-    try:
-        with st.spinner("Registrando el pago..."):
-            result = context.agent.registrar_pago(
-                confirmed_quotation,
-                image_paths,
-                invoice_id=confirmed_invoice,
-                confirmed_extraction=confirmed_extraction,
-            )
-    except (
-        ErrorAgenteComprobantes,
-        OSError,
-        ValueError,
-    ) as exc:
-        st.error(
-            f"No se pudo registrar el pago: {exc}"
-        )
-        return
-
-    st.session_state[_RESULT_KEY] = (
-        result.model_dump(mode="json")
-    )
-    _limpiar_previsualizacion()
-    st.rerun()
+    mostrar_revision_pago(preview, context)
