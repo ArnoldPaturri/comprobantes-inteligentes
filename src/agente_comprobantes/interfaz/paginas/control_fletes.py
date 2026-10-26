@@ -23,6 +23,9 @@ from agente_comprobantes.control_financiero.repositorio_json import (
 from agente_comprobantes.control_financiero.revisiones import guardar_revision
 from agente_comprobantes.dominio.enumeraciones import Moneda
 from agente_comprobantes.interfaz.componentes.panel_evidencias import mostrar_evidencias
+from agente_comprobantes.interfaz.componentes.revision_pagos import (
+    mostrar_revision_pagos,
+)
 from agente_comprobantes.interfaz.estilos import mostrar_cabecera
 
 CLASIFICACIONES = ("Sin clasificar", "Flete confirmado", "Otra operación")
@@ -96,7 +99,9 @@ def _mostrar_expediente(tablero: TableroFletes, identificador: str) -> None:
     else:
         st.warning("Pendiente de completar y revisar documentos.")
 
-    detalle, gestion = st.tabs(["Documentación y diferencias", "Revisar expediente"])
+    detalle, gestion, pagos = st.tabs(
+        ["Documentación y diferencias", "Revisar expediente", "Revisar pagos"]
+    )
     with detalle:
         c1, c2, c3 = st.columns(3)
         pago_declarado = sum(
@@ -128,6 +133,8 @@ def _mostrar_expediente(tablero: TableroFletes, identificador: str) -> None:
 
     with gestion:
         _formulario_revision(operacion)
+    with pagos:
+        mostrar_revision_pagos(operacion)
 
 
 def _formulario_revision(operacion: OperacionFlete) -> None:
