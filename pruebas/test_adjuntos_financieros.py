@@ -53,6 +53,16 @@ def test_adjunto_pdf_guardado_sin_tocar_excel(tmp_path) -> None:
         ("truncado.pdf", b"%PDF-1.4\ncontenido sin final"),
         ("corrupto.png", b"\x89PNG\r\n\x1a\ncorrupto"),
     ],
+    ids=[
+        "firma_incorrecta",
+        "extension_incompatible",
+        "nombre_con_ruta",
+        "tipo_no_admitido",
+        "archivo_vacio",
+        "archivo_excede_8mb",
+        "pdf_incompleto",
+        "png_corrupto",
+    ],
 )
 def test_rechazar_archivos_que_no_son_admisibles(nombre: str, datos: bytes) -> None:
     with pytest.raises(ValueError):
