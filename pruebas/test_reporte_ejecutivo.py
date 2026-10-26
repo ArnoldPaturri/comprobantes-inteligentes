@@ -51,7 +51,7 @@ def valor(raiz: ET.Element, celda: str) -> str | None:
     if obj is None:
         return None
     v = obj.find("x:v", NS)
-    if v is not None:
+    if v is not None and v.text is not None:
         return v.text
     t = obj.find("x:is/x:t", NS)
     if t is not None:
