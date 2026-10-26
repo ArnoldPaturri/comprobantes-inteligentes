@@ -1,9 +1,11 @@
 from __future__ import annotations
 
 from openpyxl import load_workbook
+
+from invoice_agent.domain import QuotationRecord
 from invoice_agent.exceptions import DuplicateCodeError
 from invoice_agent.repositories.esquemas_excel import QUOTATION_HEADERS
-from invoice_agent.domain import QuotationRecord
+
 
 class OperacionesCotizacionesExcel:
     def get_quotation(self, quotation_code: str) -> QuotationRecord | None:

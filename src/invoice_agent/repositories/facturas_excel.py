@@ -1,10 +1,18 @@
 from __future__ import annotations
 
 from decimal import Decimal
+
 from openpyxl import load_workbook
-from invoice_agent.repositories.esquemas_excel import INVOICE_HEADERS
-from invoice_agent.repositories.esquemas_excel import COMPARISON_HEADERS
-from invoice_agent.domain import InvoiceRecord, QuotationRecord, QuotationStatus, ReconciliationResult, VerificationStatus
+
+from invoice_agent.domain import (
+    InvoiceRecord,
+    QuotationRecord,
+    QuotationStatus,
+    ReconciliationResult,
+    VerificationStatus,
+)
+from invoice_agent.repositories.esquemas_excel import COMPARISON_HEADERS, INVOICE_HEADERS
+
 
 class OperacionesFacturasExcel:
     def add_invoice(

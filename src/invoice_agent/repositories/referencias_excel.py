@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from invoice_agent.domain import DocumentReference, DocumentType
 
+
 class ReferenciasExcel:
     def list_document_references(self) -> list[DocumentReference]:
         self.initialize()
