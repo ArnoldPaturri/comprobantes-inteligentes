@@ -8,13 +8,13 @@ from typing import Any
 
 from pydantic import ValidationError
 
-from invoice_agent.config import Settings
-from invoice_agent.domain import DocumentExtraction, DocumentType
-from invoice_agent.exceptions import ExtractionError
-from invoice_agent.prompts import EXTRACTION_SCHEMA, build_extraction_prompt
-from invoice_agent.providers.base import VisionProvider
-from invoice_agent.providers.parsing import parse_json_object
-from invoice_agent.services.image_service import PreparedDocument
+from agente_comprobantes.configuracion import Settings
+from agente_comprobantes.dominio import DocumentExtraction, DocumentType
+from agente_comprobantes.excepciones import ExtractionError
+from agente_comprobantes.prompts import EXTRACTION_SCHEMA, build_extraction_prompt
+from agente_comprobantes.proveedores.base import VisionProvider
+from agente_comprobantes.proveedores.parseo import parse_json_object
+from agente_comprobantes.servicios.imagenes import PreparedDocument
 
 MAX_GROQ_IMAGES = 3
 

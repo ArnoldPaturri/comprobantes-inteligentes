@@ -4,14 +4,14 @@ from decimal import Decimal
 
 from openpyxl import load_workbook
 
-from invoice_agent.domain import (
+from agente_comprobantes.dominio import (
     InvoiceRecord,
     QuotationRecord,
     QuotationStatus,
     ReconciliationResult,
     VerificationStatus,
 )
-from invoice_agent.repositories.esquemas_excel import COMPARISON_HEADERS, INVOICE_HEADERS
+from agente_comprobantes.repositorios.esquemas_excel import COMPARISON_HEADERS, INVOICE_HEADERS
 
 
 class OperacionesFacturasExcel:

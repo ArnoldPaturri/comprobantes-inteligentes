@@ -1,7 +1,7 @@
-from invoice_agent.providers.base import VisionProvider
-from invoice_agent.providers.cohere_vision import CohereVisionProvider
-from invoice_agent.providers.fallback import FallbackVisionProvider
-from invoice_agent.providers.groq_vision import GroqVisionProvider
+from agente_comprobantes.proveedores.base import VisionProvider
+from agente_comprobantes.proveedores.vision_cohere import CohereVisionProvider
+from agente_comprobantes.proveedores.respaldo import FallbackVisionProvider
+from agente_comprobantes.proveedores.vision_groq import GroqVisionProvider
 
 __all__ = [
     "CohereVisionProvider",

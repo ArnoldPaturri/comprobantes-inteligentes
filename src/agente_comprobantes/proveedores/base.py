@@ -1,7 +1,7 @@
 from abc import ABC, abstractmethod
 
-from invoice_agent.domain import DocumentExtraction, DocumentType
-from invoice_agent.services.image_service import PreparedDocument
+from agente_comprobantes.dominio import DocumentExtraction, DocumentType
+from agente_comprobantes.servicios.imagenes import PreparedDocument
 
 
 class VisionProvider(ABC):

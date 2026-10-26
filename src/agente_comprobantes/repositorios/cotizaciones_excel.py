@@ -2,9 +2,9 @@ from __future__ import annotations
 
 from openpyxl import load_workbook
 
-from invoice_agent.domain import QuotationRecord
-from invoice_agent.exceptions import DuplicateCodeError
-from invoice_agent.repositories.esquemas_excel import QUOTATION_HEADERS
+from agente_comprobantes.dominio import QuotationRecord
+from agente_comprobantes.excepciones import DuplicateCodeError
+from agente_comprobantes.repositorios.esquemas_excel import QUOTATION_HEADERS
 
 
 class OperacionesCotizacionesExcel:

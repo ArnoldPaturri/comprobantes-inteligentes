@@ -1,7 +1,7 @@
 from abc import ABC, abstractmethod
 from decimal import Decimal
 
-from invoice_agent.domain import (
+from agente_comprobantes.dominio import (
     DocumentReference,
     InvoiceRecord,
     PaymentReconciliationResult,

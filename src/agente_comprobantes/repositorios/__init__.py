@@ -1,5 +1,5 @@
-from invoice_agent.repositories.base import DocumentRepository
-from invoice_agent.repositories.excel_repository import ExcelRepository
+from agente_comprobantes.repositorios.base import DocumentRepository
+from agente_comprobantes.repositorios.repositorio_excel import ExcelRepository
 
 __all__ = ["DocumentRepository", "ExcelRepository"]
 
