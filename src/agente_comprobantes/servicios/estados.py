@@ -8,7 +8,7 @@ from agente_comprobantes.dominio import (
 )
 
 
-def resolve_verification_status(
+def resolver_estado_verificacion(
     validation: InformeValidacion,
     duplicates: list[CoincidenciaDuplicado],
     reconciliation: ResultadoConciliacion | ResultadoConciliacionPago | None = None,
@@ -25,7 +25,7 @@ def resolve_verification_status(
     return EstadoVerificacion.VERIFIED
 
 
-def issue_messages(
+def mensajes_observaciones(
     validation: InformeValidacion,
     reconciliation: ResultadoConciliacion | ResultadoConciliacionPago | None = None,
 ) -> list[str]:

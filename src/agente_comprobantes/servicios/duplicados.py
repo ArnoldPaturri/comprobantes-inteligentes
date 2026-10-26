@@ -9,13 +9,13 @@ from agente_comprobantes.dominio import (
     ExtraccionDocumento,
     ReferenciaDocumento,
 )
-from agente_comprobantes.servicios.normalizacion_texto import normalize_supplier, normalize_text
+from agente_comprobantes.servicios.normalizacion_texto import normalizar_proveedor, normalizar_texto
 
 
 class ServicioDuplicados:
     """Detecta coincidencias; nunca elimina registros automáticamente."""
 
-    def find_matches(
+    def buscar_coincidencias(
         self,
         extraction: ExtraccionDocumento,
         source_hash: str,
@@ -48,8 +48,8 @@ class ServicioDuplicados:
 
         reasons: list[str] = []
         scores: list[float] = []
-        left_number = normalize_text(extraction.document_number)
-        right_number = normalize_text(candidate.document_number)
+        left_number = normalizar_texto(extraction.document_number)
+        right_number = normalizar_texto(candidate.document_number)
 
         if (
             extraction.provider_tax_id
@@ -67,8 +67,8 @@ class ServicioDuplicados:
         if (
             extraction.operation_number
             and candidate.operation_number
-            and normalize_text(extraction.operation_number)
-            == normalize_text(candidate.operation_number)
+            and normalizar_texto(extraction.operation_number)
+            == normalizar_texto(candidate.operation_number)
         ):
             return 0.98, ["Mismo número de operación"]
 
@@ -99,8 +99,8 @@ class ServicioDuplicados:
 
     @staticmethod
     def _similarity(left: str | None, right: str | None) -> float:
-        normalized_left = normalize_supplier(left)
-        normalized_right = normalize_supplier(right)
+        normalized_left = normalizar_proveedor(left)
+        normalized_right = normalizar_proveedor(right)
         if not normalized_left or not normalized_right:
             return 0.0
         return SequenceMatcher(None, normalized_left, normalized_right).ratio()

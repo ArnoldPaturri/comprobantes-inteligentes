@@ -8,10 +8,10 @@ from pathlib import Path
 from agente_comprobantes.configuracion import Configuracion
 from agente_comprobantes.dominio import TipoDocumento
 from agente_comprobantes.excepciones import ErrorAgenteComprobantes
-from agente_comprobantes.fabrica import build_agent, build_repository
+from agente_comprobantes.fabrica import crear_agente, crear_repositorio
 
 
-def build_parser() -> argparse.ArgumentParser:
+def crear_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
         prog="agente-comprobantes",
         description="Extrae y concilia cotizaciones, facturas y pagos desde imágenes.",
@@ -95,54 +95,54 @@ def build_parser() -> argparse.ArgumentParser:
     return parser
 
 
-def _settings_from_args(args: argparse.Namespace) -> Configuracion:
+def _configuracion_desde_argumentos(args: argparse.Namespace) -> Configuracion:
     return Configuracion(workbook_path=args.workbook) if args.workbook else Configuracion()
 
 
 def main(argv: list[str] | None = None) -> None:
-    parser = build_parser()
+    parser = crear_parser()
     args = parser.parse_args(argv)
-    settings = _settings_from_args(args)
+    settings = _configuracion_desde_argumentos(args)
 
     try:
         if args.command == "iniciar":
-            repository = build_repository(settings)
-            repository.initialize()
-            print(f"Excel preparado: {repository.location}")
+            repository = crear_repositorio(settings)
+            repository.inicializar()
+            print(f"Excel preparado: {repository.ubicacion}")
             return
 
         if args.command == "ver":
-            repository = build_repository(settings)
-            repository.initialize()
-            records = repository.read_sheet(args.hoja)
+            repository = crear_repositorio(settings)
+            repository.inicializar()
+            records = repository.leer_hoja(args.hoja)
             print(json.dumps(records, ensure_ascii=False, indent=2, default=str))
             return
 
-        agent = build_agent(settings)
+        agent = crear_agente(settings)
 
         if args.command == "extraer":
-            result = agent.preview_extraction(
+            result = agent.previsualizar_extraccion(
                 TipoDocumento(args.tipo),
                 args.imagenes,
             )
         elif args.command == "cotizacion":
-            result = agent.register_quotation(
+            result = agent.registrar_cotizacion(
                 args.codigo,
                 args.imagenes,
             )
         elif args.command == "factura":
-            result = agent.register_invoice(
+            result = agent.registrar_factura(
                 args.cotizacion,
                 args.imagenes,
             )
         elif args.command == "pago":
-            result = agent.register_payment(
+            result = agent.registrar_pago(
                 args.cotizacion,
                 args.imagenes,
                 invoice_id=args.factura,
             )
         else:  # vincular-pago
-            result = agent.link_payment(
+            result = agent.vincular_pago(
                 args.pago,
                 args.factura,
             )

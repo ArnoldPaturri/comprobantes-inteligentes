@@ -40,7 +40,7 @@ def invoice(
 
 
 def test_calculates_difference_and_deviation(settings) -> None:
-    result = ServicioConciliacionFacturas(settings).compare(quotation(), invoice())
+    result = ServicioConciliacionFacturas(settings).comparar(quotation(), invoice())
 
     assert result.difference == Decimal("0.01")
     assert result.deviation_percent == Decimal("0.0001")
@@ -49,7 +49,7 @@ def test_calculates_difference_and_deviation(settings) -> None:
 
 
 def test_marks_supplier_mismatch(settings) -> None:
-    result = ServicioConciliacionFacturas(settings).compare(
+    result = ServicioConciliacionFacturas(settings).comparar(
         quotation(provider="Proveedor Uno SAC"),
         invoice(provider="Empresa Completamente Distinta EIRL"),
     )
@@ -58,7 +58,7 @@ def test_marks_supplier_mismatch(settings) -> None:
 
 
 def test_zero_quotation_amount_has_no_percentage(settings) -> None:
-    result = ServicioConciliacionFacturas(settings).compare(
+    result = ServicioConciliacionFacturas(settings).comparar(
         quotation(amount="0"), invoice(amount="5")
     )
 

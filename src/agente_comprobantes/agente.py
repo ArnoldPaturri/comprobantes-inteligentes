@@ -40,14 +40,14 @@ class AgenteComprobantes(
         self._reconciliation = reconciliation_service
         self._payment_reconciliation = payment_reconciliation_service
 
-    def preview_extraction(
+    def previsualizar_extraccion(
         self,
         expected_type: TipoDocumento,
         image_paths: list[str],
     ) -> ExtraccionDocumento:
         """Extrae un documento sin validar, conciliar ni guardar registros."""
-        prepared = self._images.prepare(image_paths)
-        return self._provider.extract(
+        prepared = self._images.preparar(image_paths)
+        return self._provider.extraer(
             prepared,
             expected_type,
         )

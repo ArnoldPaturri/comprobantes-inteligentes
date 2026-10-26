@@ -10,43 +10,43 @@ from agente_comprobantes.dominio import (
     TipoDocumento,
 )
 from agente_comprobantes.excepciones import ErrorRegistroNoEncontrado
-from agente_comprobantes.servicios.estados import issue_messages, resolve_verification_status
+from agente_comprobantes.servicios.estados import mensajes_observaciones, resolver_estado_verificacion
 
 
 class OperacionesFacturas:
-    def register_invoice(
+    def registrar_factura(
         self,
         quotation_code: str,
         image_paths: list[str],
         *,
         confirmed_extraction: ExtraccionDocumento | None = None,
     ) -> ResultadoRegistro:
-        self._repository.initialize()
-        quotation = self._repository.get_quotation(quotation_code)
+        self._repository.inicializar()
+        quotation = self._repository.obtener_cotizacion(quotation_code)
         if quotation is None:
             raise ErrorRegistroNoEncontrado(
                 f"No existe la cotización {quotation_code.strip().upper()}. "
                 "Regístrala antes de procesar la factura."
             )
 
-        prepared = self._images.prepare(image_paths)
+        prepared = self._images.preparar(image_paths)
         extraction = (
             confirmed_extraction
             if confirmed_extraction is not None
-            else self._provider.extract(
+            else self._provider.extraer(
                 prepared,
                 TipoDocumento.INVOICE,
             )
         )
-        validation = self._validator.validate(extraction, TipoDocumento.INVOICE)
-        duplicates = self._duplicates.find_matches(
-            extraction, prepared.source_hash, self._repository.list_document_references()
+        validation = self._validator.validar(extraction, TipoDocumento.INVOICE)
+        duplicates = self._duplicates.buscar_coincidencias(
+            extraction, prepared.source_hash, self._repository.listar_referencias_documentos()
         )
-        reconciliation = self._reconciliation.compare(quotation, extraction)
-        status = resolve_verification_status(validation, duplicates, reconciliation)
+        reconciliation = self._reconciliation.comparar(quotation, extraction)
+        status = resolver_estado_verificacion(validation, duplicates, reconciliation)
         observations = [
             *extraction.observations,
-            *issue_messages(validation, reconciliation),
+            *mensajes_observaciones(validation, reconciliation),
         ]
         if duplicates:
             observations.append(
@@ -68,17 +68,17 @@ class OperacionesFacturas:
             verification_status=status,
             payment_status=EstadoPago.PENDING,
             source_hash=prepared.source_hash,
-            source_files=prepared.source_names,
+            source_files=prepared.nombres_archivos,
             uncertain_fields=extraction.uncertain_fields,
             duplicate_of=[match.document_id for match in duplicates],
             observations=self._unique(observations),
         )
-        self._repository.add_invoice(record, quotation, reconciliation)
+        self._repository.agregar_factura(record, quotation, reconciliation)
         return ResultadoRegistro(
             document_id=invoice_id,
             document_type=TipoDocumento.INVOICE,
             verification_status=status,
-            workbook_path=self._repository.location,
+            workbook_path=self._repository.ubicacion,
             validation=validation,
             duplicates=duplicates,
             reconciliation=reconciliation,

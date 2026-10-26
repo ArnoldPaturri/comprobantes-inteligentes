@@ -36,11 +36,11 @@ class DocumentoPreparado:
     source_hash: str
 
     @property
-    def source_names(self) -> list[str]:
+    def nombres_archivos(self) -> list[str]:
         return [image.source_name for image in self.images]
 
     @property
-    def total_payload_bytes(self) -> int:
+    def total_bytes_carga(self) -> int:
         return sum(image.payload_bytes for image in self.images)
 
 
@@ -48,7 +48,7 @@ class ServicioImagenes:
     def __init__(self, settings: Configuracion) -> None:
         self._settings = settings
 
-    def prepare(self, paths: Iterable[str | Path]) -> DocumentoPreparado:
+    def preparar(self, paths: Iterable[str | Path]) -> DocumentoPreparado:
         image_paths = [Path(path).expanduser().resolve() for path in paths]
         if not image_paths:
             raise ErrorValidacionImagen("Debes proporcionar al menos una imagen.")

@@ -35,11 +35,11 @@ class FakeCohereClient:
 def test_provider_sends_schema_and_all_images(settings, make_image) -> None:
     client = FakeCohereClient()
     provider = ProveedorVisionCohere(settings, client=client)
-    prepared = ServicioImagenes(settings).prepare(
+    prepared = ServicioImagenes(settings).preparar(
         [make_image("one.png"), make_image("two.png", color="gray")]
     )
 
-    result = provider.extract(prepared, TipoDocumento.INVOICE)
+    result = provider.extraer(prepared, TipoDocumento.INVOICE)
 
     assert result.document_number == "F001-1"
     assert client.kwargs["model"] == "command-a-vision-07-2025"

@@ -16,27 +16,27 @@ class RepositorioDocumentos(ABC):
 
     @property
     @abstractmethod
-    def location(self) -> str:
+    def ubicacion(self) -> str:
         raise NotImplementedError
 
     @abstractmethod
-    def initialize(self) -> None:
+    def inicializar(self) -> None:
         raise NotImplementedError
 
     @abstractmethod
-    def get_quotation(self, quotation_code: str) -> RegistroCotizacion | None:
+    def obtener_cotizacion(self, quotation_code: str) -> RegistroCotizacion | None:
         raise NotImplementedError
 
     @abstractmethod
-    def list_quotations(self) -> list[RegistroCotizacion]:
+    def listar_cotizaciones(self) -> list[RegistroCotizacion]:
         raise NotImplementedError
     
     @abstractmethod
-    def add_quotation(self, quotation: RegistroCotizacion) -> None:
+    def agregar_cotizacion(self, quotation: RegistroCotizacion) -> None:
         raise NotImplementedError
 
     @abstractmethod
-    def add_invoice(
+    def agregar_factura(
         self,
         invoice: RegistroFactura,
         quotation: RegistroCotizacion,
@@ -45,33 +45,33 @@ class RepositorioDocumentos(ABC):
         raise NotImplementedError
 
     @abstractmethod
-    def get_invoice(self, invoice_id: str) -> RegistroFactura | None:
+    def obtener_factura(self, invoice_id: str) -> RegistroFactura | None:
         raise NotImplementedError
 
     @abstractmethod
-    def list_invoices(
+    def listar_facturas(
         self,
         quotation_code: str | None = None,
     ) -> list[RegistroFactura]:
         raise NotImplementedError
 
     @abstractmethod
-    def get_verified_payment_total(self, invoice_id: str) -> Decimal:
+    def obtener_total_pagos_verificados(self, invoice_id: str) -> Decimal:
         raise NotImplementedError
 
     @abstractmethod
-    def get_payment(self, payment_id: str) -> RegistroPago | None:
+    def obtener_pago(self, payment_id: str) -> RegistroPago | None:
         raise NotImplementedError
 
     @abstractmethod
-    def list_pending_payments(
+    def listar_pagos_pendientes(
         self,
         quotation_code: str,
     ) -> list[RegistroPago]:
         raise NotImplementedError
 
     @abstractmethod
-    def add_payment(
+    def agregar_pago(
         self,
         payment: RegistroPago,
         invoice: RegistroFactura | None = None,
@@ -80,7 +80,7 @@ class RepositorioDocumentos(ABC):
         raise NotImplementedError
 
     @abstractmethod
-    def link_payment(
+    def vincular_pago(
         self,
         payment: RegistroPago,
         invoice: RegistroFactura,
@@ -89,9 +89,9 @@ class RepositorioDocumentos(ABC):
         raise NotImplementedError
 
     @abstractmethod
-    def list_document_references(self) -> list[ReferenciaDocumento]:
+    def listar_referencias_documentos(self) -> list[ReferenciaDocumento]:
         raise NotImplementedError
 
     @abstractmethod
-    def read_sheet(self, sheet_name: str) -> list[dict[str, object]]:
+    def leer_hoja(self, sheet_name: str) -> list[dict[str, object]]:
         raise NotImplementedError

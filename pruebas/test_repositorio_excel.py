@@ -16,7 +16,7 @@ from agente_comprobantes.repositorios.repositorio_excel import RepositorioExcel
 
 
 def test_repository_creates_four_sheets_and_roundtrips(settings) -> None:
-    repository = RepositorioExcel(settings.resolved_workbook_path())
+    repository = RepositorioExcel(settings.ruta_archivo_excel())
     quotation = RegistroCotizacion(
         quotation_code="cot-001",
         provider="Proveedor SAC",
@@ -30,21 +30,21 @@ def test_repository_creates_four_sheets_and_roundtrips(settings) -> None:
         source_files=["cot.png"],
     )
 
-    repository.add_quotation(quotation)
-    loaded = repository.get_quotation("COT-001")
+    repository.agregar_cotizacion(quotation)
+    loaded = repository.obtener_cotizacion("COT-001")
 
     assert loaded is not None
     assert loaded.quotation_code == "COT-001"
     assert loaded.quoted_amount == Decimal("100")
-    assert repository.read_sheet("FACTURAS") == []
-    assert repository.read_sheet("PAGOS") == []
+    assert repository.leer_hoja("FACTURAS") == []
+    assert repository.leer_hoja("PAGOS") == []
 
     with pytest.raises(ErrorCodigoDuplicado):
-        repository.add_quotation(quotation)
+        repository.agregar_cotizacion(quotation)
 
 
 def test_add_invoice_updates_comparison(settings) -> None:
-    repository = RepositorioExcel(settings.resolved_workbook_path())
+    repository = RepositorioExcel(settings.ruta_archivo_excel())
     quotation = RegistroCotizacion(
         quotation_code="COT-002",
         provider="Proveedor SAC",
@@ -55,7 +55,7 @@ def test_add_invoice_updates_comparison(settings) -> None:
         source_hash="a" * 64,
         source_files=["q.png"],
     )
-    repository.add_quotation(quotation)
+    repository.agregar_cotizacion(quotation)
     invoice = RegistroFactura(
         invoice_id="FAC-1",
         quotation_code="COT-002",
@@ -78,23 +78,23 @@ def test_add_invoice_updates_comparison(settings) -> None:
         diagnosis=Diagnostico.ABOVE,
     )
 
-    repository.add_invoice(invoice, quotation, reconciliation)
+    repository.agregar_factura(invoice, quotation, reconciliation)
 
-    comparison = repository.read_sheet("COMPARATIVA")
+    comparison = repository.leer_hoja("COMPARATIVA")
     assert comparison[0]["Cód. Cotización"] == "COT-002"
     assert comparison[0]["Diferencia ($)"] == 5
-    assert repository.get_quotation("COT-002").status.value == "FACTURADA"
+    assert repository.obtener_cotizacion("COT-002").status.value == "FACTURADA"
 
 def test_excel_value_removes_illegal_characters() -> None:
     assert (
-        RepositorioExcel._excel_value(
+        RepositorioExcel._valor_excel(
             "ACME\x1d S.A.C."
         )
         == "ACME S.A.C."
     )
 
     assert (
-        RepositorioExcel._excel_value(
+        RepositorioExcel._valor_excel(
             ["UNO\x00", "DOS"]
         )
         == "UNO | DOS"

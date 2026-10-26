@@ -4,7 +4,7 @@ import streamlit as st
 
 from agente_comprobantes.agente import AgenteComprobantes
 from agente_comprobantes.configuracion import Configuracion
-from agente_comprobantes.fabrica import build_agent, build_repository
+from agente_comprobantes.fabrica import crear_agente, crear_repositorio
 from agente_comprobantes.repositorios import RepositorioExcel
 
 _CONTEXT_KEY = "_invoice_agent_context"
@@ -17,15 +17,15 @@ class ContextoAplicacion:
     repository: RepositorioExcel
 
 
-def get_app_context() -> ContextoAplicacion:
+def obtener_contexto_aplicacion() -> ContextoAplicacion:
     if _CONTEXT_KEY not in st.session_state:
         settings = Configuracion()
-        repository = build_repository(settings)
-        repository.initialize()
+        repository = crear_repositorio(settings)
+        repository.inicializar()
 
         st.session_state[_CONTEXT_KEY] = ContextoAplicacion(
             settings=settings,
-            agent=build_agent(
+            agent=crear_agente(
                 settings,
                 repository=repository,
             ),

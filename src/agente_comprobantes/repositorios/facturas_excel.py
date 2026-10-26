@@ -15,15 +15,15 @@ from agente_comprobantes.repositorios.esquemas_excel import COMPARISON_HEADERS, 
 
 
 class OperacionesFacturasExcel:
-    def add_invoice(
+    def agregar_factura(
         self,
         invoice: RegistroFactura,
         quotation: RegistroCotizacion,
         reconciliation: ResultadoConciliacion,
     ) -> None:
-        self.initialize()
+        self.inicializar()
         workbook = load_workbook(self._path)
-        self._append_mapping(
+        self._agregar_mapeo(
             workbook["FACTURAS"],
             INVOICE_HEADERS,
             {
@@ -46,7 +46,7 @@ class OperacionesFacturasExcel:
                 "Acción / Observaciones": invoice.observations,
             },
         )
-        self._append_mapping(
+        self._agregar_mapeo(
             workbook["COMPARATIVA"],
             COMPARISON_HEADERS,
             {
@@ -65,27 +65,27 @@ class OperacionesFacturasExcel:
                 "Acción / Observaciones": invoice.observations,
             },
         )
-        self._update_quotation_status(
+        self._actualizar_estado_cotizacion(
             workbook["COTIZACIONES"], invoice.quotation_code, EstadoCotizacion.INVOICED
         )
-        self._save_atomic(workbook)
+        self._guardar_atomico(workbook)
 
-    def get_invoice(self, invoice_id: str) -> RegistroFactura | None:
+    def obtener_factura(self, invoice_id: str) -> RegistroFactura | None:
         normalized = invoice_id.strip().upper()
-        for row in self.read_sheet("FACTURAS"):
+        for row in self.leer_hoja("FACTURAS"):
             if str(row["ID Factura"]).strip().upper() == normalized:
-                return self._invoice_from_row(row)
+                return self._factura_desde_fila(row)
         return None
 
-    def list_invoices(
+    def listar_facturas(
         self,
         quotation_code: str | None = None,
     ) -> list[RegistroFactura]:
-        self.initialize()
+        self.inicializar()
 
         invoices = [
-            self._invoice_from_row(row)
-            for row in self.read_sheet("FACTURAS")
+            self._factura_desde_fila(row)
+            for row in self.leer_hoja("FACTURAS")
         ]
 
         if quotation_code is not None:
@@ -104,10 +104,10 @@ class OperacionesFacturasExcel:
             reverse=True,
         )
 
-    def get_verified_payment_total(self, invoice_id: str) -> Decimal:
+    def obtener_total_pagos_verificados(self, invoice_id: str) -> Decimal:
         normalized = invoice_id.strip().upper()
         total = Decimal("0")
-        for row in self.read_sheet("PAGOS"):
+        for row in self.leer_hoja("PAGOS"):
             if str(row["ID Factura"]).strip().upper() != normalized:
                 continue
             if str(row["Estado Verificación"]) != EstadoVerificacion.VERIFIED.value:

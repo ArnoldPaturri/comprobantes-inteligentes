@@ -27,10 +27,10 @@ class RepositorioExcel(
         self._path = Path(path).expanduser().resolve()
 
     @property
-    def location(self) -> str:
+    def ubicacion(self) -> str:
         return str(self._path)
 
-    def initialize(self) -> None:
+    def inicializar(self) -> None:
         self._path.parent.mkdir(parents=True, exist_ok=True)
         if self._path.exists():
             workbook = load_workbook(self._path)
@@ -38,12 +38,12 @@ class RepositorioExcel(
             for name, headers in SHEETS.items():
                 if name not in workbook.sheetnames:
                     sheet = workbook.create_sheet(name)
-                    self._initialize_sheet(sheet, headers)
+                    self._inicializar_hoja(sheet, headers)
                     changed = True
                 else:
-                    changed = self._ensure_headers(workbook[name], headers) or changed
+                    changed = self._verificar_encabezados(workbook[name], headers) or changed
             if changed:
-                self._save_atomic(workbook)
+                self._guardar_atomico(workbook)
             else:
                 workbook.close()
             return
@@ -53,5 +53,5 @@ class RepositorioExcel(
         workbook.remove(default)
         for name, headers in SHEETS.items():
             sheet = workbook.create_sheet(name)
-            self._initialize_sheet(sheet, headers)
-        self._save_atomic(workbook)
+            self._inicializar_hoja(sheet, headers)
+        self._guardar_atomico(workbook)

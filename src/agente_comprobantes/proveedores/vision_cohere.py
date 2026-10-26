@@ -11,9 +11,9 @@ from pydantic import ValidationError
 from agente_comprobantes.configuracion import Configuracion
 from agente_comprobantes.dominio import ExtraccionDocumento, TipoDocumento
 from agente_comprobantes.excepciones import ErrorExtraccion
-from agente_comprobantes.prompts import EXTRACTION_SCHEMA, build_extraction_prompt
+from agente_comprobantes.prompts import EXTRACTION_SCHEMA, crear_prompt_extraccion
 from agente_comprobantes.proveedores.base import ProveedorVision
-from agente_comprobantes.proveedores.parseo import parse_json_object
+from agente_comprobantes.proveedores.parseo import parsear_objeto_json
 from agente_comprobantes.servicios.imagenes import DocumentoPreparado
 
 
@@ -32,12 +32,12 @@ class ProveedorVisionCohere(ProveedorVision):
                     "No está instalado el SDK de Cohere. Ejecuta pip install -r requirements.txt."
                 ) from exc
             client = cohere.ClientV2(
-                api_key=settings.require_cohere_api_key(),
+                api_key=settings.exigir_clave_cohere(),
                 timeout=settings.request_timeout_seconds,
             )
         self._client = client
 
-    def extract(
+    def extraer(
         self,
         document: DocumentoPreparado,
         expected_type: TipoDocumento,
@@ -45,7 +45,7 @@ class ProveedorVisionCohere(ProveedorVision):
         content: list[dict[str, Any]] = [
             {
                 "type": "text",
-                "text": build_extraction_prompt(expected_type, len(document.images)),
+                "text": crear_prompt_extraccion(expected_type, len(document.images)),
             }
         ]
         content.extend(
@@ -71,7 +71,7 @@ class ProveedorVisionCohere(ProveedorVision):
                     max_tokens=1800,
                 )
                 raw_text = self._response_text(response)
-                payload = parse_json_object(raw_text)
+                payload = parsear_objeto_json(raw_text)
                 return ExtraccionDocumento.model_validate(payload)
             except json.JSONDecodeError as exc:
                 diagnostic_path = self._save_diagnostic(raw_text, exc)
@@ -113,7 +113,7 @@ class ProveedorVisionCohere(ProveedorVision):
 
     @staticmethod
     def _save_diagnostic(self, raw_text: str | None, exc: Exception) -> Path:
-        directory = self._settings.resolved_diagnostics_dir()
+        directory = self._settings.ruta_diagnosticos()
         directory.mkdir(parents=True, exist_ok=True)
         timestamp = datetime.now().strftime("%Y%m%d_%H%M%S_%f")
         path = directory / f"cohere_failure_{timestamp}.json"

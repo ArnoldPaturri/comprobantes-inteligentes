@@ -9,11 +9,11 @@ from agente_comprobantes.dominio import (
     TipoDocumento,
 )
 from agente_comprobantes.excepciones import ErrorAgenteComprobantes
-from agente_comprobantes.interfaz.cargas import save_uploaded_files
+from agente_comprobantes.interfaz.cargas import guardar_archivos_cargados
 from agente_comprobantes.interfaz.componentes.editor_extraccion import (
-    render_extraction_editor,
+    mostrar_editor_extraccion,
 )
-from agente_comprobantes.interfaz.contexto import get_app_context
+from agente_comprobantes.interfaz.contexto import obtener_contexto_aplicacion
 
 _PREVIEW_KEY = "_quotation_preview"
 _PATHS_KEY = "_quotation_paths"
@@ -21,13 +21,13 @@ _CODE_KEY = "_quotation_confirmed_code"
 _RESULT_KEY = "_quotation_result"
 
 
-def _clear_preview() -> None:
+def _limpiar_previsualizacion() -> None:
     st.session_state.pop(_PREVIEW_KEY, None)
     st.session_state.pop(_PATHS_KEY, None)
     st.session_state.pop(_CODE_KEY, None)
 
 
-def render_quotation() -> None:
+def mostrar_cotizacion() -> None:
     st.title("Registrar cotización")
     st.caption(
         "Sube una o varias imágenes pertenecientes a "
@@ -97,16 +97,16 @@ def render_quotation() -> None:
                 return
 
             try:
-                image_paths = save_uploaded_files(
+                image_paths = guardar_archivos_cargados(
                     uploaded_files
                 )
-                context = get_app_context()
+                context = obtener_contexto_aplicacion()
 
                 with st.spinner(
                     "Analizando la cotización con Cohere..."
                 ):
                     extraction = (
-                        context.agent.preview_extraction(
+                        context.agent.previsualizar_extraccion(
                             TipoDocumento.QUOTATION,
                             image_paths,
                         )
@@ -142,10 +142,10 @@ def render_quotation() -> None:
         "Descartar análisis y comenzar nuevamente",
         use_container_width=True,
     ):
-        _clear_preview()
+        _limpiar_previsualizacion()
         st.rerun()
 
-    confirmed_extraction = render_extraction_editor(
+    confirmed_extraction = mostrar_editor_extraccion(
         preview,
         key_prefix="quotation",
     )
@@ -154,10 +154,10 @@ def render_quotation() -> None:
         return
 
     try:
-        context = get_app_context()
+        context = obtener_contexto_aplicacion()
 
         with st.spinner("Registrando cotización..."):
-            result = context.agent.register_quotation(
+            result = context.agent.registrar_cotizacion(
                 confirmed_code,
                 image_paths,
                 confirmed_extraction=confirmed_extraction,
@@ -169,5 +169,5 @@ def render_quotation() -> None:
     st.session_state[_RESULT_KEY] = result.model_dump(
         mode="json"
     )
-    _clear_preview()
+    _limpiar_previsualizacion()
     st.rerun()

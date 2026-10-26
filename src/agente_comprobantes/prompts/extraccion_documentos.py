@@ -49,7 +49,7 @@ EXTRACTION_SCHEMA = {
 }
 
 
-def build_extraction_prompt(
+def crear_prompt_extraccion(
     expected_type: TipoDocumento,
     page_count: int,
 ) -> str:

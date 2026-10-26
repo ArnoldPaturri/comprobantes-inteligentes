@@ -1,7 +1,7 @@
 import streamlit as st
 
 
-def render_home() -> None:
+def mostrar_inicio() -> None:
     st.title("Agente de comprobantes")
     st.caption(
         "Extracción, verificación y conciliación documental "

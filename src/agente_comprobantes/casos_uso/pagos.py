@@ -11,11 +11,11 @@ from agente_comprobantes.dominio import (
     TipoDocumento,
 )
 from agente_comprobantes.excepciones import ErrorEstadoRegistro, ErrorRegistroNoEncontrado
-from agente_comprobantes.servicios.estados import issue_messages, resolve_verification_status
+from agente_comprobantes.servicios.estados import mensajes_observaciones, resolver_estado_verificacion
 
 
 class OperacionesPagos:
-    def register_payment(
+    def registrar_pago(
         self,
         quotation_code: str,
         image_paths: list[str],
@@ -23,9 +23,9 @@ class OperacionesPagos:
         *,
         confirmed_extraction: ExtraccionDocumento | None = None,
     ) -> ResultadoRegistro:
-        self._repository.initialize()
+        self._repository.inicializar()
 
-        quotation = self._repository.get_quotation(quotation_code)
+        quotation = self._repository.obtener_cotizacion(quotation_code)
         if quotation is None:
             raise ErrorRegistroNoEncontrado(
                 f"No existe la cotización "
@@ -36,7 +36,7 @@ class OperacionesPagos:
         invoice = None
 
         if invoice_id:
-            invoice = self._repository.get_invoice(invoice_id)
+            invoice = self._repository.obtener_factura(invoice_id)
 
             if invoice is None:
                 raise ErrorRegistroNoEncontrado(
@@ -59,34 +59,34 @@ class OperacionesPagos:
                     "recibir pagos."
                 )
 
-        prepared = self._images.prepare(image_paths)
+        prepared = self._images.preparar(image_paths)
         extraction = (
             confirmed_extraction
             if confirmed_extraction is not None
-            else self._provider.extract(
+            else self._provider.extraer(
                 prepared,
                 TipoDocumento.PAYMENT_RECEIPT,
             )
         )
-        validation = self._validator.validate_payment(extraction)
+        validation = self._validator.validar_pago(extraction)
 
-        duplicates = self._duplicates.find_matches(
+        duplicates = self._duplicates.buscar_coincidencias(
             extraction,
             prepared.source_hash,
-            self._repository.list_document_references(),
+            self._repository.listar_referencias_documentos(),
         )
 
         payment_reconciliation = None
 
         if invoice is not None:
             previously_paid = (
-                self._repository.get_verified_payment_total(
+                self._repository.obtener_total_pagos_verificados(
                     invoice.invoice_id
                 )
             )
 
             payment_reconciliation = (
-                self._payment_reconciliation.compare(
+                self._payment_reconciliation.comparar(
                     invoice,
                     extraction,
                     previously_paid,
@@ -94,7 +94,7 @@ class OperacionesPagos:
                 )
             )
 
-            status = resolve_verification_status(
+            status = resolver_estado_verificacion(
                 validation,
                 duplicates,
                 payment_reconciliation,
@@ -105,7 +105,7 @@ class OperacionesPagos:
                 and payment_reconciliation.applied
             ):
                 payment_reconciliation = (
-                    self._payment_reconciliation.reject_application(
+                    self._payment_reconciliation.rechazar_aplicacion(
                         payment_reconciliation,
                         invoice.payment_status,
                     )
@@ -117,7 +117,7 @@ class OperacionesPagos:
                 else EstadoVinculacionPago.REVIEW
             )
         else:
-            status = resolve_verification_status(
+            status = resolver_estado_verificacion(
                 validation,
                 duplicates,
             )
@@ -130,7 +130,7 @@ class OperacionesPagos:
 
         observations = [
             *extraction.observations,
-            *issue_messages(
+            *mensajes_observaciones(
                 validation,
                 payment_reconciliation,
             ),
@@ -174,7 +174,7 @@ class OperacionesPagos:
             verification_status=status,
             reconciliation_status=reconciliation_status,
             source_hash=prepared.source_hash,
-            source_files=prepared.source_names,
+            source_files=prepared.nombres_archivos,
             duplicate_of=[
                 match.document_id
                 for match in duplicates
@@ -182,7 +182,7 @@ class OperacionesPagos:
             observations=self._unique(observations),
         )
 
-        self._repository.add_payment(
+        self._repository.agregar_pago(
             record,
             invoice,
             payment_reconciliation,
@@ -192,7 +192,7 @@ class OperacionesPagos:
             document_id=payment_id,
             document_type=extraction.document_type,
             verification_status=status,
-            workbook_path=self._repository.location,
+            workbook_path=self._repository.ubicacion,
             validation=validation,
             duplicates=duplicates,
             payment_reconciliation=payment_reconciliation,

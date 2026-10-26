@@ -14,7 +14,7 @@ def _as_text(value: Any) -> str:
     return "" if value is None else str(value)
 
 
-def render_extraction_editor(
+def mostrar_editor_extraccion(
     extraction: ExtraccionDocumento,
     *,
     key_prefix: str,

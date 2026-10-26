@@ -7,33 +7,33 @@ from agente_comprobantes.dominio import (
     ResultadoRegistro,
     TipoDocumento,
 )
-from agente_comprobantes.servicios.estados import issue_messages, resolve_verification_status
+from agente_comprobantes.servicios.estados import mensajes_observaciones, resolver_estado_verificacion
 
 
 class OperacionesCotizaciones:
-    def register_quotation(
+    def registrar_cotizacion(
         self,
         quotation_code: str,
         image_paths: list[str],
         *,
         confirmed_extraction: ExtraccionDocumento | None = None,
     ) -> ResultadoRegistro:
-        self._repository.initialize()
-        prepared = self._images.prepare(image_paths)
+        self._repository.inicializar()
+        prepared = self._images.preparar(image_paths)
         extraction = (
             confirmed_extraction
             if confirmed_extraction is not None
-            else self._provider.extract(
+            else self._provider.extraer(
                 prepared,
                 TipoDocumento.QUOTATION,
             )
         )
-        validation = self._validator.validate(extraction, TipoDocumento.QUOTATION)
-        duplicates = self._duplicates.find_matches(
-            extraction, prepared.source_hash, self._repository.list_document_references()
+        validation = self._validator.validar(extraction, TipoDocumento.QUOTATION)
+        duplicates = self._duplicates.buscar_coincidencias(
+            extraction, prepared.source_hash, self._repository.listar_referencias_documentos()
         )
-        status = resolve_verification_status(validation, duplicates)
-        observations = [*extraction.observations, *issue_messages(validation)]
+        status = resolver_estado_verificacion(validation, duplicates)
+        observations = [*extraction.observations, *mensajes_observaciones(validation)]
         if duplicates:
             observations.append(
                 "Posible coincidencia con: "
@@ -51,16 +51,16 @@ class OperacionesCotizaciones:
             status=EstadoCotizacion.WAITING_INVOICE,
             verification_status=status,
             source_hash=prepared.source_hash,
-            source_files=prepared.source_names,
+            source_files=prepared.nombres_archivos,
             uncertain_fields=extraction.uncertain_fields,
             observations=self._unique(observations),
         )
-        self._repository.add_quotation(record)
+        self._repository.agregar_cotizacion(record)
         return ResultadoRegistro(
             document_id=record.quotation_code,
             document_type=TipoDocumento.QUOTATION,
             verification_status=status,
-            workbook_path=self._repository.location,
+            workbook_path=self._repository.ubicacion,
             validation=validation,
             duplicates=duplicates,
         )

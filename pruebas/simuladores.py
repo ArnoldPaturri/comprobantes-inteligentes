@@ -10,7 +10,7 @@ class ProveedorVisionSimulado(ProveedorVision):
         self.responses = deque(responses)
         self.calls: list[tuple[DocumentoPreparado, TipoDocumento]] = []
 
-    def extract(
+    def extraer(
         self,
         document: DocumentoPreparado,
         expected_type: TipoDocumento,

@@ -11,9 +11,9 @@ from pydantic import ValidationError
 from agente_comprobantes.configuracion import Configuracion
 from agente_comprobantes.dominio import ExtraccionDocumento, TipoDocumento
 from agente_comprobantes.excepciones import ErrorExtraccion
-from agente_comprobantes.prompts import EXTRACTION_SCHEMA, build_extraction_prompt
+from agente_comprobantes.prompts import EXTRACTION_SCHEMA, crear_prompt_extraccion
 from agente_comprobantes.proveedores.base import ProveedorVision
-from agente_comprobantes.proveedores.parseo import parse_json_object
+from agente_comprobantes.proveedores.parseo import parsear_objeto_json
 from agente_comprobantes.servicios.imagenes import DocumentoPreparado
 
 MAX_GROQ_IMAGES = 3
@@ -60,14 +60,14 @@ class ProveedorVisionGroq(ProveedorVision):
                 ) from exc
 
             client = Groq(
-                api_key=settings.require_groq_api_key(),
+                api_key=settings.exigir_clave_groq(),
                 timeout=settings.groq_timeout_seconds,
                 max_retries=0,
             )
 
         self._client = client
 
-    def extract(
+    def extraer(
         self,
         document: DocumentoPreparado,
         expected_type: TipoDocumento,
@@ -81,7 +81,7 @@ class ProveedorVisionGroq(ProveedorVision):
         content: list[dict[str, Any]] = [
             {
                 "type": "text",
-                "text": build_extraction_prompt(
+                "text": crear_prompt_extraccion(
                     expected_type,
                     len(document.images),
                 ),
@@ -124,7 +124,7 @@ class ProveedorVisionGroq(ProveedorVision):
             )
 
             raw_text = self._response_text(response)
-            payload = parse_json_object(raw_text)
+            payload = parsear_objeto_json(raw_text)
 
             return ExtraccionDocumento.model_validate(payload)
 
@@ -180,7 +180,7 @@ class ProveedorVisionGroq(ProveedorVision):
         raw_text: str | None,
         exc: Exception,
     ) -> Path:
-        directory = self._settings.resolved_diagnostics_dir()
+        directory = self._settings.ruta_diagnosticos()
         directory.mkdir(parents=True, exist_ok=True)
 
         timestamp = datetime.now().strftime("%Y%m%d_%H%M%S_%f")
@@ -215,9 +215,9 @@ class ProveedorVisionGroq(ProveedorVision):
         details: list[str] = []
 
         for error in exc.errors(include_url=False)[:3]:
-            location = error.get("loc", ())
+            ubicacion = error.get("loc", ())
             field = ".".join(
-                str(part) for part in location
+                str(part) for part in ubicacion
             ) or "respuesta"
 
             details.append(

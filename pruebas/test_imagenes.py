@@ -10,9 +10,9 @@ def test_prepares_multiple_images_as_one_document(settings, make_image) -> None:
     first = make_image("page-1.png", text="Página 1")
     second = make_image("page-2.png", color="lightgray", text="Página 2")
 
-    result = ServicioImagenes(settings).prepare([first, second])
+    result = ServicioImagenes(settings).preparar([first, second])
 
-    assert result.source_names == ["page-1.png", "page-2.png"]
+    assert result.nombres_archivos == ["page-1.png", "page-2.png"]
     assert len(result.images) == 2
     assert len(result.source_hash) == 64
     first_image = result.images[0]
@@ -25,14 +25,14 @@ def test_prepares_multiple_images_as_one_document(settings, make_image) -> None:
 
 def test_rejects_missing_image(settings) -> None:
     with pytest.raises(ErrorValidacionImagen, match="No existe"):
-        ServicioImagenes(settings).prepare(["does-not-exist.png"])
+        ServicioImagenes(settings).preparar(["does-not-exist.png"])
 
 
 def test_rejects_more_than_twenty_images(settings, make_image) -> None:
     images = [make_image(name=f"{index}.png") for index in range(21)]
 
     with pytest.raises(ErrorValidacionImagen, match="Máximo 20"):
-        ServicioImagenes(settings).prepare(images)
+        ServicioImagenes(settings).preparar(images)
 
 
 def test_keeps_jpeg_output_for_jpeg_source(settings, make_image) -> None:
@@ -41,7 +41,7 @@ def test_keeps_jpeg_output_for_jpeg_source(settings, make_image) -> None:
         text="Monto: 30 117.62",
     )
 
-    result = ServicioImagenes(settings).prepare([source])
+    result = ServicioImagenes(settings).preparar([source])
 
     prepared_image = result.images[0]
 

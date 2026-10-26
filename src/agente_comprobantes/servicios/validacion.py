@@ -35,14 +35,14 @@ class ServicioValidacion:
     def __init__(self, settings: Configuracion) -> None:
         self._settings = settings
 
-    def validate(
+    def validar(
         self,
         extraction: ExtraccionDocumento,
         expected_type: TipoDocumento,
     ) -> InformeValidacion:
         return self._validate(extraction, expected_type, {expected_type})
 
-    def validate_payment(self, extraction: ExtraccionDocumento) -> InformeValidacion:
+    def validar_pago(self, extraction: ExtraccionDocumento) -> InformeValidacion:
         """Acepta las variantes soportadas de un comprobante de pago."""
 
         return self._validate(

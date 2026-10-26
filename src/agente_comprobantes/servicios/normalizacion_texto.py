@@ -14,7 +14,7 @@ LEGAL_SUFFIXES = {
 }
 
 
-def normalize_text(value: str | None) -> str:
+def normalizar_texto(value: str | None) -> str:
     if not value:
         return ""
     decomposed = unicodedata.normalize("NFKD", value.upper())
@@ -24,8 +24,8 @@ def normalize_text(value: str | None) -> str:
     return " ".join(re.sub(r"[^A-Z0-9]+", " ", ascii_text).split())
 
 
-def normalize_supplier(value: str | None) -> str:
-    tokens = [token for token in normalize_text(value).split() if token not in LEGAL_SUFFIXES]
+def normalizar_proveedor(value: str | None) -> str:
+    tokens = [token for token in normalizar_texto(value).split() if token not in LEGAL_SUFFIXES]
     collapsed: list[str] = []
     initials = ""
     for token in tokens:

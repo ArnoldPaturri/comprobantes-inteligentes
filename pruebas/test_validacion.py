@@ -18,7 +18,7 @@ def test_complete_invoice_is_valid(settings) -> None:
         confidence=0.95,
     )
 
-    report = ServicioValidacion(settings).validate(extraction, TipoDocumento.INVOICE)
+    report = ServicioValidacion(settings).validar(extraction, TipoDocumento.INVOICE)
 
     assert report.issues == []
     assert not report.has_errors
@@ -31,7 +31,7 @@ def test_missing_amount_and_wrong_type_are_errors(settings) -> None:
         uncertain_fields=["total_amount"],
     )
 
-    report = ServicioValidacion(settings).validate(extraction, TipoDocumento.INVOICE)
+    report = ServicioValidacion(settings).validar(extraction, TipoDocumento.INVOICE)
 
     assert report.has_errors
     assert any(issue.code == "DOCUMENT_TYPE_MISMATCH" for issue in report.issues)
@@ -51,7 +51,7 @@ def test_yape_is_accepted_as_payment_document(settings) -> None:
         confidence=0.95,
     )
 
-    report = ServicioValidacion(settings).validate_payment(extraction)
+    report = ServicioValidacion(settings).validar_pago(extraction)
 
     assert report.issues == []
 
@@ -67,6 +67,6 @@ def test_invoice_is_rejected_as_payment_document(settings) -> None:
         confidence=0.95,
     )
 
-    report = ServicioValidacion(settings).validate_payment(extraction)
+    report = ServicioValidacion(settings).validar_pago(extraction)
 
     assert any(issue.code == "DOCUMENT_TYPE_MISMATCH" for issue in report.issues)

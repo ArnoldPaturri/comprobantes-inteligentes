@@ -27,7 +27,7 @@ class ServicioConciliacionPagos:
 
         self._min_payment_ratio = min_payment_ratio
 
-    def compare(
+    def comparar(
         self,
         invoice: RegistroFactura,
         payment: ExtraccionDocumento,
@@ -153,7 +153,7 @@ class ServicioConciliacionPagos:
         )
 
     @staticmethod
-    def reject_application(
+    def rechazar_aplicacion(
         reconciliation: ResultadoConciliacionPago,
         current_status: EstadoPago,
     ) -> ResultadoConciliacionPago:

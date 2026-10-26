@@ -4,7 +4,7 @@ import json
 from typing import Any
 
 
-def parse_json_object(raw_text: str) -> dict[str, Any]:
+def parsear_objeto_json(raw_text: str) -> dict[str, Any]:
     text = raw_text.strip()
 
     if text.startswith("```"):

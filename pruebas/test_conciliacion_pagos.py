@@ -38,7 +38,7 @@ def _payment(amount: str, currency: Moneda = Moneda.PEN) -> ExtraccionDocumento:
 
 
 def test_exact_payment_marks_invoice_as_paid() -> None:
-    result = ServicioConciliacionPagos().compare(_invoice(), _payment("100"))
+    result = ServicioConciliacionPagos().comparar(_invoice(), _payment("100"))
 
     assert result.accumulated_paid_amount == Decimal("100.00")
     assert result.remaining_amount == Decimal("0.00")
@@ -48,8 +48,8 @@ def test_exact_payment_marks_invoice_as_paid() -> None:
 
 def test_multiple_payments_can_complete_invoice() -> None:
     service = ServicioConciliacionPagos()
-    partial = service.compare(_invoice(), _payment("40"))
-    completed = service.compare(
+    partial = service.comparar(_invoice(), _payment("40"))
+    completed = service.comparar(
         _invoice(),
         _payment("60"),
         previously_paid=partial.accumulated_paid_amount,
@@ -61,7 +61,7 @@ def test_multiple_payments_can_complete_invoice() -> None:
 
 
 def test_overpayment_requires_review() -> None:
-    result = ServicioConciliacionPagos().compare(_invoice(), _payment("101"))
+    result = ServicioConciliacionPagos().comparar(_invoice(), _payment("101"))
 
     assert result.resulting_payment_status == EstadoPago.REVIEW
     assert result.issues[0].code == "PAYMENT_EXCEEDS_INVOICE"
@@ -69,7 +69,7 @@ def test_overpayment_requires_review() -> None:
 
 
 def test_currency_mismatch_is_an_error() -> None:
-    result = ServicioConciliacionPagos().compare(
+    result = ServicioConciliacionPagos().comparar(
         _invoice(currency=Moneda.PEN),
         _payment("100", currency=Moneda.USD),
     )
@@ -80,7 +80,7 @@ def test_currency_mismatch_is_an_error() -> None:
     )
 
 def test_suspiciously_low_payment_generates_warning() -> None:
-    result = ServicioConciliacionPagos().compare(
+    result = ServicioConciliacionPagos().comparar(
         _invoice(amount="30117.62"),
         _payment("117.62"),
     )
@@ -102,7 +102,7 @@ def test_payment_at_minimum_ratio_is_not_suspicious() -> None:
         min_payment_ratio=Decimal("0.10"),
     )
 
-    result = service.compare(
+    result = service.comparar(
         _invoice(amount="100"),
         _payment("10"),
     )

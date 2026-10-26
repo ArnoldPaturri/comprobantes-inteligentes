@@ -13,23 +13,23 @@ from agente_comprobantes.repositorios.esquemas_excel import PAYMENT_HEADERS
 
 
 class OperacionesPagosExcel:
-    def get_payment(self, payment_id: str) -> RegistroPago | None:
+    def obtener_pago(self, payment_id: str) -> RegistroPago | None:
         normalized = payment_id.strip().upper()
 
-        for row in self.read_sheet("PAGOS"):
+        for row in self.leer_hoja("PAGOS"):
             if str(row["ID Pago"]).strip().upper() == normalized:
-                return self._payment_from_row(row)
+                return self._pago_desde_fila(row)
 
         return None
 
-    def list_pending_payments(
+    def listar_pagos_pendientes(
         self,
         quotation_code: str,
     ) -> list[RegistroPago]:
         normalized = quotation_code.strip().upper()
         pending: list[RegistroPago] = []
 
-        for row in self.read_sheet("PAGOS"):
+        for row in self.leer_hoja("PAGOS"):
             row_quotation = str(
                 row["Cód. Cotización"] or ""
             ).strip().upper()
@@ -43,19 +43,19 @@ class OperacionesPagosExcel:
             ):
                 continue
 
-            pending.append(self._payment_from_row(row))
+            pending.append(self._pago_desde_fila(row))
 
         return pending
 
-    def add_payment(
+    def agregar_pago(
         self,
         payment: RegistroPago,
         invoice: RegistroFactura | None = None,
         reconciliation: ResultadoConciliacionPago | None = None,
     ) -> None:
-        self.initialize()
+        self.inicializar()
         workbook = load_workbook(self._path)
-        self._append_mapping(
+        self._agregar_mapeo(
             workbook["PAGOS"],
             PAYMENT_HEADERS,
             {
@@ -83,26 +83,26 @@ class OperacionesPagosExcel:
             and reconciliation is not None
             and reconciliation.applied
         ):
-            self._update_invoice_payment_status(
+            self._actualizar_estado_pago_factura(
                 workbook["FACTURAS"],
                 invoice.invoice_id,
                 reconciliation.resulting_payment_status,
             )
-            self._update_comparison_payment_status(
+            self._actualizar_estado_pago_comparativa(
                 workbook["COMPARATIVA"],
                 invoice.quotation_code,
                 invoice.invoice_number,
                 reconciliation.resulting_payment_status,
             )
-        self._save_atomic(workbook)
+        self._guardar_atomico(workbook)
 
-    def link_payment(
+    def vincular_pago(
         self,
         payment: RegistroPago,
         invoice: RegistroFactura,
         reconciliation: ResultadoConciliacionPago,
     ) -> None:
-        self.initialize()
+        self.inicializar()
         workbook = load_workbook(self._path)
         sheet = workbook["PAGOS"]
 
@@ -136,7 +136,7 @@ class OperacionesPagosExcel:
             sheet.cell(
                 row=row_number,
                 column=headers["Acción / Observaciones"],
-            ).value = self._excel_value(payment.observations)
+            ).value = self._valor_excel(payment.observations)
 
             break
         else:
@@ -146,17 +146,17 @@ class OperacionesPagosExcel:
             )
 
         if reconciliation.applied:
-            self._update_invoice_payment_status(
+            self._actualizar_estado_pago_factura(
                 workbook["FACTURAS"],
                 invoice.invoice_id,
                 reconciliation.resulting_payment_status,
             )
 
-            self._update_comparison_payment_status(
+            self._actualizar_estado_pago_comparativa(
                 workbook["COMPARATIVA"],
                 invoice.quotation_code,
                 invoice.invoice_number,
                 reconciliation.resulting_payment_status,
             )
 
-        self._save_atomic(workbook)
+        self._guardar_atomico(workbook)

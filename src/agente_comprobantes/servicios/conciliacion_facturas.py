@@ -10,7 +10,7 @@ from agente_comprobantes.dominio import (
     ResultadoConciliacion,
     Severidad,
 )
-from agente_comprobantes.servicios.normalizacion_texto import normalize_supplier
+from agente_comprobantes.servicios.normalizacion_texto import normalizar_proveedor
 
 MONEY_PLACES = Decimal("0.01")
 PERCENT_PLACES = Decimal("0.0001")
@@ -20,7 +20,7 @@ class ServicioConciliacionFacturas:
     def __init__(self, settings: Configuracion) -> None:
         self._settings = settings
 
-    def compare(
+    def comparar(
         self,
         quotation: RegistroCotizacion,
         invoice: ExtraccionDocumento,
@@ -111,8 +111,8 @@ class ServicioConciliacionFacturas:
 
     @staticmethod
     def _provider_similarity(left: str | None, right: str | None) -> float | None:
-        normalized_left = normalize_supplier(left)
-        normalized_right = normalize_supplier(right)
+        normalized_left = normalizar_proveedor(left)
+        normalized_right = normalizar_proveedor(right)
         if not normalized_left or not normalized_right:
             return None
         return SequenceMatcher(None, normalized_left, normalized_right).ratio()

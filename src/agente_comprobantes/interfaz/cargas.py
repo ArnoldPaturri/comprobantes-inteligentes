@@ -27,7 +27,7 @@ def _safe_filename(filename: str) -> str:
     return f"{safe_stem[:80]}{path.suffix.lower()}"
 
 
-def save_uploaded_files(
+def guardar_archivos_cargados(
     uploaded_files: Iterable[ArchivoCargado],
     root: Path = Path("entrada/cargas"),
 ) -> list[str]:

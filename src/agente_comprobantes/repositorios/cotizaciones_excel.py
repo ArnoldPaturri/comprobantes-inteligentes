@@ -8,19 +8,19 @@ from agente_comprobantes.repositorios.esquemas_excel import QUOTATION_HEADERS
 
 
 class OperacionesCotizacionesExcel:
-    def get_quotation(self, quotation_code: str) -> RegistroCotizacion | None:
+    def obtener_cotizacion(self, quotation_code: str) -> RegistroCotizacion | None:
         normalized = quotation_code.strip().upper()
-        for row in self.read_sheet("COTIZACIONES"):
+        for row in self.leer_hoja("COTIZACIONES"):
             if str(row["Cód. Cotización"]).strip().upper() == normalized:
-                return self._quotation_from_row(row)
+                return self._cotizacion_desde_fila(row)
         return None
 
-    def list_quotations(self) -> list[RegistroCotizacion]:
-        self.initialize()
+    def listar_cotizaciones(self) -> list[RegistroCotizacion]:
+        self.inicializar()
 
         quotations = [
-            self._quotation_from_row(row)
-            for row in self.read_sheet("COTIZACIONES")
+            self._cotizacion_desde_fila(row)
+            for row in self.leer_hoja("COTIZACIONES")
         ]
 
         return sorted(
@@ -29,16 +29,16 @@ class OperacionesCotizacionesExcel:
             reverse=True,
         )
 
-    def add_quotation(self, quotation: RegistroCotizacion) -> None:
-        self.initialize()
-        if self.get_quotation(quotation.quotation_code):
+    def agregar_cotizacion(self, quotation: RegistroCotizacion) -> None:
+        self.inicializar()
+        if self.obtener_cotizacion(quotation.quotation_code):
             raise ErrorCodigoDuplicado(
                 f"Ya existe la cotización {quotation.quotation_code}; no se creó otra fila."
             )
 
         workbook = load_workbook(self._path)
         sheet = workbook["COTIZACIONES"]
-        self._append_mapping(
+        self._agregar_mapeo(
             sheet,
             QUOTATION_HEADERS,
             {
@@ -59,4 +59,4 @@ class OperacionesCotizacionesExcel:
                 
             },
         )
-        self._save_atomic(workbook)
+        self._guardar_atomico(workbook)

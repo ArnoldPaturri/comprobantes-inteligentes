@@ -9,16 +9,16 @@ from agente_comprobantes.dominio import (
     TipoDocumento,
 )
 from agente_comprobantes.excepciones import ErrorAgenteComprobantes
-from agente_comprobantes.interfaz.cargas import save_uploaded_files
+from agente_comprobantes.interfaz.cargas import guardar_archivos_cargados
 from agente_comprobantes.interfaz.componentes.editor_extraccion import (
-    render_extraction_editor,
+    mostrar_editor_extraccion,
 )
 from agente_comprobantes.interfaz.componentes.etiquetas_pago import (
     etiqueta_cotizacion,
     etiqueta_factura,
 )
 from agente_comprobantes.interfaz.componentes.resultados_pago import mostrar_resultado_pago
-from agente_comprobantes.interfaz.contexto import get_app_context
+from agente_comprobantes.interfaz.contexto import obtener_contexto_aplicacion
 
 _PREVIEW_KEY = "_payment_preview"
 _PATHS_KEY = "_payment_paths"
@@ -31,7 +31,7 @@ _MODE_WITH_INVOICE = "Aplicar a una factura existente"
 _MODE_WITHOUT_INVOICE = "Registrar antes de recibir la factura"
 
 
-def _clear_preview() -> None:
+def _limpiar_previsualizacion() -> None:
     st.session_state.pop(_PREVIEW_KEY, None)
     st.session_state.pop(_PATHS_KEY, None)
     st.session_state.pop(_QUOTATION_KEY, None)
@@ -39,15 +39,15 @@ def _clear_preview() -> None:
     st.session_state.pop(_MODE_KEY, None)
 
 
-def render_payment() -> None:
+def mostrar_pago() -> None:
     st.title("Registrar pago")
     st.caption(
         "Registra transferencias, depósitos, Yape, Plin "
         "u otras constancias de pago."
     )
 
-    context = get_app_context()
-    quotations = context.repository.list_quotations()
+    context = obtener_contexto_aplicacion()
+    quotations = context.repository.listar_cotizaciones()
 
     if not quotations:
         st.warning(
@@ -65,7 +65,7 @@ def render_payment() -> None:
             use_container_width=True,
         ):
             st.session_state.pop(_RESULT_KEY, None)
-            _clear_preview()
+            _limpiar_previsualizacion()
             st.rerun()
 
         return
@@ -107,7 +107,7 @@ def render_payment() -> None:
     selected_invoice_id: str | None = None
 
     if mode == _MODE_WITH_INVOICE:
-        invoices = context.repository.list_invoices(
+        invoices = context.repository.listar_facturas(
             selected_quotation_code
         )
         invoice_by_id = {
@@ -177,7 +177,7 @@ def render_payment() -> None:
                 return
 
             try:
-                image_paths = save_uploaded_files(
+                image_paths = guardar_archivos_cargados(
                     uploaded_files
                 )
 
@@ -185,7 +185,7 @@ def render_payment() -> None:
                     "Analizando el comprobante de pago..."
                 ):
                     extraction = (
-                        context.agent.preview_extraction(
+                        context.agent.previsualizar_extraccion(
                             TipoDocumento.PAYMENT_RECEIPT,
                             image_paths,
                         )
@@ -257,10 +257,10 @@ def render_payment() -> None:
         "Descartar análisis y comenzar nuevamente",
         use_container_width=True,
     ):
-        _clear_preview()
+        _limpiar_previsualizacion()
         st.rerun()
 
-    confirmed_extraction = render_extraction_editor(
+    confirmed_extraction = mostrar_editor_extraccion(
         preview,
         key_prefix="payment",
     )
@@ -270,7 +270,7 @@ def render_payment() -> None:
 
     try:
         with st.spinner("Registrando el pago..."):
-            result = context.agent.register_payment(
+            result = context.agent.registrar_pago(
                 confirmed_quotation,
                 image_paths,
                 invoice_id=confirmed_invoice,
@@ -289,5 +289,5 @@ def render_payment() -> None:
     st.session_state[_RESULT_KEY] = (
         result.model_dump(mode="json")
     )
-    _clear_preview()
+    _limpiar_previsualizacion()
     st.rerun()

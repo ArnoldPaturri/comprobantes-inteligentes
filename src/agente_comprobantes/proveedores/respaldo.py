@@ -22,7 +22,7 @@ class ProveedorVisionRespaldo(ProveedorVision):
 
         self._providers = tuple(providers)
 
-    def extract(
+    def extraer(
         self,
         document: DocumentoPreparado,
         expected_type: TipoDocumento,
@@ -31,7 +31,7 @@ class ProveedorVisionRespaldo(ProveedorVision):
 
         for name, provider in self._providers:
             try:
-                return provider.extract(
+                return provider.extraer(
                     document,
                     expected_type,
                 )

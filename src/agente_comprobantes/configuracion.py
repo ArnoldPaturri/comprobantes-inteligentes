@@ -45,28 +45,28 @@ class Configuracion(BaseSettings):
     request_timeout_seconds: float = Field(default=90.0, gt=0)
     max_api_attempts: int = Field(default=3, ge=1, le=5)
 
-    def resolved_workbook_path(self) -> Path:
+    def ruta_archivo_excel(self) -> Path:
         path = self.workbook_path.expanduser()
         return path if path.is_absolute() else PROJECT_ROOT / path
 
-    def resolved_diagnostics_dir(self) -> Path:
+    def ruta_diagnosticos(self) -> Path:
         path = self.diagnostics_dir.expanduser()
         return path if path.is_absolute() else PROJECT_ROOT / path
 
-    def has_cohere_api_key(self) -> bool:
+    def tiene_clave_cohere(self) -> bool:
         return bool(
             self.cohere_api_key
             and self.cohere_api_key.get_secret_value().strip()
         )
 
-    def has_groq_api_key(self) -> bool:
+    def tiene_clave_groq(self) -> bool:
         return bool(
             self.groq_api_key
             and self.groq_api_key.get_secret_value().strip()
         )
 
-    def require_cohere_api_key(self) -> str:
-        if not self.has_cohere_api_key():
+    def exigir_clave_cohere(self) -> str:
+        if not self.tiene_clave_cohere():
             raise ValueError(
                 "Falta COHERE_API_KEY. Copia .env.example como .env y agrega tu clave."
             )
@@ -75,8 +75,8 @@ class Configuracion(BaseSettings):
         return self.cohere_api_key.get_secret_value()
 
 
-    def require_groq_api_key(self) -> str:
-        if not self.has_groq_api_key():
+    def exigir_clave_groq(self) -> str:
+        if not self.tiene_clave_groq():
             raise ValueError(
                 "Falta GROQ_API_KEY. Agrega tu clave de Groq en el archivo .env."
             )
@@ -85,5 +85,5 @@ class Configuracion(BaseSettings):
         return self.groq_api_key.get_secret_value()
 
 @lru_cache(maxsize=1)
-def get_settings() -> Configuracion:
+def obtener_configuracion() -> Configuracion:
     return Configuracion()

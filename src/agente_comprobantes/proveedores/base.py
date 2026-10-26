@@ -8,7 +8,7 @@ class ProveedorVision(ABC):
     """Puerto de salida para proveedores multimodales."""
 
     @abstractmethod
-    def extract(
+    def extraer(
         self,
         document: DocumentoPreparado,
         expected_type: TipoDocumento,

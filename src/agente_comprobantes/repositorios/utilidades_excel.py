@@ -21,7 +21,7 @@ from agente_comprobantes.repositorios.esquemas_excel import ILLEGAL_EXCEL_CHARAC
 
 
 class UtilidadesExcel(ConversionFilasExcel):
-    def read_sheet(self, sheet_name: str) -> list[dict[str, object]]:
+    def leer_hoja(self, sheet_name: str) -> list[dict[str, object]]:
         if not self._path.exists():
             return []
         workbook = load_workbook(self._path, data_only=True, read_only=True)
@@ -38,7 +38,7 @@ class UtilidadesExcel(ConversionFilasExcel):
             workbook.close()
 
     @staticmethod
-    def _initialize_sheet(sheet: Any, headers: list[str]) -> None:
+    def _inicializar_hoja(sheet: Any, headers: list[str]) -> None:
         sheet.append(headers)
         sheet.freeze_panes = "A2"
         sheet.auto_filter.ref = f"A1:{get_column_letter(len(headers))}1"
@@ -53,7 +53,7 @@ class UtilidadesExcel(ConversionFilasExcel):
         sheet.row_dimensions[1].height = 28
 
     @staticmethod
-    def _ensure_headers(sheet: Any, expected: list[str]) -> bool:
+    def _verificar_encabezados(sheet: Any, expected: list[str]) -> bool:
         actual = [cell.value for cell in sheet[1]]
 
         while actual and actual[-1] is None:
@@ -92,16 +92,16 @@ class UtilidadesExcel(ConversionFilasExcel):
         return True
 
     @classmethod
-    def _append_mapping(cls, sheet: Any, headers: list[str], mapping: dict[str, Any]) -> None:
-        sheet.append([cls._excel_value(mapping.get(header)) for header in headers])
+    def _agregar_mapeo(cls, sheet: Any, headers: list[str], mapping: dict[str, Any]) -> None:
+        sheet.append([cls._valor_excel(mapping.get(header)) for header in headers])
         row_number = sheet.max_row
         for cell in sheet[row_number]:
             cell.alignment = Alignment(vertical="top", wrap_text=True)
-        cls._apply_number_formats(sheet, row_number, headers)
+        cls._aplicar_formatos_numericos(sheet, row_number, headers)
         sheet.auto_filter.ref = f"A1:{get_column_letter(len(headers))}{sheet.max_row}"
 
     @staticmethod
-    def _apply_number_formats(sheet: Any, row_number: int, headers: list[str]) -> None:
+    def _aplicar_formatos_numericos(sheet: Any, row_number: int, headers: list[str]) -> None:
         for index, header in enumerate(headers, start=1):
             cell = sheet.cell(row=row_number, column=index)
             if header.startswith("Monto") or header == "Diferencia ($)":
@@ -114,7 +114,7 @@ class UtilidadesExcel(ConversionFilasExcel):
                 cell.number_format = "dd/mm/yyyy"
 
     @staticmethod
-    def _excel_value(value: Any) -> Any:
+    def _valor_excel(value: Any) -> Any:
         if isinstance(value, Decimal):
             return float(value)
 
@@ -136,7 +136,7 @@ class UtilidadesExcel(ConversionFilasExcel):
         return value
 
     @staticmethod
-    def _update_quotation_status(sheet: Any, code: str, status: EstadoCotizacion) -> None:
+    def _actualizar_estado_cotizacion(sheet: Any, code: str, status: EstadoCotizacion) -> None:
         headers = {cell.value: cell.column for cell in sheet[1]}
         code_col = headers["Cód. Cotización"]
         status_col = headers["Estado"]
@@ -147,7 +147,7 @@ class UtilidadesExcel(ConversionFilasExcel):
                 return
 
     @staticmethod
-    def _update_invoice_payment_status(
+    def _actualizar_estado_pago_factura(
         sheet: Any,
         invoice_id: str,
         status: EstadoPago,
@@ -162,7 +162,7 @@ class UtilidadesExcel(ConversionFilasExcel):
                 return
 
     @staticmethod
-    def _update_comparison_payment_status(
+    def _actualizar_estado_pago_comparativa(
         sheet: Any,
         quotation_code: str,
         invoice_number: str | None,
@@ -183,7 +183,7 @@ class UtilidadesExcel(ConversionFilasExcel):
                 sheet.cell(row=row_number, column=status_col).value = status.value
                 return
 
-    def _save_atomic(self, workbook: Any) -> None:
+    def _guardar_atomico(self, workbook: Any) -> None:
         self._path.parent.mkdir(parents=True, exist_ok=True)
         temporary_path: Path | None = None
         try:

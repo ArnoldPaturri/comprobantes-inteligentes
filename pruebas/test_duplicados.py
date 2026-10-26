@@ -29,7 +29,7 @@ def test_detects_same_invoice_by_tax_id_and_number() -> None:
         )
     ]
 
-    matches = ServicioDuplicados().find_matches(extraction, "b" * 64, existing)
+    matches = ServicioDuplicados().buscar_coincidencias(extraction, "b" * 64, existing)
 
     assert matches[0].score == 0.99
     assert matches[0].document_id == "FAC-1"
@@ -53,5 +53,5 @@ def test_does_not_compare_invoice_against_quotation() -> None:
         )
     ]
 
-    assert ServicioDuplicados().find_matches(extraction, "same", existing) == []
+    assert ServicioDuplicados().buscar_coincidencias(extraction, "same", existing) == []
 

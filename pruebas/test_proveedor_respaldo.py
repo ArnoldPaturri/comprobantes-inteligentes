@@ -15,7 +15,7 @@ class StubProvider(ProveedorVision):
         self.error = error
         self.calls = 0
 
-    def extract(
+    def extraer(
         self,
         document: DocumentoPreparado,
         expected_type: TipoDocumento,
@@ -51,7 +51,7 @@ def test_uses_second_provider_when_first_fails() -> None:
         ]
     )
 
-    result = provider.extract(
+    result = provider.extraer(
         _document(),
         TipoDocumento.QUOTATION,
     )
@@ -76,7 +76,7 @@ def test_does_not_call_fallback_after_success() -> None:
         ]
     )
 
-    result = provider.extract(
+    result = provider.extraer(
         _document(),
         TipoDocumento.QUOTATION,
     )

@@ -1,9 +1,9 @@
 import streamlit as st
 
-from agente_comprobantes.interfaz.paginas.cotizacion import render_quotation
-from agente_comprobantes.interfaz.paginas.factura import render_invoice
-from agente_comprobantes.interfaz.paginas.inicio import render_home
-from agente_comprobantes.interfaz.paginas.pago import render_payment
+from agente_comprobantes.interfaz.paginas.cotizacion import mostrar_cotizacion
+from agente_comprobantes.interfaz.paginas.factura import mostrar_factura
+from agente_comprobantes.interfaz.paginas.inicio import mostrar_inicio
+from agente_comprobantes.interfaz.paginas.pago import mostrar_pago
 
 st.set_page_config(
     page_title="Agente de comprobantes",
@@ -15,7 +15,7 @@ st.set_page_config(
 pages = {
     "General": [
         st.Page(
-            render_home,
+            mostrar_inicio,
             title="Inicio",
             icon="🏠",
             default=True,
@@ -23,17 +23,17 @@ pages = {
     ],
     "Documentos": [
         st.Page(
-            render_quotation,
+            mostrar_cotizacion,
             title="Registrar cotización",
             icon="📄",
         ),
         st.Page(
-            render_invoice,
+            mostrar_factura,
             title="Registrar factura",
             icon="🧾",
         ),
         st.Page(
-            render_payment,
+            mostrar_pago,
             title="Registrar pago",
             icon="💰",
         ),

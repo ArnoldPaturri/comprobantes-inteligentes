@@ -12,21 +12,21 @@ from agente_comprobantes.excepciones import ErrorEstadoRegistro, ErrorRegistroNo
 class OperacionesVinculacionPagos:
     """Vinculación de pagos pendientes con facturas registradas."""
 
-    def link_payment(
+    def vincular_pago(
         self,
         payment_id: str,
         invoice_id: str,
     ) -> ResultadoVinculacionPago:
-        self._repository.initialize()
+        self._repository.inicializar()
 
-        payment = self._repository.get_payment(payment_id)
+        payment = self._repository.obtener_pago(payment_id)
         if payment is None:
             raise ErrorRegistroNoEncontrado(
                 f"No existe el pago "
                 f"{payment_id.strip().upper()}."
             )
 
-        invoice = self._repository.get_invoice(invoice_id)
+        invoice = self._repository.obtener_factura(invoice_id)
         if invoice is None:
             raise ErrorRegistroNoEncontrado(
                 f"No existe la factura "
@@ -81,12 +81,12 @@ class OperacionesVinculacionPagos:
         )
 
         previously_paid = (
-            self._repository.get_verified_payment_total(
+            self._repository.obtener_total_pagos_verificados(
                 invoice.invoice_id
             )
         )
 
-        reconciliation = self._payment_reconciliation.compare(
+        reconciliation = self._payment_reconciliation.comparar(
             invoice,
             extraction,
             previously_paid,
@@ -96,7 +96,7 @@ class OperacionesVinculacionPagos:
 
         if not applied:
             reconciliation = (
-                self._payment_reconciliation.reject_application(
+                self._payment_reconciliation.rechazar_aplicacion(
                     reconciliation,
                     invoice.payment_status,
                 )
@@ -139,7 +139,7 @@ class OperacionesVinculacionPagos:
             }
         )
 
-        self._repository.link_payment(
+        self._repository.vincular_pago(
             updated_payment,
             invoice,
             reconciliation,
@@ -150,6 +150,6 @@ class OperacionesVinculacionPagos:
             invoice_id=invoice.invoice_id,
             quotation_code=payment.quotation_code,
             reconciliation_status=reconciliation_status,
-            workbook_path=self._repository.location,
+            workbook_path=self._repository.ubicacion,
             payment_reconciliation=reconciliation,
         )

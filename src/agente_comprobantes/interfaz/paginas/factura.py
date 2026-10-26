@@ -11,12 +11,12 @@ from agente_comprobantes.dominio import (
     TipoDocumento,
 )
 from agente_comprobantes.excepciones import ErrorAgenteComprobantes
-from agente_comprobantes.interfaz.cargas import save_uploaded_files
+from agente_comprobantes.interfaz.cargas import guardar_archivos_cargados
 from agente_comprobantes.interfaz.componentes.editor_extraccion import (
-    render_extraction_editor,
+    mostrar_editor_extraccion,
 )
 from agente_comprobantes.interfaz.componentes.resultados_factura import mostrar_resultado_factura
-from agente_comprobantes.interfaz.contexto import get_app_context
+from agente_comprobantes.interfaz.contexto import obtener_contexto_aplicacion
 
 _PREVIEW_KEY = "_invoice_preview"
 _PATHS_KEY = "_invoice_paths"
@@ -25,14 +25,14 @@ _RESULT_KEY = "_invoice_result"
 _ELAPSED_KEY = "_invoice_elapsed_seconds"
 
 
-def _clear_preview() -> None:
+def _limpiar_previsualizacion() -> None:
     st.session_state.pop(_PREVIEW_KEY, None)
     st.session_state.pop(_PATHS_KEY, None)
     st.session_state.pop(_QUOTATION_KEY, None)
     st.session_state.pop(_ELAPSED_KEY, None)
 
 
-def _quotation_label(
+def _etiqueta_cotizacion(
     quotation: RegistroCotizacion,
 ) -> str:
     provider = quotation.provider or "Proveedor no identificado"
@@ -56,7 +56,7 @@ def _quotation_label(
     )
 
 
-def render_invoice() -> None:
+def mostrar_factura() -> None:
     st.title("Registrar factura")
     st.caption(
         "Selecciona la cotización relacionada y sube "
@@ -68,8 +68,8 @@ def render_invoice() -> None:
     if isinstance(last_result, dict):
         mostrar_resultado_factura(last_result)
 
-    context = get_app_context()
-    quotations = context.repository.list_quotations()
+    context = obtener_contexto_aplicacion()
+    quotations = context.repository.listar_cotizaciones()
 
     if not quotations:
         st.warning(
@@ -94,7 +94,7 @@ def render_invoice() -> None:
     selected_code = st.selectbox(
         "Cotización relacionada",
         options=quotation_codes,
-        format_func=lambda code: _quotation_label(
+        format_func=lambda code: _etiqueta_cotizacion(
             quotation_by_code[code]
         ),
         disabled=has_preview,
@@ -111,7 +111,7 @@ def render_invoice() -> None:
     if not has_preview:
         st.info(
             "Cotización seleccionada: "
-            f"{_quotation_label(selected_quotation)}"
+            f"{_etiqueta_cotizacion(selected_quotation)}"
         )
 
     uploaded_files = st.file_uploader(
@@ -151,7 +151,7 @@ def render_invoice() -> None:
             started_at = perf_counter()
 
             try:
-                image_paths = save_uploaded_files(
+                image_paths = guardar_archivos_cargados(
                     uploaded_files
                 )
 
@@ -160,7 +160,7 @@ def render_invoice() -> None:
                     "de visión disponible..."
                 ):
                     extraction = (
-                        context.agent.preview_extraction(
+                        context.agent.previsualizar_extraccion(
                             TipoDocumento.INVOICE,
                             image_paths,
                         )
@@ -223,10 +223,10 @@ def render_invoice() -> None:
         "Descartar análisis y comenzar nuevamente",
         use_container_width=True,
     ):
-        _clear_preview()
+        _limpiar_previsualizacion()
         st.rerun()
 
-    confirmed_extraction = render_extraction_editor(
+    confirmed_extraction = mostrar_editor_extraccion(
         preview,
         key_prefix="invoice",
     )
@@ -238,7 +238,7 @@ def render_invoice() -> None:
         with st.spinner(
             "Registrando y comparando la factura..."
         ):
-            result = context.agent.register_invoice(
+            result = context.agent.registrar_factura(
                 confirmed_code,
                 image_paths,
                 confirmed_extraction=confirmed_extraction,
@@ -256,5 +256,5 @@ def render_invoice() -> None:
     st.session_state[_RESULT_KEY] = (
         result.model_dump(mode="json")
     )
-    _clear_preview()
+    _limpiar_previsualizacion()
     st.rerun()
