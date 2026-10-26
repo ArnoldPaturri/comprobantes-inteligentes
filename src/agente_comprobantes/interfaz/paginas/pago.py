@@ -16,9 +16,9 @@ from agente_comprobantes.interfaz.componentes.resultados_pago import mostrar_res
 from agente_comprobantes.interfaz.contexto import obtener_contexto_aplicacion
 from agente_comprobantes.interfaz.flujos.pago import (
     _INVOICE_KEY,
+    _MODE_KEY,
     _MODE_WITH_INVOICE,
     _MODE_WITHOUT_INVOICE,
-    _MODE_KEY,
     _PATHS_KEY,
     _PREVIEW_KEY,
     _QUOTATION_KEY,
