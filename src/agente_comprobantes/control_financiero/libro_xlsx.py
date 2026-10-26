@@ -103,7 +103,7 @@ def _dibujar_hoja(libro: Workbook, hoja: HojaReporte) -> None:
     ws.row_dimensions[2].height = 25
     ws.row_dimensions[5].height = 32
 
-    for i, (titulo, ancho) in enumerate(zip(hoja.encabezados, hoja.anchos), 1):
+    for i, (titulo, ancho) in enumerate(zip(hoja.encabezados, hoja.anchos, strict=True), 1):
         ws.column_dimensions[get_column_letter(i)].width = ancho
         celda = ws.cell(row=5, column=i, value=_texto(titulo))
         celda.data_type = "s"
