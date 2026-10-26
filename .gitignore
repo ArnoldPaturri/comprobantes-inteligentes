@@ -1,0 +1,36 @@
+.env
+.venv/
+__pycache__/
+*.py[cod]
+*.egg-info/
+.pytest_cache/
+.ruff_cache/
+.coverage
+htmlcov/
+output/*.xlsx
+!output/.gitkeep
+input/samples/*
+!input/samples/.gitkeep
+
+# Credenciales adicionales
+.env.*
+!.env.example
+credentials/
+.streamlit/secrets.toml
+*.pem
+*.key
+*.p12
+
+# Comprobantes y archivos privados
+input/*
+!input/.gitkeep
+!input/samples/
+
+# Resultados generados
+output/*
+!output/.gitkeep
+
+# Bases de datos locales
+*.db
+*.sqlite
+*.sqlite3
