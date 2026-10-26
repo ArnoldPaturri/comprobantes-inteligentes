@@ -15,7 +15,7 @@ html, body, [class*="css"], [data-testid="stApp"] {
 [data-testid="stSidebar"] [data-testid="stMarkdownContainer"] p {
     color: #443847;
 }
-.block-container {padding-top: 1.25rem; padding-bottom: 2rem;}
+.block-container {padding-top: 3rem; padding-bottom: 2rem;}
 [data-testid="stMetric"] {
     background: #FFFFFF;
     border: 1px solid #E7E2E8;
