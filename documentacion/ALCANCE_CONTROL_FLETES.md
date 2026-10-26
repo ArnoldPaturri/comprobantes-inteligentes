@@ -263,3 +263,32 @@ de escribir manualmente XML. Las pruebas comprueban que el resultado se
 puede volver a abrir con `openpyxl.load_workbook`, incluyendo las
 fórmulas y los textos procedentes de OCR almacenados como datos literales.
 Al abrir el libro en Excel, se recalculan las fórmulas.
+
+
+## Importación masiva — primera versión
+
+En la pantalla Control financiero aparece **Importar operaciones desde Excel**.
+Admite .xlsx de hasta 8 MB y un máximo de 5000 filas de operaciones por lote.
+Busca los encabezados en las primeras 25 filas de las hojas del archivo;
+admite el formato «Fletes y detracciones» mostrado durante el levantamiento
+y el reporte de operaciones generado por el proyecto.
+
+La vista previa muestra operaciones válidas, duplicadas y con errores,
+incluyendo una advertencia de las transformaciones. La confirmación registra
+únicamente las operaciones válidas en una sola escritura del JSON, sin
+sobrescribir los expedientes existentes ni escribir sobre registros.xlsx.
+
+Reglas conservadoras:
+- Todos los registros importados se crean **sin clasificar como flete**.
+- Los pagos quedan como montos **declarados, nunca acreditados**.
+- Los estados «Conforme», detracciones «SI» y referencias a notas de crédito
+  se muestran como advertencias y requieren posterior revisión documental.
+- Cuando el importe o la moneda no pueden interpretarse, la fila se excluye.
+- Se detectan duplicados por proveedor y número de factura, tanto en el
+  archivo como en el destino; un identificador ya existente no se modifica.
+- Si el JSON cambia después de generar la vista previa, se rechaza el lote
+  y es necesario revisar de nuevo.
+
+Limitación: el primer importador está pensado para **uso local por un operador**,
+no para concurrencia multiusuario. Los adjuntos originales siguen requiriendo
+carga explícita; esta función no recupera comprobantes externos.
