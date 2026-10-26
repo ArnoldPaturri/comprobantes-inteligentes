@@ -83,3 +83,22 @@ la edición y aprobación operativa tendrán un flujo específico posterior.
 
 La implementación actual está diseñada para uso local y secuencial, no
 para escritura concurrente por varios usuarios.
+
+## Visualización — primera versión de consulta
+
+Se incorpora la página **Control financiero** en la navegación de Streamlit.
+Lee `control_fletes.json` junto al Excel activo; no modifica registros.
+
+- Resumen financiero desagregado por moneda, sin sumas entre PEN y USD.
+- Filtros por estado, moneda e identificadores.
+- Tabla de facturas, pagos declarados, evidencia acreditada y saldo documental.
+- Detalle de respaldos, guías, notas de crédito y observaciones.
+- Estilo visual propio inspirado en la paleta de Odoo.
+
+```powershell
+python -m streamlit run aplicacion.py
+```
+
+**Limitación:** no permite todavía acreditar movimientos, adjuntar guías
+ni cerrar conciliaciones. Un control importado se mantiene pendiente hasta
+su revisión explícita; esta pantalla es solo lectura.
