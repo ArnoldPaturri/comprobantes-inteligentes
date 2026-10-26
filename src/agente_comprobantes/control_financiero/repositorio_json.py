@@ -5,6 +5,7 @@ Este repositorio no escribe ni modifica el Excel operativo original.
 
 from __future__ import annotations
 
+import hashlib
 import json
 import os
 import tempfile
@@ -55,6 +56,45 @@ class RepositorioControlFletes:
         operaciones.append(operacion)
         self._validar_unicidad(operaciones)
         self._guardar_atomico(operaciones)
+
+    def huella(self) -> str:
+        """Versión del archivo para evitar guardar una vista previa obsoleta."""
+        if not self._ruta.exists():
+            return "sin-archivo"
+        return hashlib.sha256(self._ruta.read_bytes()).hexdigest()
+
+    def agregar_lote(
+        self,
+        nuevas: list[OperacionFlete],
+        *,
+        huella_esperada: str,
+    ) -> None:
+        """Incorpora el lote validado en una sola escritura atómica.
+
+        Protege ID y factura/proveedor; no sobrescribe operaciones revisadas.
+        Se destina a un único operador local, no a edición concurrente.
+        """
+        if not nuevas:
+            raise ValueError("El lote de importación no tiene operaciones.")
+        if self.huella() != huella_esperada:
+            raise ValueError("El archivo de control cambió; genera otra vista previa.")
+        actuales = self.listar()
+        existentes = {
+            (op.numero_factura.strip().casefold(), (op.proveedor or "").strip().casefold())
+            for op in actuales
+        }
+        nuevos_pares: set[tuple[str, str]] = set()
+        for op in nuevas:
+            par = (
+                op.numero_factura.strip().casefold(),
+                (op.proveedor or "").strip().casefold(),
+            )
+            if par in existentes or par in nuevos_pares:
+                raise ValueError("La importación contiene facturas repetidas.")
+            nuevos_pares.add(par)
+        conjunto = [*actuales, *nuevas]
+        self._validar_unicidad(conjunto)
+        self._guardar_atomico(conjunto)
 
     def actualizar(self, operacion: OperacionFlete) -> None:
         operaciones = self.listar()
