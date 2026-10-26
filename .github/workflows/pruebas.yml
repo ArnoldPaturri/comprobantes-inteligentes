@@ -1,0 +1,31 @@
+name: Pruebas y calidad del código
+
+on:
+  push:
+    branches:
+      - main
+      - refactor/espanol-y-modularizacion
+  pull_request:
+
+jobs:
+  comprobar:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Obtener código
+        uses: actions/checkout@v4
+      - name: Configurar Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+          cache: pip
+      - name: Instalar dependencias
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install -r requirements-dev.txt
+          python -m pip install -e .
+      - name: Comprobar sintaxis
+        run: python -m compileall -q src pruebas aplicacion.py principal.py
+      - name: Ejecutar pruebas
+        run: python -m pytest
+      - name: Revisar código
+        run: python -m ruff check .
