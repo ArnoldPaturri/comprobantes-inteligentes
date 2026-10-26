@@ -7,7 +7,7 @@ en el banco. Todas las evidencias nuevas empiezan sin acreditar.
 from __future__ import annotations
 
 from datetime import UTC, datetime
-from decimal import Decimal
+from decimal import Decimal, InvalidOperation
 from typing import Literal
 
 from agente_comprobantes.control_financiero.modelos import (
@@ -50,9 +50,15 @@ def _coleccion(tipo: TipoEvidencia) -> str:
 
 def _validar_importe(valor: str) -> Decimal:
     importe = importe_positivo(valor)
-    if importe != importe.quantize(Decimal("0.01")):
+    if importe > Decimal("999999999999.99"):
+        raise ValueError("El importe excede el límite permitido.")
+    try:
+        importe_redondeado = importe.quantize(Decimal("0.01"))
+    except InvalidOperation as exc:
+        raise ValueError("El importe monetario no es válido.") from exc
+    if importe != importe_redondeado:
         raise ValueError("El importe debe tener como máximo dos decimales.")
-    return importe
+    return importe_redondeado
 
 
 def preparar_registro_evidencia(
