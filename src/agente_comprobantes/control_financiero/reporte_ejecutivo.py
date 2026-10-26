@@ -167,7 +167,10 @@ def _notas() -> HojaReporte:
         ["Alcance", "Reporte de consulta. No modifica registros, adjuntos ni Excel original."],
         ["Resumen", "Solo fletes confirmados. No incluye compras u operaciones sin clasificar."],
         ["Filtros", "Operaciones, observaciones e historial respetan moneda, estado y búsqueda."],
-        ["Presupuesto", "El resumen usa todas las facturas de cada cotización para evitar doble conteo."],
+        [
+            "Presupuesto",
+            "El resumen usa todas las facturas de cada cotización para evitar doble conteo.",
+        ],
         ["Estado", "La conformidad es documental declarada, no confirmación bancaria."],
         ["Pago declarado", "Comprobante registrado u OCR, aunque aún no se haya acreditado."],
         ["Acreditado", "Evidencias con revisión documental registrada por el operador."],
