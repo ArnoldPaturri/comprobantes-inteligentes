@@ -13,9 +13,12 @@ from agente_comprobantes.control_financiero.modelos import SituacionControl
 from agente_comprobantes.control_financiero.repositorio_json import (
     RepositorioControlFletes,
 )
+from agente_comprobantes.repositorios.repositorio_excel import RepositorioExcel
 from agente_comprobantes.dominio import (
+    Diagnostico,
     EstadoVerificacion,
     EstadoVinculacionPago,
+    ResultadoConciliacion,
     Moneda,
     RegistroCotizacion,
     RegistroFactura,
@@ -167,3 +170,34 @@ def test_no_sobrescribir_json_con_version_desconocida(tmp_path) -> None:
     with pytest.raises(ValueError, match="formato inválido"):
         repositorio.agregar(crear_borrador_desde_documentos(factura()).operacion)
     assert destino.read_text(encoding="utf-8") == contenido
+
+
+def test_integracion_lee_excel_real_sin_cambiar_su_contenido(tmp_path) -> None:
+    ruta = tmp_path / "registros.xlsx"
+    repositorio = RepositorioExcel(ruta)
+    presupuesto = cotizacion()
+    documento = factura()
+    repositorio.agregar_cotizacion(presupuesto)
+    repositorio.agregar_factura(
+        documento,
+        presupuesto,
+        ResultadoConciliacion(
+            quoted_amount=Decimal("900"),
+            invoiced_amount=Decimal("1000"),
+            difference=Decimal("100"),
+            deviation_percent=Decimal("11.11"),
+            diagnosis=Diagnostico.ABOVE,
+        ),
+    )
+    repositorio.agregar_pago(pago())
+    contenido_original = ruta.read_bytes()
+
+    borrador = crear_borrador_desde_repositorio(repositorio, "FAC-01")
+
+    assert borrador.operacion.identificador == "FAC-01"
+    assert borrador.operacion.numero_factura == "F001-12"
+    assert borrador.operacion.monto_facturado == Decimal("1000")
+    assert borrador.operacion.monto_cotizado == Decimal("900")
+    assert len(borrador.operacion.movimientos_bancarios) == 1
+    assert not borrador.operacion.movimientos_bancarios[0].verificada
+    assert ruta.read_bytes() == contenido_original
