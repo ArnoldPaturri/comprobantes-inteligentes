@@ -8,12 +8,12 @@ from __future__ import annotations
 
 import hashlib
 import io
-from itertools import islice
 import re
 import unicodedata
 from dataclasses import dataclass
 from datetime import date, datetime
 from decimal import Decimal, InvalidOperation
+from itertools import islice
 
 from openpyxl import load_workbook
 
