@@ -5,6 +5,7 @@ on:
     branches:
       - main
       - refactor/espanol-y-modularizacion
+      - feature/control-financiero-fletes
   pull_request:
 
 jobs:
