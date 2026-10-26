@@ -2,7 +2,7 @@ from decimal import Decimal
 
 import pytest
 
-from invoice_agent.domain import (
+from agente_comprobantes.dominio import (
     Currency,
     Diagnosis,
     InvoiceRecord,
@@ -11,8 +11,8 @@ from invoice_agent.domain import (
     ReconciliationResult,
     VerificationStatus,
 )
-from invoice_agent.exceptions import DuplicateCodeError
-from invoice_agent.repositories.excel_repository import ExcelRepository
+from agente_comprobantes.excepciones import DuplicateCodeError
+from agente_comprobantes.repositorios.repositorio_excel import ExcelRepository
 
 
 def test_repository_creates_four_sheets_and_roundtrips(settings) -> None:

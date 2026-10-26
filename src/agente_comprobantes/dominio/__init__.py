@@ -1,4 +1,4 @@
-from invoice_agent.domain.enums import (
+from agente_comprobantes.dominio.enumeraciones import (
     Currency,
     Diagnosis,
     DocumentType,
@@ -8,7 +8,7 @@ from invoice_agent.domain.enums import (
     Severity,
     VerificationStatus,
 )
-from invoice_agent.domain.models import (
+from agente_comprobantes.dominio.modelos import (
     DocumentExtraction,
     DocumentReference,
     DuplicateMatch,

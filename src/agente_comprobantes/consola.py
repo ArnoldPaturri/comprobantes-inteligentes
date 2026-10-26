@@ -5,10 +5,10 @@ import json
 import sys
 from pathlib import Path
 
-from invoice_agent.config import Settings
-from invoice_agent.domain import DocumentType
-from invoice_agent.exceptions import InvoiceAgentError
-from invoice_agent.factory import build_agent, build_repository
+from agente_comprobantes.configuracion import Settings
+from agente_comprobantes.dominio import DocumentType
+from agente_comprobantes.excepciones import InvoiceAgentError
+from agente_comprobantes.fabrica import build_agent, build_repository
 
 
 def build_parser() -> argparse.ArgumentParser:

@@ -1,10 +1,10 @@
-from invoice_agent.domain import (
+from agente_comprobantes.dominio import (
     Currency,
     DocumentExtraction,
     DocumentType,
     Severity,
 )
-from invoice_agent.services.validation_service import ValidationService
+from agente_comprobantes.servicios.validacion import ValidationService
 
 
 def test_complete_invoice_is_valid(settings) -> None:

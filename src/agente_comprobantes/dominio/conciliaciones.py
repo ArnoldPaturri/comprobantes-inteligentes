@@ -4,10 +4,10 @@ from decimal import Decimal
 
 from pydantic import Field, field_validator
 
-from invoice_agent.domain.enums import Diagnosis, PaymentStatus
-from invoice_agent.domain.modelo_base import DomainModel
-from invoice_agent.domain.normalizacion import _parse_decimal
-from invoice_agent.domain.validacion import ValidationIssue
+from agente_comprobantes.dominio.enumeraciones import Diagnosis, PaymentStatus
+from agente_comprobantes.dominio.modelo_base import DomainModel
+from agente_comprobantes.dominio.normalizacion import _parse_decimal
+from agente_comprobantes.dominio.validacion import ValidationIssue
 
 
 class ReconciliationResult(DomainModel):

@@ -1,13 +1,13 @@
 from __future__ import annotations
 
-from invoice_agent.domain import (
+from agente_comprobantes.dominio import (
     DocumentExtraction,
     DocumentType,
     QuotationRecord,
     QuotationStatus,
     RegistrationResult,
 )
-from invoice_agent.services.status_service import issue_messages, resolve_verification_status
+from agente_comprobantes.servicios.estados import issue_messages, resolve_verification_status
 
 
 class OperacionesCotizaciones:

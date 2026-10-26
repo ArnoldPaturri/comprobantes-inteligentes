@@ -1,16 +1,16 @@
 from __future__ import annotations
 
-from invoice_agent.casos_uso.cotizaciones import OperacionesCotizaciones
-from invoice_agent.casos_uso.facturas import OperacionesFacturas
-from invoice_agent.casos_uso.pagos import OperacionesPagos
-from invoice_agent.domain import DocumentExtraction, DocumentType
-from invoice_agent.providers.base import VisionProvider
-from invoice_agent.repositories.base import DocumentRepository
-from invoice_agent.services.duplicate_service import DuplicateService
-from invoice_agent.services.image_service import ImageService
-from invoice_agent.services.payment_reconciliation_service import PaymentReconciliationService
-from invoice_agent.services.reconciliation_service import ReconciliationService
-from invoice_agent.services.validation_service import ValidationService
+from agente_comprobantes.casos_uso.cotizaciones import OperacionesCotizaciones
+from agente_comprobantes.casos_uso.facturas import OperacionesFacturas
+from agente_comprobantes.casos_uso.pagos import OperacionesPagos
+from agente_comprobantes.dominio import DocumentExtraction, DocumentType
+from agente_comprobantes.proveedores.base import VisionProvider
+from agente_comprobantes.repositorios.base import DocumentRepository
+from agente_comprobantes.servicios.duplicados import DuplicateService
+from agente_comprobantes.servicios.imagenes import ImageService
+from agente_comprobantes.servicios.conciliacion_pagos import PaymentReconciliationService
+from agente_comprobantes.servicios.conciliacion_facturas import ReconciliationService
+from agente_comprobantes.servicios.validacion import ValidationService
 
 
 class ReceiptAgent(OperacionesCotizaciones, OperacionesFacturas, OperacionesPagos):
