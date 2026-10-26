@@ -6,13 +6,13 @@ import streamlit as st
 
 from agente_comprobantes.configuracion import Configuracion
 from agente_comprobantes.control_financiero.modelos import OperacionFlete
+from agente_comprobantes.control_financiero.presentacion import formatear_importe
 from agente_comprobantes.control_financiero.repositorio_json import (
     RepositorioControlFletes,
 )
 from agente_comprobantes.control_financiero.revision_pagos import (
     guardar_revision_pago,
 )
-from agente_comprobantes.control_financiero.presentacion import formatear_importe
 
 
 def mostrar_revision_pagos(operacion: OperacionFlete) -> None:
