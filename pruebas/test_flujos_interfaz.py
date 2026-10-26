@@ -24,7 +24,7 @@ def test_limpiar_previsualizacion_conserva_resultado(
     nombres_claves: tuple[str, ...],
 ) -> None:
     flujo = import_module(modulo)
-    clave_resultado = getattr(flujo, "_RESULT_KEY")
+    clave_resultado = flujo._RESULT_KEY
     sesion = {getattr(flujo, nombre): "temporal" for nombre in nombres_claves}
     sesion[clave_resultado] = {"document_id": "REG-001"}
 
