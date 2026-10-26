@@ -38,9 +38,11 @@ def _formulario_registro(operacion: OperacionFlete) -> None:
     )
     with st.form(f"registrar_ajuste_{operacion.identificador}"):
         etiqueta = st.selectbox("Tipo de documento", list(TIPOS))
-        numero = ""
-        if etiqueta == "Nota de crédito":
-            numero = st.text_input("Número de nota de crédito", placeholder="FC01-0005")
+        numero = st.text_input(
+            "Número de nota de crédito (solo para notas)",
+            placeholder="FC01-0005",
+            help="Obligatorio únicamente cuando registras una nota de crédito.",
+        )
         referencia = st.text_input(
             "Referencia documental u operación",
             placeholder="Número de depósito o referencia de nota de crédito",
