@@ -1,7 +1,7 @@
 from __future__ import annotations
 
-from os import os
-from tempfile import tempfile
+import os
+import tempfile
 from datetime import date
 from datetime import datetime
 from decimal import Decimal
