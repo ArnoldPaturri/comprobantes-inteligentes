@@ -14,19 +14,13 @@ from openpyxl.utils import get_column_letter
 from agente_comprobantes.dominio import (
     EstadoCotizacion,
     EstadoPago,
-    EstadoVerificacion,
-    EstadoVinculacionPago,
-    Moneda,
-    RegistroCotizacion,
-    RegistroFactura,
-    RegistroPago,
-    TipoDocumento,
 )
 from agente_comprobantes.excepciones import ErrorRepositorio
+from agente_comprobantes.repositorios.conversion_filas_excel import ConversionFilasExcel
 from agente_comprobantes.repositorios.esquemas_excel import ILLEGAL_EXCEL_CHARACTER_PATTERN
 
 
-class UtilidadesExcel:
+class UtilidadesExcel(ConversionFilasExcel):
     def read_sheet(self, sheet_name: str) -> list[dict[str, object]]:
         if not self._path.exists():
             return []
@@ -205,107 +199,3 @@ class UtilidadesExcel:
             if temporary_path and temporary_path.exists():
                 temporary_path.unlink()
             raise ErrorRepositorio(f"No se pudo guardar el Excel: {self._path}") from exc
-
-    @staticmethod
-    def _quotation_from_row(row: dict[str, object]) -> RegistroCotizacion:
-        return RegistroCotizacion(
-            quotation_code=str(row["Cód. Cotización"]),
-            provider=UtilidadesExcel._optional_str(row["Proveedor"]),
-            provider_tax_id=UtilidadesExcel._optional_str(row["RUC Proveedor"]),
-            concept=UtilidadesExcel._optional_str(row["Concepto / Descripción"]),
-            quoted_amount=row["Monto Cotizado"],
-            currency=UtilidadesExcel._optional_currency(row["Moneda"]),
-            quotation_date=row["Fecha Cotización"],
-            status=EstadoCotizacion(str(row["Estado"])),
-            verification_status=EstadoVerificacion(str(row["Estado Verificación"])),
-            source_hash=str(row["Hash Documento"]),
-            source_files=UtilidadesExcel._split(row["Archivos Origen"]),
-            uncertain_fields=UtilidadesExcel._split(row["Campos Inciertos"]),
-            registered_at=row["Fecha Registro"] or datetime.now(),
-            observations=UtilidadesExcel._split(row["Acción / Observaciones"]),
-        )
-
-    @staticmethod
-    def _invoice_from_row(row: dict[str, object]) -> RegistroFactura:
-        return RegistroFactura(
-            invoice_id=str(row["ID Factura"]),
-            quotation_code=str(row["Cód. Cotización"]),
-            provider=UtilidadesExcel._optional_str(row["Proveedor"]),
-            provider_tax_id=UtilidadesExcel._optional_str(row["RUC Proveedor"]),
-            invoice_number=UtilidadesExcel._optional_str(row["N° Factura"]),
-            concept=UtilidadesExcel._optional_str(row["Concepto / Descripción"]),
-            invoiced_amount=row["Monto Facturado"],
-            currency=UtilidadesExcel._optional_currency(row["Moneda"]),
-            invoice_date=row["Fecha Factura"],
-            verification_status=EstadoVerificacion(str(row["Estado Verificación"])),
-            payment_status=EstadoPago(str(row["Estado de Pago"])),
-            source_hash=str(row["Hash Documento"]),
-            source_files=UtilidadesExcel._split(row["Archivos Origen"]),
-            uncertain_fields=UtilidadesExcel._split(row["Campos Inciertos"]),
-            duplicate_of=UtilidadesExcel._split(row["Posible Duplicado De"]),
-            registered_at=row["Fecha Registro"] or datetime.now(),
-            observations=UtilidadesExcel._split(row["Acción / Observaciones"]),
-        )
-
-    @staticmethod
-    def _payment_from_row(
-        row: dict[str, object],
-    ) -> RegistroPago:
-        return RegistroPago(
-            payment_id=str(row["ID Pago"]),
-            quotation_code=str(row["Cód. Cotización"]),
-            invoice_id=UtilidadesExcel._optional_str(
-                row["ID Factura"]
-            ),
-            payment_type=TipoDocumento(
-                str(row["Tipo de Pago"])
-            ),
-            payment_entity=UtilidadesExcel._optional_str(
-                row["Entidad"]
-            ),
-            operation_number=UtilidadesExcel._optional_str(
-                row["N° Operación"]
-            ),
-            paid_amount=row["Monto Pagado"],
-            currency=UtilidadesExcel._optional_currency(
-                row["Moneda"]
-            ),
-            payment_date=row["Fecha Pago"],
-            verification_status=EstadoVerificacion(
-                str(row["Estado Verificación"])
-            ),
-            reconciliation_status=EstadoVinculacionPago(
-                str(row["Estado Conciliación"])
-            ),
-            source_hash=str(row["Hash Documento"]),
-            source_files=UtilidadesExcel._split(
-                row["Archivos Origen"]
-            ),
-            duplicate_of=UtilidadesExcel._split(
-                row["Posible Duplicado De"]
-            ),
-            registered_at=(
-                row["Fecha Registro"] or datetime.now()
-            ),
-            observations=UtilidadesExcel._split(
-                row["Acción / Observaciones"]
-            ),
-        )
-
-    @staticmethod
-    def _optional_str(value: object) -> str | None:
-        return None if value in (None, "") else str(value)
-
-    @staticmethod
-    def _optional_currency(value: object) -> Moneda | None:
-        return None if value in (None, "") else Moneda(str(value))
-
-    @staticmethod
-    def _optional_document_type(value: object) -> TipoDocumento | None:
-        return None if value in (None, "") else TipoDocumento(str(value))
-
-    @staticmethod
-    def _split(value: object) -> list[str]:
-        if value in (None, ""):
-            return []
-        return [part.strip() for part in str(value).split("|") if part.strip()]

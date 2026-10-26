@@ -6,14 +6,16 @@ import streamlit as st
 
 from agente_comprobantes.dominio import (
     ExtraccionDocumento,
-    RegistroCotizacion,
-    RegistroFactura,
     TipoDocumento,
 )
 from agente_comprobantes.excepciones import ErrorAgenteComprobantes
 from agente_comprobantes.interfaz.cargas import save_uploaded_files
 from agente_comprobantes.interfaz.componentes.editor_extraccion import (
     render_extraction_editor,
+)
+from agente_comprobantes.interfaz.componentes.etiquetas_pago import (
+    etiqueta_cotizacion,
+    etiqueta_factura,
 )
 from agente_comprobantes.interfaz.componentes.resultados_pago import mostrar_resultado_pago
 from agente_comprobantes.interfaz.contexto import get_app_context
@@ -35,43 +37,6 @@ def _clear_preview() -> None:
     st.session_state.pop(_QUOTATION_KEY, None)
     st.session_state.pop(_INVOICE_KEY, None)
     st.session_state.pop(_MODE_KEY, None)
-
-
-def _quotation_label(
-    quotation: RegistroCotizacion,
-) -> str:
-    provider = quotation.provider or "Proveedor no identificado"
-    amount = (
-        f"{quotation.currency.value} {quotation.quoted_amount:,.2f}"
-        if quotation.currency is not None
-        and quotation.quoted_amount is not None
-        else "Monto no disponible"
-    )
-
-    return (
-        f"{quotation.quotation_code} | "
-        f"{provider} | "
-        f"{amount}"
-    )
-
-
-def _invoice_label(
-    invoice: RegistroFactura,
-) -> str:
-    number = invoice.invoice_number or "Sin número"
-    amount = (
-        f"{invoice.currency.value} {invoice.invoiced_amount:,.2f}"
-        if invoice.currency is not None
-        and invoice.invoiced_amount is not None
-        else "Monto no disponible"
-    )
-
-    return (
-        f"{invoice.invoice_id} | "
-        f"{number} | "
-        f"{amount} | "
-        f"{invoice.payment_status.value}"
-    )
 
 
 def render_payment() -> None:
@@ -120,7 +85,7 @@ def render_payment() -> None:
     selected_quotation_code = st.selectbox(
         "Cotización relacionada",
         options=quotation_codes,
-        format_func=lambda code: _quotation_label(
+        format_func=lambda code: etiqueta_cotizacion(
             quotation_by_code[code]
         ),
         disabled=has_preview,
@@ -155,7 +120,7 @@ def render_payment() -> None:
             selected_invoice_id = st.selectbox(
                 "Factura que se está pagando",
                 options=list(invoice_by_id),
-                format_func=lambda invoice_id: _invoice_label(
+                format_func=lambda invoice_id: etiqueta_factura(
                     invoice_by_id[invoice_id]
                 ),
                 disabled=has_preview,

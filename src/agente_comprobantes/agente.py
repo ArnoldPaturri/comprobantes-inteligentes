@@ -3,6 +3,7 @@ from __future__ import annotations
 from agente_comprobantes.casos_uso.cotizaciones import OperacionesCotizaciones
 from agente_comprobantes.casos_uso.facturas import OperacionesFacturas
 from agente_comprobantes.casos_uso.pagos import OperacionesPagos
+from agente_comprobantes.casos_uso.vinculacion_pagos import OperacionesVinculacionPagos
 from agente_comprobantes.dominio import ExtraccionDocumento, TipoDocumento
 from agente_comprobantes.proveedores.base import ProveedorVision
 from agente_comprobantes.repositorios.base import RepositorioDocumentos
@@ -13,7 +14,12 @@ from agente_comprobantes.servicios.imagenes import ServicioImagenes
 from agente_comprobantes.servicios.validacion import ServicioValidacion
 
 
-class AgenteComprobantes(OperacionesCotizaciones, OperacionesFacturas, OperacionesPagos):
+class AgenteComprobantes(
+    OperacionesCotizaciones,
+    OperacionesFacturas,
+    OperacionesPagos,
+    OperacionesVinculacionPagos,
+):
     """Fachada que coordina los casos de uso sin duplicar responsabilidades."""
 
     def __init__(
