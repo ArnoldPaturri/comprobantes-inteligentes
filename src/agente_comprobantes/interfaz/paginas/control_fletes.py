@@ -22,6 +22,9 @@ from agente_comprobantes.control_financiero.repositorio_json import (
 )
 from agente_comprobantes.control_financiero.revisiones import guardar_revision
 from agente_comprobantes.dominio.enumeraciones import Moneda
+from agente_comprobantes.interfaz.componentes.ajustes_financieros import (
+    mostrar_ajustes_financieros,
+)
 from agente_comprobantes.interfaz.componentes.panel_evidencias import mostrar_evidencias
 from agente_comprobantes.interfaz.componentes.revision_pagos import (
     mostrar_revision_pagos,
@@ -99,8 +102,13 @@ def _mostrar_expediente(tablero: TableroFletes, identificador: str) -> None:
     else:
         st.warning("Pendiente de completar y revisar documentos.")
 
-    detalle, gestion, pagos = st.tabs(
-        ["Documentación y diferencias", "Revisar expediente", "Revisar pagos"]
+    detalle, gestion, pagos, ajustes = st.tabs(
+        [
+            "Documentación y diferencias",
+            "Revisar expediente",
+            "Revisar pagos",
+            "Detracciones y notas",
+        ]
     )
     with detalle:
         c1, c2, c3 = st.columns(3)
@@ -135,6 +143,8 @@ def _mostrar_expediente(tablero: TableroFletes, identificador: str) -> None:
         _formulario_revision(operacion)
     with pagos:
         mostrar_revision_pagos(operacion)
+    with ajustes:
+        mostrar_ajustes_financieros(operacion)
 
 
 def _formulario_revision(operacion: OperacionFlete) -> None:

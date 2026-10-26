@@ -148,3 +148,27 @@ excluir el importe del saldo acreditado.
 como revisado; no existe confirmación bancaria automatizada, identidad
 autenticada del revisor ni auditoría multiusuario. No es una aprobación
 final ni una liquidación tributaria.
+
+
+## Registro manual de detracciones y notas de crédito
+
+El expediente ahora incluye la pestaña **Detracciones y notas**, donde el
+usuario puede declarar un importe, referencia, número (para nota de crédito),
+nombre del archivo de respaldo y motivo. El registro inicia **sin acreditar**.
+El nombre del archivo es una referencia declarada; todavía no existe
+almacenamiento o carga física del documento en esta pantalla.
+
+- Las detracciones requieren que la operación esté confirmada como flete y
+  que se haya registrado manualmente que la detracción corresponde.
+- Las notas de crédito se vinculan a su factura y reducen el importe neto
+  solo después de una acreditación documental separada.
+- Se rechazan referencias de detracción repetidas y números duplicados
+  de notas de crédito dentro del expediente, así como importes inválidos.
+- La acreditación y su reversión exigen motivo y confirmación expresa;
+  cada cambio se añade al historial local del archivo JSON.
+- Ninguna acción modifica el Excel de origen, ni calcula tasas SPOT,
+  verifica datos en SUNAT, ni comprueba la autenticidad del archivo indicado.
+
+**Alcance:** las restricciones de duplicados son por expediente; todavía
+no existe control transaccional global o de concurrencia multiusuario.
+El archivo JSON debe emplearse solo con un operador a la vez.
