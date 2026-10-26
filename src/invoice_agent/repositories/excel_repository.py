@@ -2,9 +2,8 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from openpyxl import load_workbook, Workbook
+from openpyxl import Workbook, load_workbook
 
-from invoice_agent.exceptions import RepositoryError
 from invoice_agent.repositories.base import DocumentRepository
 from invoice_agent.repositories.cotizaciones_excel import OperacionesCotizacionesExcel
 from invoice_agent.repositories.esquemas_excel import SHEETS

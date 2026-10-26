@@ -10,11 +10,11 @@ from pydantic import Field, field_validator, model_validator
 from invoice_agent.domain.enums import Currency, DocumentType
 from invoice_agent.domain.modelo_base import DomainModel
 from invoice_agent.domain.normalizacion import (
+    PROVIDER_LABEL_PATTERN,
     _is_missing,
     _parse_date,
     _parse_decimal,
     _sanitize_text,
-    PROVIDER_LABEL_PATTERN,
 )
 
 

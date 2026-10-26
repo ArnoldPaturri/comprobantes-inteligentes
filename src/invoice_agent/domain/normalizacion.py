@@ -5,7 +5,6 @@ from datetime import date, datetime
 from decimal import Decimal, InvalidOperation
 from typing import Any
 
-
 MISSING_TEXT_VALUES = {"", "NULL", "NONE", "N/A", "NA", "NO APLICA", "NO VISIBLE"}
 
 ILLEGAL_CONTROL_CHARACTER_PATTERN = re.compile(

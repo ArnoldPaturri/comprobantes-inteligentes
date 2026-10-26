@@ -210,19 +210,19 @@ class UtilidadesExcel:
     def _quotation_from_row(row: dict[str, object]) -> QuotationRecord:
         return QuotationRecord(
             quotation_code=str(row["Cód. Cotización"]),
-            provider=ExcelRepository._optional_str(row["Proveedor"]),
-            provider_tax_id=ExcelRepository._optional_str(row["RUC Proveedor"]),
-            concept=ExcelRepository._optional_str(row["Concepto / Descripción"]),
+            provider=UtilidadesExcel._optional_str(row["Proveedor"]),
+            provider_tax_id=UtilidadesExcel._optional_str(row["RUC Proveedor"]),
+            concept=UtilidadesExcel._optional_str(row["Concepto / Descripción"]),
             quoted_amount=row["Monto Cotizado"],
-            currency=ExcelRepository._optional_currency(row["Moneda"]),
+            currency=UtilidadesExcel._optional_currency(row["Moneda"]),
             quotation_date=row["Fecha Cotización"],
             status=QuotationStatus(str(row["Estado"])),
             verification_status=VerificationStatus(str(row["Estado Verificación"])),
             source_hash=str(row["Hash Documento"]),
-            source_files=ExcelRepository._split(row["Archivos Origen"]),
-            uncertain_fields=ExcelRepository._split(row["Campos Inciertos"]),
+            source_files=UtilidadesExcel._split(row["Archivos Origen"]),
+            uncertain_fields=UtilidadesExcel._split(row["Campos Inciertos"]),
             registered_at=row["Fecha Registro"] or datetime.now(),
-            observations=ExcelRepository._split(row["Acción / Observaciones"]),
+            observations=UtilidadesExcel._split(row["Acción / Observaciones"]),
         )
 
     @staticmethod
@@ -230,21 +230,21 @@ class UtilidadesExcel:
         return InvoiceRecord(
             invoice_id=str(row["ID Factura"]),
             quotation_code=str(row["Cód. Cotización"]),
-            provider=ExcelRepository._optional_str(row["Proveedor"]),
-            provider_tax_id=ExcelRepository._optional_str(row["RUC Proveedor"]),
-            invoice_number=ExcelRepository._optional_str(row["N° Factura"]),
-            concept=ExcelRepository._optional_str(row["Concepto / Descripción"]),
+            provider=UtilidadesExcel._optional_str(row["Proveedor"]),
+            provider_tax_id=UtilidadesExcel._optional_str(row["RUC Proveedor"]),
+            invoice_number=UtilidadesExcel._optional_str(row["N° Factura"]),
+            concept=UtilidadesExcel._optional_str(row["Concepto / Descripción"]),
             invoiced_amount=row["Monto Facturado"],
-            currency=ExcelRepository._optional_currency(row["Moneda"]),
+            currency=UtilidadesExcel._optional_currency(row["Moneda"]),
             invoice_date=row["Fecha Factura"],
             verification_status=VerificationStatus(str(row["Estado Verificación"])),
             payment_status=PaymentStatus(str(row["Estado de Pago"])),
             source_hash=str(row["Hash Documento"]),
-            source_files=ExcelRepository._split(row["Archivos Origen"]),
-            uncertain_fields=ExcelRepository._split(row["Campos Inciertos"]),
-            duplicate_of=ExcelRepository._split(row["Posible Duplicado De"]),
+            source_files=UtilidadesExcel._split(row["Archivos Origen"]),
+            uncertain_fields=UtilidadesExcel._split(row["Campos Inciertos"]),
+            duplicate_of=UtilidadesExcel._split(row["Posible Duplicado De"]),
             registered_at=row["Fecha Registro"] or datetime.now(),
-            observations=ExcelRepository._split(row["Acción / Observaciones"]),
+            observations=UtilidadesExcel._split(row["Acción / Observaciones"]),
         )
 
     @staticmethod
@@ -254,20 +254,20 @@ class UtilidadesExcel:
         return PaymentRecord(
             payment_id=str(row["ID Pago"]),
             quotation_code=str(row["Cód. Cotización"]),
-            invoice_id=ExcelRepository._optional_str(
+            invoice_id=UtilidadesExcel._optional_str(
                 row["ID Factura"]
             ),
             payment_type=DocumentType(
                 str(row["Tipo de Pago"])
             ),
-            payment_entity=ExcelRepository._optional_str(
+            payment_entity=UtilidadesExcel._optional_str(
                 row["Entidad"]
             ),
-            operation_number=ExcelRepository._optional_str(
+            operation_number=UtilidadesExcel._optional_str(
                 row["N° Operación"]
             ),
             paid_amount=row["Monto Pagado"],
-            currency=ExcelRepository._optional_currency(
+            currency=UtilidadesExcel._optional_currency(
                 row["Moneda"]
             ),
             payment_date=row["Fecha Pago"],
@@ -278,16 +278,16 @@ class UtilidadesExcel:
                 str(row["Estado Conciliación"])
             ),
             source_hash=str(row["Hash Documento"]),
-            source_files=ExcelRepository._split(
+            source_files=UtilidadesExcel._split(
                 row["Archivos Origen"]
             ),
-            duplicate_of=ExcelRepository._split(
+            duplicate_of=UtilidadesExcel._split(
                 row["Posible Duplicado De"]
             ),
             registered_at=(
                 row["Fecha Registro"] or datetime.now()
             ),
-            observations=ExcelRepository._split(
+            observations=UtilidadesExcel._split(
                 row["Acción / Observaciones"]
             ),
         )
