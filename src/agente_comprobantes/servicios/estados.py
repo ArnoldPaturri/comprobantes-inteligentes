@@ -1,10 +1,10 @@
 from agente_comprobantes.dominio import (
     CoincidenciaDuplicado,
-    ResultadoConciliacionPago,
-    ResultadoConciliacion,
-    Severidad,
-    InformeValidacion,
     EstadoVerificacion,
+    InformeValidacion,
+    ResultadoConciliacion,
+    ResultadoConciliacionPago,
+    Severidad,
 )
 
 

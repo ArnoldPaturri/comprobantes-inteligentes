@@ -3,13 +3,13 @@ from decimal import Decimal
 import pytest
 
 from agente_comprobantes.dominio import (
-    Moneda,
     Diagnostico,
-    RegistroFactura,
     EstadoPago,
-    RegistroCotizacion,
-    ResultadoConciliacion,
     EstadoVerificacion,
+    Moneda,
+    RegistroCotizacion,
+    RegistroFactura,
+    ResultadoConciliacion,
 )
 from agente_comprobantes.excepciones import ErrorCodigoDuplicado
 from agente_comprobantes.repositorios.repositorio_excel import RepositorioExcel

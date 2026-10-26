@@ -1,6 +1,6 @@
 from agente_comprobantes.dominio import (
-    Moneda,
     ExtraccionDocumento,
+    Moneda,
     ReferenciaDocumento,
     TipoDocumento,
 )

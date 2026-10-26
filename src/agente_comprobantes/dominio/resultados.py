@@ -3,13 +3,13 @@ from __future__ import annotations
 from pydantic import Field
 
 from agente_comprobantes.dominio.conciliaciones import (
-    ResultadoConciliacionPago,
     ResultadoConciliacion,
+    ResultadoConciliacionPago,
 )
 from agente_comprobantes.dominio.enumeraciones import (
-    TipoDocumento,
-    EstadoVinculacionPago,
     EstadoVerificacion,
+    EstadoVinculacionPago,
+    TipoDocumento,
 )
 from agente_comprobantes.dominio.modelo_base import ModeloDominio
 from agente_comprobantes.dominio.referencias import CoincidenciaDuplicado

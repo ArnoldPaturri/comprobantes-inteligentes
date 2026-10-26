@@ -1,12 +1,12 @@
 from decimal import Decimal
 
 from agente_comprobantes.dominio import (
-    Moneda,
     Diagnostico,
-    ExtraccionDocumento,
-    TipoDocumento,
-    RegistroCotizacion,
     EstadoVerificacion,
+    ExtraccionDocumento,
+    Moneda,
+    RegistroCotizacion,
+    TipoDocumento,
 )
 from agente_comprobantes.servicios.conciliacion_facturas import ServicioConciliacionFacturas
 
@@ -58,7 +58,9 @@ def test_marks_supplier_mismatch(settings) -> None:
 
 
 def test_zero_quotation_amount_has_no_percentage(settings) -> None:
-    result = ServicioConciliacionFacturas(settings).compare(quotation(amount="0"), invoice(amount="5"))
+    result = ServicioConciliacionFacturas(settings).compare(
+        quotation(amount="0"), invoice(amount="5")
+    )
 
     assert result.difference == Decimal("5.00")
     assert result.deviation_percent is None

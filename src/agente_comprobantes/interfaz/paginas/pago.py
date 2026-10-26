@@ -6,9 +6,9 @@ import streamlit as st
 
 from agente_comprobantes.dominio import (
     ExtraccionDocumento,
-    TipoDocumento,
-    RegistroFactura,
     RegistroCotizacion,
+    RegistroFactura,
+    TipoDocumento,
 )
 from agente_comprobantes.excepciones import ErrorAgenteComprobantes
 from agente_comprobantes.interfaz.cargas import save_uploaded_files

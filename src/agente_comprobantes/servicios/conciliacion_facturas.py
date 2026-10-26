@@ -1,14 +1,14 @@
-from decimal import ROUND_HALF_UP, Decimal
+from decimal import Decimal, ROUND_HALF_UP
 from difflib import SequenceMatcher
 
 from agente_comprobantes.configuracion import Configuracion
 from agente_comprobantes.dominio import (
     Diagnostico,
     ExtraccionDocumento,
+    ObservacionValidacion,
     RegistroCotizacion,
     ResultadoConciliacion,
     Severidad,
-    ObservacionValidacion,
 )
 from agente_comprobantes.servicios.normalizacion_texto import normalize_supplier
 

@@ -5,8 +5,8 @@ from typing import Any
 import streamlit as st
 
 from agente_comprobantes.dominio import (
-    Moneda,
     ExtraccionDocumento,
+    Moneda,
 )
 
 

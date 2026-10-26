@@ -1,8 +1,8 @@
 from agente_comprobantes.dominio import (
-    Moneda,
     ExtraccionDocumento,
-    TipoDocumento,
+    Moneda,
     Severidad,
+    TipoDocumento,
 )
 from agente_comprobantes.servicios.validacion import ServicioValidacion
 

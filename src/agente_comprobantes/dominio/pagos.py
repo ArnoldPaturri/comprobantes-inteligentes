@@ -6,10 +6,10 @@ from decimal import Decimal
 from pydantic import Field, field_validator
 
 from agente_comprobantes.dominio.enumeraciones import (
+    EstadoVerificacion,
+    EstadoVinculacionPago,
     Moneda,
     TipoDocumento,
-    EstadoVinculacionPago,
-    EstadoVerificacion,
 )
 from agente_comprobantes.dominio.modelo_base import ModeloDominio
 from agente_comprobantes.dominio.normalizacion import _parse_date, _parse_decimal

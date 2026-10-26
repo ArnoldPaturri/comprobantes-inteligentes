@@ -3,13 +3,13 @@ from __future__ import annotations
 from uuid import uuid4
 
 from agente_comprobantes.dominio import (
-    ExtraccionDocumento,
-    TipoDocumento,
-    ResultadoVinculacionPago,
+    EstadoVerificacion,
     EstadoVinculacionPago,
+    ExtraccionDocumento,
     RegistroPago,
     ResultadoRegistro,
-    EstadoVerificacion,
+    ResultadoVinculacionPago,
+    TipoDocumento,
 )
 from agente_comprobantes.excepciones import ErrorEstadoRegistro, ErrorRegistroNoEncontrado
 from agente_comprobantes.servicios.estados import issue_messages, resolve_verification_status

@@ -1,11 +1,11 @@
 from __future__ import annotations
 
 from agente_comprobantes.dominio import (
-    ExtraccionDocumento,
-    TipoDocumento,
-    RegistroCotizacion,
     EstadoCotizacion,
+    ExtraccionDocumento,
+    RegistroCotizacion,
     ResultadoRegistro,
+    TipoDocumento,
 )
 from agente_comprobantes.servicios.estados import issue_messages, resolve_verification_status
 

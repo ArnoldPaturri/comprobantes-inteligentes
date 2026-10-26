@@ -1,13 +1,13 @@
 from decimal import Decimal
 
 from agente_comprobantes.dominio import (
-    Moneda,
-    ExtraccionDocumento,
-    TipoDocumento,
-    RegistroFactura,
     EstadoPago,
-    Severidad,
     EstadoVerificacion,
+    ExtraccionDocumento,
+    Moneda,
+    RegistroFactura,
+    Severidad,
+    TipoDocumento,
 )
 from agente_comprobantes.servicios.conciliacion_pagos import (
     ServicioConciliacionPagos,

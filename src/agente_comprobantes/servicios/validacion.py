@@ -1,10 +1,10 @@
 from agente_comprobantes.configuracion import Configuracion
 from agente_comprobantes.dominio import (
     ExtraccionDocumento,
-    TipoDocumento,
-    Severidad,
-    ObservacionValidacion,
     InformeValidacion,
+    ObservacionValidacion,
+    Severidad,
+    TipoDocumento,
 )
 
 REQUIRED_FIELDS: dict[TipoDocumento, tuple[str, ...]] = {

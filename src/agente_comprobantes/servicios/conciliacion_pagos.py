@@ -1,12 +1,12 @@
-from decimal import ROUND_HALF_UP, Decimal
+from decimal import Decimal, ROUND_HALF_UP
 
 from agente_comprobantes.dominio import (
+    EstadoPago,
     ExtraccionDocumento,
+    ObservacionValidacion,
     RegistroFactura,
     ResultadoConciliacionPago,
-    EstadoPago,
     Severidad,
-    ObservacionValidacion,
 )
 
 MONEY_PLACES = Decimal("0.01")

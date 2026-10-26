@@ -12,15 +12,15 @@ from openpyxl.styles import Alignment, Font, PatternFill
 from openpyxl.utils import get_column_letter
 
 from agente_comprobantes.dominio import (
-    Moneda,
-    TipoDocumento,
-    RegistroFactura,
-    EstadoVinculacionPago,
-    RegistroPago,
-    EstadoPago,
-    RegistroCotizacion,
     EstadoCotizacion,
+    EstadoPago,
     EstadoVerificacion,
+    EstadoVinculacionPago,
+    Moneda,
+    RegistroCotizacion,
+    RegistroFactura,
+    RegistroPago,
+    TipoDocumento,
 )
 from agente_comprobantes.excepciones import ErrorRepositorio
 from agente_comprobantes.repositorios.esquemas_excel import ILLEGAL_EXCEL_CHARACTER_PATTERN

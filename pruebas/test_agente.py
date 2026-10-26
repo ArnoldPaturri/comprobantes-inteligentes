@@ -3,13 +3,13 @@ from decimal import Decimal
 import pytest
 
 from agente_comprobantes.dominio import (
-    Moneda,
     Diagnostico,
-    ExtraccionDocumento,
-    TipoDocumento,
-    EstadoVinculacionPago,
     EstadoPago,
     EstadoVerificacion,
+    EstadoVinculacionPago,
+    ExtraccionDocumento,
+    Moneda,
+    TipoDocumento,
 )
 from agente_comprobantes.excepciones import ErrorRegistroNoEncontrado
 from agente_comprobantes.fabrica import build_agent

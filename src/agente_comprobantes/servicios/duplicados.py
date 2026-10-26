@@ -5,9 +5,9 @@ from decimal import Decimal
 from difflib import SequenceMatcher
 
 from agente_comprobantes.dominio import (
+    CoincidenciaDuplicado,
     ExtraccionDocumento,
     ReferenciaDocumento,
-    CoincidenciaDuplicado,
 )
 from agente_comprobantes.servicios.normalizacion_texto import normalize_supplier, normalize_text
 

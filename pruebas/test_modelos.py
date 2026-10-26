@@ -1,7 +1,7 @@
 from datetime import date
 from decimal import Decimal
 
-from agente_comprobantes.dominio import Moneda, ExtraccionDocumento, TipoDocumento
+from agente_comprobantes.dominio import ExtraccionDocumento, Moneda, TipoDocumento
 
 
 def test_extraction_normalizes_localized_amount_and_date() -> None:
