@@ -5,7 +5,7 @@ build-backend = "setuptools.build_meta"
 [project]
 name = "agente-comprobantes"
 version = "0.2.0"
-description = "Backend modular para extraer y conciliar cotizaciones, facturas y pagos desde imágenes."
+description = "Aplicación modular para analizar y conciliar cotizaciones, facturas, boletas y pagos mediante IA."
 readme = "README.md"
 requires-python = ">=3.11"
 dependencies = [
@@ -24,7 +24,7 @@ dev = [
 ]
 
 [project.scripts]
-agente-comprobantes = "invoice_agent.cli:main"
+agente-comprobantes = "agente_comprobantes.consola:main"
 
 [tool.setuptools]
 package-dir = {"" = "src"}
@@ -35,7 +35,7 @@ where = ["src"]
 [tool.pytest.ini_options]
 addopts = "-q"
 pythonpath = ["src"]
-testpaths = ["tests"]
+testpaths = ["pruebas"]
 
 [tool.ruff]
 line-length = 100

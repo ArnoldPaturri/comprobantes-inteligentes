@@ -1,167 +1,92 @@
-# Agente IA de comprobantes
+# Comprobantes Inteligentes
 
-Versión: **0.2.0**
+Agente en Python para extraer información de cotizaciones, facturas, boletas y constancias de pago usando IA; validar datos, identificar posibles duplicados, comparar montos y conciliar pagos parciales o totales. Incluye interfaz Streamlit y comandos de consola.
 
-Backend modular para registrar cotizaciones desde imágenes, asociarles facturas, comparar
-automáticamente lo cotizado con lo facturado y conciliar comprobantes de pago. La extracción
-visual usa Cohere Command A Vision; las validaciones, cálculos, duplicados y escritura del Excel
-se realizan en Python.
+## Qué hace
 
-## Alcance de esta versión
+- Procesa varias imágenes como un único documento (Cohere / Groq Vision).
+- Permite revisar y corregir la extracción antes de registrarla.
+- Registra cotizaciones, facturas y comprobantes de pago vinculados.
+- Detecta duplicados y conserva el registro para su revisión.
+- Calcula diferencias, saldos y pagos aplicados mediante reglas deterministas.
+- Mantiene hojas Excel: `COTIZACIONES`, `FACTURAS`, `COMPARATIVA` y `PAGOS`.
+- Permite pagos anticipados que se vinculan con la factura posteriormente.
 
-- Una o varias imágenes se procesan como un solo documento.
-- Registro de cotizaciones con un código interno ingresado por el usuario.
-- Registro de facturas asociadas a una cotización existente.
-- Comparación de proveedor, moneda y montos.
-- Cálculo determinista de diferencia y porcentaje de desvío.
-- Detección de posibles duplicados sin eliminarlos automáticamente.
-- Registro de Yape, Plin, transferencias, vouchers, depósitos y constancias de pago.
-- Pagos totales y parciales acumulables, con detección de moneda distinta y sobrepago.
-- Los pagos dudosos o duplicados se registran, pero no se aplican a la factura.
-- Estados `VERIFICADO`, `REVISAR`, `ERROR` y `POSIBLE DUPLICADO`.
-- Excel con hojas `COTIZACIONES`, `FACTURAS`, `COMPARATIVA` y `PAGOS`.
-- Puerto de proveedor desacoplado para poder añadir Gemini u otro modelo más adelante.
-
-## Arquitectura
+## Estructura de carpetas
 
 ```text
-Imágenes (1..N)
-      │
-      ▼
-ImageService ── valida, orienta, reduce y calcula hash
-      │
-      ▼
-VisionProvider ── Cohere Vision → JSON estructurado
-      │
-      ├── ValidationService
-      ├── DuplicateService
-      ├── ReconciliationService
-      └── PaymentReconciliationService
-                  │
-                  ▼
-            ExcelRepository
+comprobantes-inteligentes/
+├── src/agente_comprobantes/
+│   ├── casos_uso/          Operaciones de cotizaciones, facturas y pagos
+│   ├── dominio/            Entidades y modelos del sistema
+│   ├── proveedores/        Proveedores de IA: Groq y Cohere
+│   ├── repositorios/       Persistencia y operaciones Excel
+│   ├── servicios/          Validación, duplicados y conciliación
+│   ├── interfaz/           Páginas y componentes Streamlit
+│   ├── prompts/            Instrucciones de extracción
+│   ├── agente.py           Fachada del agente
+│   ├── configuracion.py    Configuración y rutas
+│   ├── consola.py          Interfaz de comandos
+│   └── fabrica.py          Ensamblaje de dependencias
+├── pruebas/                Pruebas automáticas
+├── documentacion/          Registro de decisiones
+├── entrada/ejemplos/       Solo archivos de ejemplo públicos
+├── salida/                 Datos generados (privados y excluidos de Git)
+├── principal.py            Entrada para consola
+├── aplicacion.py           Entrada para Streamlit
+├── pyproject.toml
+└── .env.example
 ```
 
-`ReceiptAgent` coordina el caso de uso, pero cada responsabilidad vive en una clase independiente.
-La futura interfaz Streamlit podrá llamar a `register_quotation()`, `register_invoice()` y
-`register_payment()` sin contener lógica de negocio.
+## Instalar en Windows
 
-## Instalación en Windows
-
-Desde VS Code o Cursor, abre una terminal en la carpeta del proyecto:
+Desde la raíz del proyecto:
 
 ```powershell
 py -3.13 -m venv .venv
-.venv\Scripts\activate
+.venv\Scripts\Activate.ps1
 python -m pip install --upgrade pip
-pip install -e ".[dev]"
-Copy-Item .env.example .env
+python -m pip install -e ".[dev]"
 ```
 
-Edita `.env` y coloca tu clave:
+Si todavía no tienes tu archivo `.env`, crea uno desde `.env.example` y configura las API keys necesarias. Nunca subas el archivo `.env` ni credenciales de Google o documentos privados.
 
-```dotenv
-COHERE_API_KEY=tu_clave_real
-```
+## Ejecutar
 
-El archivo `.env` está excluido de Git. Nunca subas ni compartas tu API key.
-
-## Uso
-
-Inicializar el Excel:
+Interfaz gráfica:
 
 ```powershell
-python main.py iniciar
+streamlit run aplicacion.py
 ```
 
-Registrar una cotización de una o varias páginas:
+Consola:
 
 ```powershell
-python main.py cotizacion --codigo COT-2026-001 foto_1.jpg foto_2.jpg
+python principal.py iniciar
+python principal.py cotizacion --codigo COT-2026-001 foto_cotizacion.jpg
+python principal.py factura --cotizacion COT-2026-001 foto_factura.jpg
+python principal.py pago --cotizacion COT-2026-001 --factura FAC-ABC1234567 foto_pago.png
+python principal.py ver --hoja COMPARATIVA
 ```
 
-Registrar la factura relacionada:
+Las llamadas a IA no se requieren para ejecutar las pruebas.
+
+## Validación
 
 ```powershell
-python main.py factura --cotizacion COT-2026-001 factura.jpg
+python -m pytest
+python -m ruff check .
+python -m pytest --cov=agente_comprobantes --cov-report=term-missing
 ```
 
-Registrar un comprobante asociado al ID interno de una factura:
+## Migración desde el proyecto anterior
 
-```powershell
-python main.py pago --factura FAC-ABC1234567 comprobante_pago.png
-```
+- **No borres** las carpetas antiguas `input/`, `output/` ni tu archivo `.env`: pueden contener documentos y registros reales. Siguen excluidas del repositorio.
+- El proyecto nuevo utiliza `entrada/` y `salida/`. Los archivos Excel anteriores **no se trasladan automáticamente**.
+- Si existe `output/registros.xlsx`, la configuración por defecto de Python lo prioriza para evitar perder continuidad. **Si tu `.env` contiene `WORKBOOK_PATH`, prevalece esa variable**, por lo que deberás revisar esa ruta antes de cambiarla.
+- Las estructuras JSON y los nombres de columnas Excel se conservan en inglés o español según su contrato previo, para no romper datos persistidos.
+- La rama `main` mantiene el estado anterior; esta reorganización se desarrolla por separado hasta completar su validación.
 
-Consultar la comparativa:
+## Próximas mejoras
 
-```powershell
-python main.py ver --hoja COMPARATIVA
-```
-
-También puedes instalar el comando y usar `agente-comprobantes` en vez de `python main.py`.
-
-## Reglas relevantes
-
-- El código de cotización es único y lo ingresa el usuario.
-- Una factura solo se procesa si la cotización indicada ya existe; así se evita gastar una llamada
-  de IA inútil.
-- Los datos no legibles quedan vacíos y el registro se marca para revisión.
-- Una coincidencia de duplicado no borra la evidencia: el nuevo registro se conserva marcado.
-- Un pago `VERIFICADO` actualiza las hojas `FACTURAS` y `COMPARATIVA`; un pago dudoso o duplicado
-  queda en `PAGOS`, pero no modifica el saldo de la factura.
-- Los pagos parciales se acumulan hasta completar el monto facturado.
-- Reenviar exactamente el mismo código de cotización se bloquea porque ese código es la clave que
-  relaciona futuras facturas.
-- `Diferencia = Monto facturado - Monto cotizado`.
-- `% Desvío = Diferencia / Monto cotizado × 100`.
-- Aún no se aplican tolerancias comerciales inventadas; por ahora el diagnóstico solo indica si el
-  monto está por encima, coincide o está por debajo.
-
-## Límites de imágenes
-
-Por defecto se aceptan hasta 20 imágenes y 20 MB procesados por expediente. Se corrige la
-orientación EXIF, se limita la imagen a 1536 × 2048 y se envía con detalle alto para conservar
-texto pequeño. Los formatos admitidos son JPEG, PNG, WEBP y GIF no animado.
-
-## Pruebas y calidad
-
-```powershell
-pytest
-ruff check .
-pytest --cov=invoice_agent --cov-report=term-missing
-```
-
-Las pruebas usan un proveedor de visión falso; no consumen llamadas ni tokens de Cohere.
-
-Si Cohere devuelve un valor con formato inesperado, el mensaje mostrará los campos problemáticos
-y guardará la respuesta original en `output/diagnostics/`. Ese archivo facilita el diagnóstico y
-puede contener información extraída del documento, por lo que no debe compartirse públicamente.
-
-## Estructura
-
-```text
-agente_comprobantes/
-├── input/samples/
-├── output/
-├── src/invoice_agent/
-│   ├── domain/
-│   ├── prompts/
-│   ├── providers/
-│   ├── repositories/
-│   ├── services/
-│   ├── agent.py
-│   ├── cli.py
-│   ├── config.py
-│   └── factory.py
-├── tests/
-├── .env.example
-├── main.py
-├── pyproject.toml
-└── requirements.txt
-```
-
-## Próximas fases
-
-1. Probar documentos reales y ajustar el prompt con evidencia.
-2. Añadir un repositorio de Google Sheets usando el mismo contrato de persistencia.
-3. Construir Streamlit sobre los casos de uso ya probados.
+Se evaluará integrar LangChain y LangGraph cuando la refactorización, las pruebas y la aplicación estén estabilizadas.

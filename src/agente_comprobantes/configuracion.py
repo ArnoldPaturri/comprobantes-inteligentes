@@ -7,6 +7,10 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 
 PROJECT_ROOT = Path(__file__).resolve().parents[2]
 
+# Priorizar registros ya existentes al migrar desde la estructura antigua.
+ARCHIVO_ANTERIOR = PROJECT_ROOT / "output" / "registros.xlsx"
+ARCHIVO_NUEVO = PROJECT_ROOT / "salida" / "registros.xlsx"
+
 
 class Settings(BaseSettings):
     """Configuración central leída desde variables de entorno o ``.env``."""
@@ -27,8 +31,8 @@ class Settings(BaseSettings):
     cohere_api_key: SecretStr | None = None
     cohere_model: str = "command-a-vision-07-2025"
     image_detail: Literal["low", "high", "auto"] = "high"
-    workbook_path: Path = PROJECT_ROOT / "output" / "registros.xlsx"
-    diagnostics_dir: Path = PROJECT_ROOT / "output" / "diagnostics"
+    workbook_path: Path = ARCHIVO_ANTERIOR if ARCHIVO_ANTERIOR.is_file() else ARCHIVO_NUEVO
+    diagnostics_dir: Path = PROJECT_ROOT / "salida" / "diagnosticos"
 
     max_images_per_document: int = Field(default=20, ge=1, le=20)
     max_payload_mb: int = Field(default=20, ge=1, le=20)

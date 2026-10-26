@@ -29,7 +29,7 @@ def _safe_filename(filename: str) -> str:
 
 def save_uploaded_files(
     uploaded_files: Iterable[UploadedFileLike],
-    root: Path = Path("input/uploads"),
+    root: Path = Path("entrada/cargas"),
 ) -> list[str]:
     files = list(uploaded_files)
 

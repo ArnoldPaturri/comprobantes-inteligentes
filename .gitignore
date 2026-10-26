@@ -1,5 +1,29 @@
+# Entorno local y secretos
 .env
+.env.*
+!.env.example
 .venv/
+venv/
+credenciales/
+credentials/
+.streamlit/secrets.toml
+*.pem
+*.key
+*.p12
+
+# Archivos personales, comprobantes y resultados
+entrada/*
+!entrada/ejemplos/
+entrada/ejemplos/*
+!entrada/ejemplos/.gitkeep
+salida/*
+!salida/.gitkeep
+
+# Directorios anteriores: conservar ignorados durante la migración
+input/
+output/
+
+# Python, distribución, herramientas y cobertura
 __pycache__/
 *.py[cod]
 *.egg-info/
@@ -7,28 +31,6 @@ __pycache__/
 .ruff_cache/
 .coverage
 htmlcov/
-output/*.xlsx
-!output/.gitkeep
-input/samples/*
-!input/samples/.gitkeep
-
-# Credenciales adicionales
-.env.*
-!.env.example
-credentials/
-.streamlit/secrets.toml
-*.pem
-*.key
-*.p12
-
-# Comprobantes y archivos privados
-input/*
-!input/.gitkeep
-!input/samples/
-
-# Resultados generados
-output/*
-!output/.gitkeep
 
 # Bases de datos locales
 *.db
