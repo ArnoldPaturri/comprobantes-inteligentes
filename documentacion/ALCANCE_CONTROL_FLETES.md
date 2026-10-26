@@ -55,3 +55,31 @@ Un saldo negativo es excepción. Un saldo positivo en expediente
 incompleto queda pendiente; en expediente cerrado y documentado queda
 observado. El consolidado por moneda y cotización no equivale a un
 estado de sobrecostos aprobados.
+
+## Integración disponible en esta rama
+
+El adaptador `control_financiero/integracion.py` lee facturas, cotizaciones y
+pagos desde el repositorio documental existente y crea un `BorradorFlete`.
+No modifica las hojas originales. Los pagos reconocidos por OCR se importan
+como **no acreditados**, con el fin de requerir revisión humana explícita.
+
+Los controles se almacenan aparte como JSON versionado con escritura atómica;
+no se sobrescriben los registros existentes ni se admiten IDs repetidos.
+Por defecto, el JSON está junto al Excel activo. Una ruta alternativa se
+puede pasar con `--control`.
+
+```powershell
+python principal.py flete-borrador --factura FAC-01
+python principal.py fletes-ver
+```
+
+Si se especificó una ruta Excel alternativa, anteponer
+`--workbook RUTA_DEL_EXCEL` antes del subcomando.
+
+**Precauciones:** el comando no permite sobreescribir el Excel con JSON,
+rechaza IDs ya guardados y no verifica bancos ni detracciones. Antes de
+importar un nuevo borrador para el mismo ID, hay que revisar el existente;
+la edición y aprobación operativa tendrán un flujo específico posterior.
+
+La implementación actual está diseñada para uso local y secuencial, no
+para escritura concurrente por varios usuarios.

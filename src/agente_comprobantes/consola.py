@@ -6,6 +6,9 @@ import sys
 from pathlib import Path
 
 from agente_comprobantes.configuracion import Configuracion
+from agente_comprobantes.control_financiero.conciliacion import conciliar_flete
+from agente_comprobantes.control_financiero.integracion import crear_borrador_desde_repositorio
+from agente_comprobantes.control_financiero.repositorio_json import RepositorioControlFletes
 from agente_comprobantes.dominio import TipoDocumento
 from agente_comprobantes.excepciones import ErrorAgenteComprobantes
 from agente_comprobantes.fabrica import crear_agente, crear_repositorio
@@ -92,6 +95,18 @@ def crear_parser() -> argparse.ArgumentParser:
         choices=["COTIZACIONES", "FACTURAS", "COMPARATIVA", "PAGOS"],
         default="COMPARATIVA",
     )
+    flete = subparsers.add_parser(
+        "flete-borrador",
+        help="Importa un control pendiente desde una factura existente del Excel.",
+    )
+    flete.add_argument("--factura", required=True, help="ID interno de factura.")
+    flete.add_argument("--control", type=Path, help="Archivo JSON de control independiente.")
+
+    listado = subparsers.add_parser(
+        "fletes-ver",
+        help="Muestra el estado de los controles de fletes registrados.",
+    )
+    listado.add_argument("--control", type=Path, help="Archivo JSON de control independiente.")
     return parser
 
 
@@ -116,6 +131,32 @@ def main(argv: list[str] | None = None) -> None:
             repository.inicializar()
             records = repository.leer_hoja(args.hoja)
             print(json.dumps(records, ensure_ascii=False, indent=2, default=str))
+            return
+
+        if args.command in {"flete-borrador", "fletes-ver"}:
+            ruta_control = args.control or settings.ruta_archivo_excel().with_name(
+                "control_fletes.json"
+            )
+            if ruta_control.expanduser().resolve() == settings.ruta_archivo_excel().resolve():
+                raise ValueError("El archivo de control no puede reemplazar el Excel.")
+            control = RepositorioControlFletes(ruta_control)
+            if args.command == "flete-borrador":
+                borrador = crear_borrador_desde_repositorio(
+                    crear_repositorio(settings), args.factura
+                )
+                control.agregar(borrador.operacion)
+                respuesta = {
+                    "control": control.ubicacion,
+                    "operacion": borrador.operacion.model_dump(mode="json"),
+                    "advertencias": borrador.advertencias,
+                    "estado": conciliar_flete(borrador.operacion).model_dump(mode="json"),
+                }
+            else:
+                respuesta = [
+                    conciliar_flete(operacion).model_dump(mode="json")
+                    for operacion in control.listar()
+                ]
+            print(json.dumps(respuesta, ensure_ascii=False, indent=2))
             return
 
         agent = crear_agente(settings)
