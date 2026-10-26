@@ -64,6 +64,14 @@ def conciliar_flete(operacion: OperacionFlete) -> ResultadoControlFlete:
     observaciones: list[str] = []
     problemas: list[str] = []
 
+    if operacion.es_flete is None:
+        observaciones.append("La operación está pendiente de clasificar como flete.")
+    elif operacion.es_flete is False:
+        observaciones.append(
+            "No corresponde a un flete: el expediente queda fuera de los "
+            "indicadores específicos de transporte."
+        )
+
     if not operacion.evidencia_factura:
         observaciones.append("Falta evidencia de la factura.")
     if not operacion.numero_guia:

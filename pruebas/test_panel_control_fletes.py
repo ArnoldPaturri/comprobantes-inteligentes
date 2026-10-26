@@ -29,6 +29,7 @@ def operacion(
         numero_factura=numero_factura,
         monto_facturado=Decimal(monto),
         proveedor=proveedor,
+        es_flete=True,
         movimientos_bancarios=[
             MovimientoBancario(
                 importe_aplicado=Decimal("117.62"),

@@ -59,6 +59,7 @@ def operacion(**cambios: object) -> OperacionFlete:
         "monto_facturado": "1000.00",
         "evidencia_factura": "factura.pdf",
         "detraccion_aplica": False,
+        "es_flete": True,
         "movimientos_bancarios": [bancarizacion("1000.00")],
         "conciliacion_cerrada": True,
     }

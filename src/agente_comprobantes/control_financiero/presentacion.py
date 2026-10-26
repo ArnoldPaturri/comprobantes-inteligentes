@@ -27,6 +27,7 @@ class FilaPanelFlete:
     factura: str
     proveedor: str
     guia: str
+    clasificacion: str
     moneda: Moneda
     facturado: Decimal
     declarado: Decimal
@@ -74,6 +75,11 @@ class TableroFletes:
                     factura=operacion.numero_factura,
                     proveedor=operacion.proveedor or "Sin proveedor",
                     guia=operacion.numero_guia or "Por asociar",
+                    clasificacion=(
+                        "Flete" if operacion.es_flete is True
+                        else "Otro servicio" if operacion.es_flete is False
+                        else "Sin clasificar"
+                    ),
                     moneda=operacion.moneda,
                     facturado=estado.facturado_neto,
                     declarado=declarado,
@@ -95,7 +101,9 @@ def construir_tablero(operaciones: list[OperacionFlete]) -> TableroFletes:
     return TableroFletes(
         operaciones=operaciones,
         resultados=resultados,
-        resumenes=resumir_operaciones(operaciones),
+        resumenes=resumir_operaciones(
+            [operacion for operacion in operaciones if operacion.es_flete is True]
+        ),
     )
 
 

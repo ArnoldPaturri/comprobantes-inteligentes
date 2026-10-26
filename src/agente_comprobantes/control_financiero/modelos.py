@@ -6,7 +6,7 @@ de extracción OCR ni los encabezados de los Excel existentes.
 
 from __future__ import annotations
 
-from datetime import date
+from datetime import date, datetime
 from decimal import Decimal, InvalidOperation
 from enum import StrEnum
 
@@ -81,6 +81,14 @@ class NotaCredito(EvidenciaFinanciera):
         return importe_positivo(valor)
 
 
+class RevisionExpediente(ModeloDominio):
+    """Registro local de cambios; no representa una firma autenticada."""
+
+    fecha: datetime
+    motivo: str
+    cambios: dict[str, str]
+
+
 class OperacionFlete(ModeloDominio):
     """Una operación corresponde a una única factura y su control de pagos.
 
@@ -99,10 +107,12 @@ class OperacionFlete(ModeloDominio):
     fecha_factura: date | None = None
     evidencia_factura: str | None = None
     detraccion_aplica: bool | None = None
+    es_flete: bool | None = None
     movimientos_bancarios: list[MovimientoBancario] = Field(default_factory=list)
     depositos_detraccion: list[DepositoDetraccion] = Field(default_factory=list)
     notas_credito: list[NotaCredito] = Field(default_factory=list)
     conciliacion_cerrada: bool = False
+    revisiones: list[RevisionExpediente] = Field(default_factory=list)
 
     @field_validator("monto_facturado", mode="before")
     @classmethod
