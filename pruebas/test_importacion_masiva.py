@@ -12,6 +12,7 @@ from agente_comprobantes.control_financiero.importacion_masiva import (
     preparar_importacion,
 )
 from agente_comprobantes.control_financiero.repositorio_json import RepositorioControlFletes
+from agente_comprobantes.dominio.enumeraciones import Moneda
 
 HEADERS = [
     "Nro. Bancarización", "Detracción", "Nro de Guía", "Proveedor",
@@ -197,3 +198,65 @@ def test_limite_de_filas_no_depende_de_max_row(monkeypatch, tmp_path) -> None:
     with pytest.raises(ValueError, match="límite por importación"):
         preparar_importacion(datos, repo)
     assert not (tmp_path / "control.json").exists()
+
+
+@pytest.mark.parametrize(
+    ("etiqueta", "moneda"),
+    [
+        ("PEN (S/.)", Moneda.PEN),
+        (" PEN ( S/. ) ", Moneda.PEN),
+        ("PEN (S/)", Moneda.PEN),
+        ("USD (US$)", Moneda.USD),
+        ("USD ($)", Moneda.USD),
+        ("EUR (€)", Moneda.EUR),
+        ("PEN", Moneda.PEN),
+        ("soles", Moneda.PEN),
+    ],
+)
+def test_moneda_con_simbolo_contable_se_reconoce(etiqueta, moneda) -> None:
+    assert importacion_masiva._moneda(etiqueta) == moneda
+
+
+@pytest.mark.parametrize(
+    "etiqueta",
+    ["PEN (US$)", "USD (S/.)", "PEN (EUR)", "XXX (S/.)", "PEN / USD"],
+)
+def test_no_acepta_monedas_ambiguas_ni_contradictorias(etiqueta) -> None:
+    with pytest.raises(ValueError, match="Moneda desconocida"):
+        importacion_masiva._moneda(etiqueta)
+
+
+def test_archivo_con_monedas_etiquetadas_y_pies_de_tabla(tmp_path) -> None:
+    repo = RepositorioControlFletes(tmp_path / "control.json")
+    pie = [None] * len(HEADERS)
+    pie[0] = "Observación final"
+    pie[1] = "Revisión interna"
+    pie_con_importe = [None] * len(HEADERS)
+    pie_con_importe[8] = 250
+    datos = excel([
+        HEADERS,
+        fila(currency="PEN (S/.)"),
+        fila("F001-13", "Transportes Norte", 800, 0, "USD (US$)"),
+        pie,
+        pie_con_importe,
+    ], title="Detalle")
+    previa = preparar_importacion(datos, repo)
+    assert previa.nombre_hoja == "Detalle"
+    assert len(previa.listas) == 2
+    assert previa.listas[0].moneda == Moneda.PEN
+    assert previa.listas[1].moneda == Moneda.USD
+    assert previa.omitidas == 1
+    assert previa.errores == 1
+    assert previa.duplicadas == 0
+    assert previa.filas[-1].detalles == ("Factura y proveedor son obligatorios.",)
+    assert not (tmp_path / "control.json").exists()
+
+
+def test_filas_sin_factura_pero_con_proveedor_no_se_omiten(tmp_path) -> None:
+    repo = RepositorioControlFletes(tmp_path / "control.json")
+    sin_factura = fila(currency="PEN (S/.)")
+    sin_factura[5] = None
+    previa = preparar_importacion(excel([HEADERS, sin_factura]), repo)
+    assert previa.errores == 1
+    assert previa.omitidas == 0
+    assert not previa.listas

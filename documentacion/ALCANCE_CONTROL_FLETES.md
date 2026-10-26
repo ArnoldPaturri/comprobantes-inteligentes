@@ -292,3 +292,14 @@ Reglas conservadoras:
 Limitación: el primer importador está pensado para **uso local por un operador**,
 no para concurrencia multiusuario. Los adjuntos originales siguen requiriendo
 carga explícita; esta función no recupera comprobantes externos.
+
+
+### Compatibilidad de moneda y pies de tabla
+
+El importador acepta monedas explícitamente etiquetadas como
+`PEN (S/.)`, `USD (US$)` y `EUR (€)`, además de sus códigos ISO.
+No interpreta combinaciones contradictorias (por ejemplo, `PEN (US$)`).
+Las filas sin factura, proveedor ni importes se marcan **OMITIDA**
+(posible nota o pie de tabla) en vez de contarse como errores.
+Las filas con importes o datos parciales de una operación siguen
+sujetas a validación y pueden conservar el estado **ERROR**.

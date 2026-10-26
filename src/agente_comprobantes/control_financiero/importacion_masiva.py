@@ -65,13 +65,42 @@ def _texto(valor: object) -> str:
 
 
 def _moneda(valor: object) -> Moneda:
-    codigo = _normalizar(valor).replace(" ", "")
-    monedas = {"pen": Moneda.PEN, "soles": Moneda.PEN, "s": Moneda.PEN,
-               "usd": Moneda.USD, "us": Moneda.USD, "dolares": Moneda.USD,
-               "eur": Moneda.EUR, "euros": Moneda.EUR}
-    if codigo not in monedas:
-        raise ValueError(f"Moneda desconocida: {_texto(valor) or 'vacía'}")
-    return monedas[codigo]
+    texto = _texto(valor)
+    codigo = _normalizar(texto)
+    monedas = {
+        "pen": Moneda.PEN,
+        "soles": Moneda.PEN,
+        "s": Moneda.PEN,
+        "usd": Moneda.USD,
+        "us": Moneda.USD,
+        "dolares": Moneda.USD,
+        "eur": Moneda.EUR,
+        "euros": Moneda.EUR,
+    }
+    if codigo in monedas:
+        return monedas[codigo]
+
+    # Formatos reales de hojas contables: PEN (S/.), USD (US$), etc.
+    # El símbolo debe ser compatible con el código: nunca inferir una
+    # moneda cuando la etiqueta es contradictoria o desconocida.
+    etiqueta = re.fullmatch(
+        r"(PEN|USD|EUR)\s*\(\s*([^()]*)\s*\)",
+        texto,
+        flags=re.IGNORECASE,
+    )
+    if etiqueta:
+        iso, simbolo = etiqueta.groups()
+        iso = iso.upper()
+        simbolo = re.sub(r"\s+", "", simbolo).upper().rstrip(".")
+        simbolos_validos = {
+            "PEN": {"S/", "SOLES", "PEN"},
+            "USD": {"US$", "$", "DOLARES", "USD"},
+            "EUR": {"€", "EUROS", "EUR"},
+        }
+        if simbolo in simbolos_validos[iso]:
+            return Moneda(iso)
+
+    raise ValueError(f"Moneda desconocida: {texto or 'vacía'}")
 
 
 def _importe(valor: object, *, permitir_cero: bool = False) -> Decimal:
@@ -164,6 +193,10 @@ class VistaPrevia:
     @property
     def duplicadas(self) -> int:
         return sum(f.estado == "DUPLICADA" for f in self.filas)
+
+    @property
+    def omitidas(self) -> int:
+        return sum(f.estado == "OMITIDA" for f in self.filas)
 
 
 def _encabezados(valores: tuple[object, ...]) -> dict[str, int]:
@@ -293,6 +326,21 @@ def preparar_importacion(
                       for campo, i in columnas.items()}
             factura = _texto(campos.get("factura"))
             proveedor = _texto(campos.get("proveedor"))
+            # Las últimas filas suelen contener notas de control, listas
+            # desplegables o pies de tabla sin una operación económica.
+            # Si existe un importe, se mantiene como ERROR y no se oculta.
+            if (
+                not factura
+                and not proveedor
+                and not _texto(campos.get("facturado"))
+                and not _texto(campos.get("pago"))
+            ):
+                filas.append(FilaImportada(
+                    ws.title, numero, "OMITIDA", "", "", "",
+                    _texto(campos.get("moneda")), "",
+                    ("Fila sin factura, proveedor ni importes; no se importa.",),
+                ))
+                continue
             try:
                 op, avisos = _convertir(campos)
             except (ValueError, TypeError) as exc:

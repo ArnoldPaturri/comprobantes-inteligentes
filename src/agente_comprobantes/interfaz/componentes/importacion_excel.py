@@ -47,10 +47,11 @@ def mostrar_importador_excel() -> None:
             f"Encabezados en fila {vista.encabezado}"
         )
         disponibles = len(vista.listas)
-        col1, col2, col3 = st.columns(3)
+        col1, col2, col3, col4 = st.columns(4)
         col1.metric("Listas para importar", disponibles)
         col2.metric("Duplicadas", vista.duplicadas)
         col3.metric("Con errores", vista.errores)
+        col4.metric("Omitidas sin importes", vista.omitidas)
 
         if vista.filas:
             tabla = [
