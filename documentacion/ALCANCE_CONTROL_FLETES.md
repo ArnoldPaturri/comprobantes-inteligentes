@@ -102,3 +102,25 @@ python -m streamlit run aplicacion.py
 **Limitación:** no permite todavía acreditar movimientos, adjuntar guías
 ni cerrar conciliaciones. Un control importado se mantiene pendiente hasta
 su revisión explícita; esta pantalla es solo lectura.
+
+## Revisión de clasificación del expediente
+
+La interfaz permite seleccionar directamente una fila de la tabla y
+registrar, con sustento, la clasificación `flete`, `otra operación` o
+`sin clasificar`, el número de guía y la evaluación manual de detracción.
+
+Los presupuestos y diferencias se muestran en los indicadores de fletes
+**solo cuando la naturaleza del expediente está confirmada como flete**.
+Esta clasificación evita que una compra de materiales se considere por
+defecto un flete. Los expedientes no clasificados siguen visibles.
+
+Cada modificación agrega fecha UTC, motivo y campos modificados al historial
+local dentro de `control_fletes.json`; no contiene identidad autenticada.
+Modificar el expediente reabre cualquier conciliación previamente cerrada.
+No se acreditan pagos, no se calculan porcentajes de detracción y el archivo
+`registros.xlsx` no se modifica.
+
+La interfaz no implementa aprobaciones finales ni auditoría multiusuario.
+El acceso es local, sin identificación del operador; no debe utilizarse como
+control interno formal sin incorporar autenticación, autorizaciones y un
+registro de auditoría resistente a alteraciones.

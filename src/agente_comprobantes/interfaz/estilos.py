@@ -15,12 +15,12 @@ html, body, [class*="css"], [data-testid="stApp"] {
 [data-testid="stSidebar"] [data-testid="stMarkdownContainer"] p {
     color: #443847;
 }
-.block-container {padding-top: 1.9rem; padding-bottom: 3rem;}
+.block-container {padding-top: 1.25rem; padding-bottom: 2rem;}
 [data-testid="stMetric"] {
     background: #FFFFFF;
     border: 1px solid #E7E2E8;
     border-radius: 13px;
-    padding: 16px 18px;
+    padding: 11px 15px;
     box-shadow: 0 2px 12px rgb(44 31 49 / 3%);
 }
 [data-testid="stMetricLabel"] {color: #655A69;}
@@ -39,8 +39,8 @@ div[data-testid="stDataFrame"] {
     background: linear-gradient(113deg, #714B67 0%, #513B59 76%, #017E84 170%);
     color: #FFFFFF;
     border-radius: 15px;
-    padding: 25px 29px;
-    margin-bottom: 19px;
+    padding: 15px 23px;
+    margin-bottom: 12px;
 }
 .ci-hero .ci-kicker {
     color: #CDE5E4;
@@ -50,8 +50,8 @@ div[data-testid="stDataFrame"] {
     text-transform: uppercase;
     margin-bottom: 7px;
 }
-.ci-hero h1 {color: white; font-size: 1.75rem; margin: 0 0 7px;}
-.ci-hero p {color: #F5EEF4; margin: 0; font-size: 0.95rem;}
+.ci-hero h1 {color: white; font-size: 1.4rem; margin: 0 0 4px;}
+.ci-hero p {color: #F5EEF4; margin: 0; font-size: 0.88rem;}
 </style>
 """
 
