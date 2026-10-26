@@ -1,6 +1,6 @@
 """Pruebas de importación masiva segura desde Excel."""
-from io import BytesIO
 from decimal import Decimal
+from io import BytesIO
 
 import pytest
 from openpyxl import Workbook

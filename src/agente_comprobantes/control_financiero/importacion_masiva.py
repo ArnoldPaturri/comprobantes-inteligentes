@@ -86,7 +86,11 @@ def _importe(valor: object, *, permitir_cero: bool = False) -> Decimal:
         else:
             texto = texto.replace(",", "")
     elif "," in texto:
-        texto = texto.replace(",", ".") if len(texto.rsplit(",", 1)[-1]) <= 2 else texto.replace(",", "")
+        texto = (
+            texto.replace(",", ".")
+            if len(texto.rsplit(",", 1)[-1]) <= 2
+            else texto.replace(",", "")
+        )
     try:
         importe = Decimal(texto)
     except InvalidOperation as exc:

@@ -229,8 +229,10 @@ def mostrar_control_fletes() -> None:
     if not tablero.operaciones:
         st.info(
             "No hay expedientes registrados. Importa una factura con "
-            "python principal.py flete-borrador --factura ID_FACTURA."
+            "python principal.py flete-borrador --factura ID_FACTURA "
+            "o utiliza el importador de Excel."
         )
+        mostrar_importador_excel()
         return
 
     sin_clasificar = sum(op.es_flete is None for op in tablero.operaciones)
