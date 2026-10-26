@@ -1,17 +1,17 @@
-from invoice_agent.agent import ReceiptAgent
-from invoice_agent.config import Settings
-from invoice_agent.providers import (
+from agente_comprobantes.agente import ReceiptAgent
+from agente_comprobantes.configuracion import Settings
+from agente_comprobantes.proveedores import (
     CohereVisionProvider,
     FallbackVisionProvider,
     GroqVisionProvider,
     VisionProvider,
 )
-from invoice_agent.repositories import DocumentRepository, ExcelRepository
-from invoice_agent.services.duplicate_service import DuplicateService
-from invoice_agent.services.image_service import ImageService
-from invoice_agent.services.payment_reconciliation_service import PaymentReconciliationService
-from invoice_agent.services.reconciliation_service import ReconciliationService
-from invoice_agent.services.validation_service import ValidationService
+from agente_comprobantes.repositorios import DocumentRepository, ExcelRepository
+from agente_comprobantes.servicios.duplicados import DuplicateService
+from agente_comprobantes.servicios.imagenes import ImageService
+from agente_comprobantes.servicios.conciliacion_pagos import PaymentReconciliationService
+from agente_comprobantes.servicios.conciliacion_facturas import ReconciliationService
+from agente_comprobantes.servicios.validacion import ValidationService
 
 
 def build_repository(settings: Settings) -> ExcelRepository:

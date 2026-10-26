@@ -7,9 +7,9 @@ from typing import Any
 
 from pydantic import Field, field_validator, model_validator
 
-from invoice_agent.domain.enums import Currency, DocumentType
-from invoice_agent.domain.modelo_base import DomainModel
-from invoice_agent.domain.normalizacion import (
+from agente_comprobantes.dominio.enumeraciones import Currency, DocumentType
+from agente_comprobantes.dominio.modelo_base import DomainModel
+from agente_comprobantes.dominio.normalizacion import (
     PROVIDER_LABEL_PATTERN,
     _is_missing,
     _parse_date,

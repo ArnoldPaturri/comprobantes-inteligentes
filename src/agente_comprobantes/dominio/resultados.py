@@ -2,11 +2,11 @@ from __future__ import annotations
 
 from pydantic import Field
 
-from invoice_agent.domain.conciliaciones import PaymentReconciliationResult, ReconciliationResult
-from invoice_agent.domain.enums import DocumentType, PaymentLinkStatus, VerificationStatus
-from invoice_agent.domain.modelo_base import DomainModel
-from invoice_agent.domain.referencias import DuplicateMatch
-from invoice_agent.domain.validacion import ValidationReport
+from agente_comprobantes.dominio.conciliaciones import PaymentReconciliationResult, ReconciliationResult
+from agente_comprobantes.dominio.enumeraciones import DocumentType, PaymentLinkStatus, VerificationStatus
+from agente_comprobantes.dominio.modelo_base import DomainModel
+from agente_comprobantes.dominio.referencias import DuplicateMatch
+from agente_comprobantes.dominio.validacion import ValidationReport
 
 
 class RegistrationResult(DomainModel):

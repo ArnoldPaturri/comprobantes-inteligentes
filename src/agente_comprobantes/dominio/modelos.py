@@ -1,17 +1,17 @@
 """Modelos del dominio reexportados desde módulos especializados."""
 
-from invoice_agent.domain.conciliaciones import (
+from agente_comprobantes.dominio.conciliaciones import (
     PaymentReconciliationResult,
     ReconciliationResult,
 )
-from invoice_agent.domain.cotizaciones import QuotationRecord
-from invoice_agent.domain.extraccion import DocumentExtraction
-from invoice_agent.domain.facturas import InvoiceRecord
-from invoice_agent.domain.modelo_base import DomainModel
-from invoice_agent.domain.pagos import PaymentRecord
-from invoice_agent.domain.referencias import DocumentReference, DuplicateMatch
-from invoice_agent.domain.resultados import PaymentLinkResult, RegistrationResult
-from invoice_agent.domain.validacion import ValidationIssue, ValidationReport
+from agente_comprobantes.dominio.cotizaciones import QuotationRecord
+from agente_comprobantes.dominio.extraccion import DocumentExtraction
+from agente_comprobantes.dominio.facturas import InvoiceRecord
+from agente_comprobantes.dominio.modelo_base import DomainModel
+from agente_comprobantes.dominio.pagos import PaymentRecord
+from agente_comprobantes.dominio.referencias import DocumentReference, DuplicateMatch
+from agente_comprobantes.dominio.resultados import PaymentLinkResult, RegistrationResult
+from agente_comprobantes.dominio.validacion import ValidationIssue, ValidationReport
 
 __all__ = [
     "DomainModel",

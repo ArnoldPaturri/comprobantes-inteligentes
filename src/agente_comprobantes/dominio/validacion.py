@@ -2,8 +2,8 @@ from __future__ import annotations
 
 from pydantic import Field
 
-from invoice_agent.domain.enums import Severity
-from invoice_agent.domain.modelo_base import DomainModel
+from agente_comprobantes.dominio.enumeraciones import Severity
+from agente_comprobantes.dominio.modelo_base import DomainModel
 
 
 class ValidationIssue(DomainModel):
