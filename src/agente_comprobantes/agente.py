@@ -13,7 +13,7 @@ from agente_comprobantes.servicios.imagenes import ImageService
 from agente_comprobantes.servicios.validacion import ValidationService
 
 
-class ReceiptAgent(OperacionesCotizaciones, OperacionesFacturas, OperacionesPagos):
+class AgenteComprobantes(OperacionesCotizaciones, OperacionesFacturas, OperacionesPagos):
     """Fachada que coordina los casos de uso sin duplicar responsabilidades."""
 
     def __init__(

@@ -2,7 +2,7 @@ from dataclasses import dataclass
 
 import streamlit as st
 
-from agente_comprobantes.agente import ReceiptAgent
+from agente_comprobantes.agente import AgenteComprobantes
 from agente_comprobantes.configuracion import Settings
 from agente_comprobantes.fabrica import build_agent, build_repository
 from agente_comprobantes.repositorios import ExcelRepository
@@ -13,7 +13,7 @@ _CONTEXT_KEY = "_invoice_agent_context"
 @dataclass(frozen=True, slots=True)
 class AppContext:
     settings: Settings
-    agent: ReceiptAgent
+    agent: AgenteComprobantes
     repository: ExcelRepository
 
 

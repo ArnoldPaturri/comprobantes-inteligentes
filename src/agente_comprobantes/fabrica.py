@@ -1,4 +1,4 @@
-from agente_comprobantes.agente import ReceiptAgent
+from agente_comprobantes.agente import AgenteComprobantes
 from agente_comprobantes.configuracion import Settings
 from agente_comprobantes.proveedores import (
     CohereVisionProvider,
@@ -55,8 +55,8 @@ def build_agent(
     settings: Settings,
     provider: VisionProvider | None = None,
     repository: DocumentRepository | None = None,
-) -> ReceiptAgent:
-    return ReceiptAgent(
+) -> AgenteComprobantes:
+    return AgenteComprobantes(
         provider=provider or build_vision_provider(settings),
         repository=repository or build_repository(settings),
         image_service=ImageService(settings),

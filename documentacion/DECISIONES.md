@@ -29,7 +29,7 @@ marcan; no se borran automáticamente.
 ## Persistencia intercambiable
 
 `DocumentRepository` evita que la lógica conozca detalles de openpyxl. Una futura clase
-`GoogleSheetsRepository` podrá reemplazar `ExcelRepository` sin modificar `ReceiptAgent`.
+`GoogleSheetsRepository` podrá reemplazar `ExcelRepository` sin modificar `AgenteComprobantes`.
 
 ## Estados
 
