@@ -2,9 +2,10 @@ from __future__ import annotations
 
 from pathlib import Path
 from time import perf_counter
-from typing import Any
 
 import streamlit as st
+
+from invoice_agent.ui.components.resultados_factura import mostrar_resultado_factura
 
 from invoice_agent.domain import (
     DocumentExtraction,
@@ -56,87 +57,6 @@ def _quotation_label(
     )
 
 
-def _render_result(result: dict[str, Any]) -> None:
-    status = result.get(
-        "verification_status",
-        "DESCONOCIDO",
-    )
-    document_id = result.get("document_id", "")
-
-    if status == "VERIFICADO":
-        st.success(
-            f"Factura {document_id} registrada y verificada."
-        )
-    else:
-        st.warning(
-            f"Factura {document_id} registrada con estado "
-            f"{status}."
-        )
-
-    reconciliation = result.get("reconciliation")
-
-    if isinstance(reconciliation, dict):
-        st.subheader("Resultado de la comparación")
-
-        quoted_column, invoiced_column, difference_column = (
-            st.columns(3)
-        )
-
-        quoted_column.metric(
-            "Monto cotizado",
-            reconciliation.get("quoted_amount") or "—",
-        )
-        invoiced_column.metric(
-            "Monto facturado",
-            reconciliation.get("invoiced_amount") or "—",
-        )
-        difference_column.metric(
-            "Diferencia",
-            reconciliation.get("difference") or "—",
-        )
-
-        diagnosis = reconciliation.get("diagnosis")
-        deviation = reconciliation.get(
-            "deviation_percent"
-        )
-        similarity = reconciliation.get(
-            "provider_similarity"
-        )
-
-        if diagnosis:
-            st.info(f"Diagnóstico: {diagnosis}")
-
-        details: list[str] = []
-
-        if deviation is not None:
-            details.append(
-                f"Desvío: {deviation}%"
-            )
-
-        if similarity is not None:
-            details.append(
-                "Similitud del proveedor: "
-                f"{float(similarity):.0%}"
-            )
-
-        if details:
-            st.caption(" · ".join(details))
-
-        issues = reconciliation.get("issues") or []
-
-        for issue in issues:
-            if isinstance(issue, dict):
-                st.warning(
-                    issue.get(
-                        "message",
-                        "La conciliación requiere revisión.",
-                    )
-                )
-
-    with st.expander("Ver respuesta completa"):
-        st.json(result)
-
-
 def render_invoice() -> None:
     st.title("Registrar factura")
     st.caption(
@@ -147,7 +67,7 @@ def render_invoice() -> None:
     last_result = st.session_state.get(_RESULT_KEY)
 
     if isinstance(last_result, dict):
-        _render_result(last_result)
+        mostrar_resultado_factura(last_result)
 
     context = get_app_context()
     quotations = context.repository.list_quotations()
