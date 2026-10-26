@@ -201,3 +201,30 @@ inalterable, lectura OCR del contenido recién adjuntado ni integración
 bancaria o tributaria. Recomendado por ahora para uso local y de prueba.
 Una interrupción entre guardar el archivo y el JSON podría dejar un
 archivo sin referencia, pero nunca debe reemplazar el Excel.
+
+
+## Reportes de consulta descargables — archivos CSV
+
+Se añade un botón **Descargar reporte para Excel (ZIP)** desde el panel de
+Control financiero. El ZIP se construye en memoria, sin guardar datos nuevos
+ni modificar `registros.xlsx` o `control_fletes.json`.
+
+Contiene `operaciones.csv`, `observaciones.csv`, `historial.csv`,
+`resumen_fletes.csv` y un archivo `LEEME.txt` explicativo.
+
+- Las operaciones, observaciones e historial siguen los filtros elegidos
+  de moneda, situación y búsqueda.
+- El resumen consolidado sigue la moneda, pero **no** el filtro de estado
+  o búsqueda para evitar presupuestos incompletos. Solo suma fletes
+  confirmados y deduplica las cotizaciones.
+- Los importes permanecen en sus monedas originales (sin conversión PEN/USD);
+  los pagos declarados no se presentan como acreditados.
+- Los CSV emplean UTF-8 con BOM, separador de campos punto y coma y punto
+  decimal. Los textos procedentes de OCR y usuarios se escapan para impedir
+  que Excel los interprete como fórmulas.
+- Es una exportación de datos, **no** una réplica de la plantilla de
+  Google Sheets ni una validación de SUNAT/bancos. El historial local no
+  proporciona una identidad autenticada ni prueba de inalterabilidad.
+
+Próxima fase: informe XLSX con formato ejecutivo, y mapeo de columnas según
+el libro real de operaciones, cuando se confirme el contrato de datos.

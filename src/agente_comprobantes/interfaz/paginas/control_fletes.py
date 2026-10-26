@@ -17,6 +17,7 @@ from agente_comprobantes.control_financiero.presentacion import (
     cargar_tablero,
     formatear_importe,
 )
+from agente_comprobantes.control_financiero.reportes import exportar_control
 from agente_comprobantes.control_financiero.repositorio_json import (
     RepositorioControlFletes,
 )
@@ -247,6 +248,22 @@ def mostrar_control_fletes() -> None:
     st.subheader("Expedientes")
     filtro_estado = None if estado == "Todos" else SituacionControl(estado)
     filas = tablero.filas(moneda, filtro_estado, busqueda)
+    st.download_button(
+        "Descargar reporte para Excel (ZIP)",
+        data=exportar_control(
+            tablero, moneda=moneda, situacion=filtro_estado, busqueda=busqueda
+        ),
+        file_name="control_financiero_reporte.zip",
+        mime="application/zip",
+        help=(
+            "Incluye operaciones, observaciones, historial y resumen por moneda. "
+            "El resumen usa todos los fletes confirmados de la moneda elegida."
+        ),
+    )
+    st.caption(
+        "Cuatro archivos CSV compatibles con Excel. El resumen no aplica "
+        "los filtros de estado ni búsqueda para no fraccionar presupuestos."
+    )
     if not filas:
         st.info("Sin resultados con los filtros aplicados.")
         return
