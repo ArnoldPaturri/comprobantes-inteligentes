@@ -84,7 +84,7 @@ def _estilos() -> bytes:
             ET.SubElement(font, _q("b"))
         ET.SubElement(font, _q("color"), {"rgb": "FF" + color})
     rellenos = ET.SubElement(raiz, _q("fills"), {"count": "5"})
-    for color in [None, None, "714B67", "017E84", "FFF5DE"]:
+    for indice, color in enumerate([None, None, "714B67", "017E84", "FFF5DE"]):
         fill = ET.SubElement(rellenos, _q("fill"))
         if color:
             pat = ET.SubElement(fill, _q("patternFill"), {"patternType": "solid"})
@@ -93,7 +93,7 @@ def _estilos() -> bytes:
         else:
             ET.SubElement(
                 fill, _q("patternFill"),
-                {"patternType": "none" if color is None else "gray125"},
+                {"patternType": "none" if indice == 0 else "gray125"},
             )
     bordes = ET.SubElement(raiz, _q("borders"), {"count": "1"})
     borde = ET.SubElement(bordes, _q("border"))
