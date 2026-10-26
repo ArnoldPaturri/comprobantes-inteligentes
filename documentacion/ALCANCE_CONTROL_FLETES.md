@@ -242,7 +242,7 @@ crea un libro nuevo en memoria con cinco pestañas: **Resumen ejecutivo**,
 - Los movimientos declarados y acreditados tienen columnas independientes.
   Las operaciones no clasificadas se conservan en el detalle.
 - Los importes son celdas numéricas y los campos netos, acreditados y
-  saldos se expresan mediante fórmulas de Excel con resultados guardados.
+  saldos se expresan mediante fórmulas nativas de Excel; los resultados se recalculan al abrir el libro.
 - La identidad visual utiliza púrpura y verde azulado inspirados en Odoo.
   La hoja de instrucciones advierte que una evidencia documental registrada
   no equivale a una validación bancaria, SUNAT ni deuda pendiente.
@@ -253,3 +253,13 @@ El informe es un documento **de consulta**, generado sin modificar los
 registros Excel, JSON o los comprobantes guardados. Es una primera versión
 de presentación ejecutiva y todavía no replica fórmulas personalizadas
 de las hojas originales de Google Sheets.
+
+
+### Compatibilidad del XLSX
+
+El generador ejecutivo utiliza `openpyxl` para construir los cinco
+archivos de hoja del libro con estructura OOXML admitida por Excel, en lugar
+de escribir manualmente XML. Las pruebas comprueban que el resultado se
+puede volver a abrir con `openpyxl.load_workbook`, incluyendo las
+fórmulas y los textos procedentes de OCR almacenados como datos literales.
+Al abrir el libro en Excel, se recalculan las fórmulas.
