@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 
 from agente_comprobantes.control_financiero.modelos import (
     OperacionFlete,
@@ -47,7 +47,7 @@ def preparar_revision(
         raise ValueError("No hay cambios que guardar.")
 
     revision = RevisionExpediente(
-        fecha=datetime.now(timezone.utc),
+        fecha=datetime.now(UTC),
         motivo=motivo,
         cambios=cambios,
     )
