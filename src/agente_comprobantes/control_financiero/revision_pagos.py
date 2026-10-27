@@ -15,6 +15,9 @@ from agente_comprobantes.control_financiero.modelos import (
 from agente_comprobantes.control_financiero.repositorio_json import (
     RepositorioControlFletes,
 )
+from agente_comprobantes.control_financiero.validacion_bancarizaciones import (
+    validar_cotejo_pago,
+)
 
 
 def preparar_revision_pago(
@@ -25,6 +28,7 @@ def preparar_revision_pago(
     motivo: str,
     confirmacion: bool,
     version_esperada: int,
+    otros_expedientes: list[OperacionFlete] | None = None,
 ) -> OperacionFlete:
     """Cambia la revisión documental de un pago, sin editar sus importes."""
     if len(operacion.revisiones) != version_esperada:
@@ -44,12 +48,9 @@ def preparar_revision_pago(
         raise ValueError("La acreditación documental seleccionada ya está registrada.")
 
     if acreditar:
-        if not pago.referencia or not pago.referencia.strip():
-            raise ValueError("No se puede acreditar un pago sin número de operación.")
-        if not pago.documento_respaldo or not pago.documento_respaldo.strip():
-            raise ValueError("No se puede acreditar un pago sin archivo de respaldo.")
-        if pago.moneda != operacion.moneda:
-            raise ValueError("La moneda del movimiento no coincide con la factura.")
+        validar_cotejo_pago(
+            operacion, indice, otros_expedientes=otros_expedientes
+        )
 
     nuevos_pagos = [
         item.model_dump(mode="python") for item in operacion.movimientos_bancarios
@@ -86,7 +87,11 @@ def guardar_revision_pago(
     version_esperada: int,
 ) -> OperacionFlete:
     """Guarda en JSON independiente; el Excel original permanece sin cambios."""
-    actual = repositorio.obtener(identificador)
+    expedientes = repositorio.listar()
+    actual = next(
+        (op for op in expedientes if op.identificador == identificador),
+        None,
+    )
     if actual is None:
         raise ValueError(f"No existe el expediente {identificador}.")
     revisado = preparar_revision_pago(
@@ -96,6 +101,7 @@ def guardar_revision_pago(
         motivo=motivo,
         confirmacion=confirmacion,
         version_esperada=version_esperada,
+        otros_expedientes=expedientes,
     )
     repositorio.actualizar(revisado)
     return revisado
