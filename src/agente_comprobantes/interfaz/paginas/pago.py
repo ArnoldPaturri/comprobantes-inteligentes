@@ -35,6 +35,14 @@ def mostrar_pago() -> None:
         "u otras constancias de pago."
     )
 
+    st.info(
+        "Paso 3 de 3. Relaciona el pago con la factura si ya existe; si no, "
+        "puedes dejarlo pendiente de vinculación. Revisa fecha, moneda, importe "
+        "y número de operación. El OCR registra una declaración, pero no acredita "
+        "el pago por sí solo. Para OCR usa imágenes; guarda los PDF como evidencia "
+        "en Control financiero."
+    )
+
     context = obtener_contexto_aplicacion()
     quotations = context.repository.listar_cotizaciones()
 
