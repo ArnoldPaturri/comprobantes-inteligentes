@@ -17,7 +17,6 @@ from agente_comprobantes.control_financiero.repositorio_json import (
     RepositorioControlFletes,
 )
 
-
 ACCIONES_HALLAZGO = {
     "REFERENCIAS_MULTIPLES": (
         "Reunir los vouchers de cada operación; registrar referencia, fecha, "
