@@ -30,6 +30,7 @@ from agente_comprobantes.control_financiero.repositorio_json import (
 )
 from agente_comprobantes.control_financiero.revisiones import guardar_revision
 from agente_comprobantes.dominio.enumeraciones import Moneda
+from agente_comprobantes.fabrica import crear_repositorio
 from agente_comprobantes.interfaz.componentes.ajustes_financieros import (
     mostrar_ajustes_financieros,
 )
@@ -49,7 +50,6 @@ from agente_comprobantes.interfaz.componentes.panel_evidencias import mostrar_ev
 from agente_comprobantes.interfaz.componentes.revision_pagos import (
     mostrar_revision_pagos,
 )
-from agente_comprobantes.fabrica import crear_repositorio
 from agente_comprobantes.interfaz.estilos import mostrar_cabecera
 
 CLASIFICACIONES = ("Sin clasificar", "Flete confirmado", "Otra operación")
