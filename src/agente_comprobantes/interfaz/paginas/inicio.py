@@ -65,8 +65,9 @@ def mostrar_inicio() -> None:
 
     if not cantidad:
         st.info(
-            "No hay controles financieros registrados. Importa el borrador de "
-            "una factura y luego consulta su expediente en Control financiero."
+            "Todavía no hay expedientes financieros. Registra primero una "
+            "cotización y su factura; luego abre Control financiero para crear "
+            "el expediente desde la interfaz."
         )
     else:
         st.info(
