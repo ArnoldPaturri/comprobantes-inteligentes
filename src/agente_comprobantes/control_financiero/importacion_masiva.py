@@ -10,7 +10,7 @@ import hashlib
 import io
 import re
 import unicodedata
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from datetime import date, datetime
 from decimal import Decimal, InvalidOperation
 from itertools import islice
@@ -18,6 +18,7 @@ from itertools import islice
 from openpyxl import load_workbook
 
 from agente_comprobantes.control_financiero.modelos import (
+    DatosOrigenExcel,
     MovimientoBancario,
     OperacionFlete,
 )
@@ -45,6 +46,11 @@ COLUMNAS = {
     "detraccion": ("detraccion",),
     "nota_credito": ("nota de credito", "nota credito"),
     "estado": ("estado", "estado de pago", "estado pago"),
+    "diferencia": ("diferencia", "diferencia bancaria", "diferencia bancaria factura"),
+    "observaciones": (
+        "accion observaciones", "accion observacion", "acciones observaciones",
+        "observaciones", "accion requerida",
+    ),
 }
 OBLIGATORIAS = {"factura", "proveedor", "moneda", "facturado"}
 ALIAS = {alias: campo for campo, nombres in COLUMNAS.items() for alias in nombres}
@@ -172,6 +178,7 @@ class FilaImportada:
     monto: str
     detalles: tuple[str, ...]
     operacion: OperacionFlete | None = None
+    valores_origen: dict[str, str] = field(default_factory=dict)
 
 
 @dataclass(frozen=True)
@@ -180,6 +187,8 @@ class VistaPrevia:
     encabezado: int
     filas: list[FilaImportada]
     huella_destino: str
+    columnas_origen: tuple[str, ...] = ()
+    columnas_no_reconocidas: tuple[str, ...] = ()
 
     @property
     def listas(self) -> list[OperacionFlete]:
@@ -232,7 +241,10 @@ def _detectar(libro) -> tuple[object, int, dict[str, int]]:
     return mejor[1], mejor[2], mejor[3]
 
 
-def _convertir(datos: dict[str, object]) -> tuple[OperacionFlete, tuple[str, ...]]:
+def _convertir(
+    datos: dict[str, object],
+    datos_origen: DatosOrigenExcel | None = None,
+) -> tuple[OperacionFlete, tuple[str, ...]]:
     factura = _texto(datos.get("factura"))
     proveedor = _texto(datos.get("proveedor"))
     if not factura or not proveedor:
@@ -260,7 +272,18 @@ def _convertir(datos: dict[str, object]) -> tuple[OperacionFlete, tuple[str, ...
                 "Monto bancarizado importado solo como declaración, sin respaldo."
             )
     if _texto(datos.get("estado")):
-        advertencias.append("Se ignoró el estado de conformidad de la hoja de origen.")
+        advertencias.append(
+            "El estado del Excel se conservó como dato de origen, sin acreditar."
+        )
+    if _texto(datos.get("diferencia")):
+        advertencias.append(
+            "La diferencia del Excel se conservó como dato de origen; "
+            "no se asumió su fórmula de cálculo."
+        )
+    if _texto(datos.get("observaciones")):
+        advertencias.append(
+            "Las acciones u observaciones del Excel se conservaron para revisión."
+        )
     if _texto(datos.get("detraccion")):
         advertencias.append("Debe revisarse la aplicabilidad y constancia de detracción.")
     nota = _normalizar(datos.get("nota_credito"))
@@ -285,6 +308,7 @@ def _convertir(datos: dict[str, object]) -> tuple[OperacionFlete, tuple[str, ...
         detraccion_aplica=None,
         conciliacion_cerrada=False,
         movimientos_bancarios=movimientos,
+        datos_origen=datos_origen,
     )
     return operacion, tuple(advertencias)
 
@@ -292,6 +316,8 @@ def _convertir(datos: dict[str, object]) -> tuple[OperacionFlete, tuple[str, ...
 def preparar_importacion(
     datos_xlsx: bytes,
     repositorio: RepositorioControlFletes,
+    *,
+    nombre_archivo: str | None = None,
 ) -> VistaPrevia:
     """Solo lectura. Ningún dato se incorpora sin confirmación posterior."""
     if not isinstance(datos_xlsx, bytes) or not 0 < len(datos_xlsx) <= MAX_ARCHIVO:
@@ -306,6 +332,21 @@ def preparar_importacion(
 
     try:
         ws, encabezado, columnas = _detectar(libro)
+        encabezados = next(
+            ws.iter_rows(
+                min_row=encabezado, max_row=encabezado, values_only=True
+            )
+        )
+        nombres = tuple(
+            _texto(valor) if _texto(valor) else f"Columna {indice}"
+            for indice, valor in enumerate(encabezados, start=1)
+        )
+        sin_mapear = tuple(
+            nombre for nombre in nombres
+            if ALIAS.get(_normalizar(nombre)) is None
+            and not nombre.startswith("Columna ")
+        )
+        huella_archivo = hashlib.sha256(datos_xlsx).hexdigest()
         existentes = repositorio.listar()
         ids = {op.identificador.strip().casefold() for op in existentes}
         claves = {_clave(op.numero_factura, op.proveedor or "") for op in existentes}
@@ -322,8 +363,24 @@ def preparar_importacion(
                 raise ValueError(f"El límite por importación es {MAX_FILAS} filas.")
             if not any(x is not None and _texto(x) for x in valores):
                 continue
-            campos = {campo: valores[i] if i < len(valores) else None
-                      for campo, i in columnas.items()}
+            campos = {
+                campo: valores[i] if i < len(valores) else None
+                for campo, i in columnas.items()
+            }
+            valores_origen = {
+                (nombre if nombres.count(nombre) == 1
+                 else f"{nombre} [{indice + 1}]"): _texto(
+                    valores[indice] if indice < len(valores) else None
+                )
+                for indice, nombre in enumerate(nombres)
+            }
+            datos_origen = DatosOrigenExcel(
+                archivo=nombre_archivo,
+                huella_archivo=huella_archivo,
+                hoja=ws.title,
+                fila=numero,
+                campos=valores_origen,
+            )
             factura = _texto(campos.get("factura"))
             proveedor = _texto(campos.get("proveedor"))
             # Las últimas filas suelen contener notas de control, listas
@@ -339,15 +396,17 @@ def preparar_importacion(
                     ws.title, numero, "OMITIDA", "", "", "",
                     _texto(campos.get("moneda")), "",
                     ("Fila sin factura, proveedor ni importes; no se importa.",),
+                    valores_origen=valores_origen,
                 ))
                 continue
             try:
-                op, avisos = _convertir(campos)
+                op, avisos = _convertir(campos, datos_origen)
             except (ValueError, TypeError) as exc:
                 filas.append(FilaImportada(
                     ws.title, numero, "ERROR", "", factura, proveedor,
                     _texto(campos.get("moneda")), _texto(campos.get("facturado")),
                     (str(exc),),
+                    valores_origen=valores_origen,
                 ))
                 continue
             clave = _clave(op.numero_factura, op.proveedor or "")
@@ -365,8 +424,16 @@ def preparar_importacion(
                 ws.title, numero, estado, op.identificador, op.numero_factura,
                 op.proveedor or "", op.moneda.value, str(op.monto_facturado),
                 avisos, op if estado == "LISTA" else None,
+                valores_origen=valores_origen,
             ))
-        return VistaPrevia(ws.title, encabezado, filas, repositorio.huella())
+        return VistaPrevia(
+            ws.title,
+            encabezado,
+            filas,
+            repositorio.huella(),
+            columnas_origen=nombres,
+            columnas_no_reconocidas=sin_mapear,
+        )
     finally:
         libro.close()
 

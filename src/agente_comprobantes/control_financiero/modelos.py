@@ -89,6 +89,19 @@ class RevisionExpediente(ModeloDominio):
     cambios: dict[str, str]
 
 
+class DatosOrigenExcel(ModeloDominio):
+    """Fotografía de los valores disponibles en la hoja importada.
+
+    No se interpretan como acreditaciones ni sustituyen los documentos.
+    """
+
+    archivo: str | None = None
+    huella_archivo: str
+    hoja: str
+    fila: int
+    campos: dict[str, str] = Field(default_factory=dict)
+
+
 class OperacionFlete(ModeloDominio):
     """Una operación corresponde a una única factura y su control de pagos.
 
@@ -113,6 +126,7 @@ class OperacionFlete(ModeloDominio):
     notas_credito: list[NotaCredito] = Field(default_factory=list)
     conciliacion_cerrada: bool = False
     revisiones: list[RevisionExpediente] = Field(default_factory=list)
+    datos_origen: DatosOrigenExcel | None = None
 
     @field_validator("monto_facturado", mode="before")
     @classmethod
