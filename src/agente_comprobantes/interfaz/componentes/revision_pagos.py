@@ -15,6 +15,9 @@ from agente_comprobantes.control_financiero.repositorio_json import (
 from agente_comprobantes.control_financiero.revision_pagos import (
     guardar_revision_pago,
 )
+from agente_comprobantes.control_financiero.validacion_bancarizaciones import (
+    validar_cotejo_pago,
+)
 from agente_comprobantes.interfaz.componentes.visor_adjuntos import mostrar_respaldo
 
 
@@ -61,6 +64,30 @@ def mostrar_revision_pagos(operacion: OperacionFlete) -> None:
         return
 
     _cargar_comprobante_pago(operacion, indice)
+    if not seleccionado.verificada:
+        destino = RepositorioControlFletes(
+            Configuracion().ruta_archivo_excel().with_name("control_fletes.json")
+        )
+        try:
+            validar_cotejo_pago(
+                operacion,
+                indice,
+                otros_expedientes=destino.listar(),
+            )
+        except (ValueError, OSError) as error:
+            st.warning(
+                f"Este comprobante todavía no se puede acreditar: {error}"
+            )
+            st.caption(
+                "Si el número de operación contiene varias referencias, "
+                "utiliza el editor de incidencias. Si figura en otras "
+                "facturas, revisa primero su distribución documentada."
+            )
+            return
+        st.success(
+            "Comprobante apto para una revisión documental manual. "
+            "Aún no se ha acreditado ni confirmado en el banco."
+        )
     accion = (
         "Retirar validación documental"
         if seleccionado.verificada else "Validar evidencia documental"
