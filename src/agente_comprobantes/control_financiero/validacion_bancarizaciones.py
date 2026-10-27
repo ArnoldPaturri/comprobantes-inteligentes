@@ -7,10 +7,10 @@ compartido requiere un proceso aparte de asignación global.
 
 from __future__ import annotations
 
+from agente_comprobantes.control_financiero.archivos import REFERENCIA
 from agente_comprobantes.control_financiero.auditoria_importacion import (
     _referencias,
 )
-from agente_comprobantes.control_financiero.archivos import REFERENCIA
 from agente_comprobantes.control_financiero.modelos import OperacionFlete
 from agente_comprobantes.control_financiero.tipos_referencia import (
     indicador_efectivo,
@@ -67,4 +67,10 @@ def validar_cotejo_pago(
                     "La referencia bancaria ya figura en otro movimiento "
                     "o expediente. Revisa el voucher y la distribución "
                     "del pago antes de acreditarlo."
+                )
+            if pago.documento_respaldo == otro_pago.documento_respaldo:
+                raise ValueError(
+                    "El mismo comprobante ya está vinculado a otro "
+                    "movimiento. Comprueba la distribución del pago "
+                    "antes de acreditar dos veces el voucher."
                 )
