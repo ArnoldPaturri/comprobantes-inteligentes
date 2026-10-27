@@ -9,7 +9,6 @@ from typing import Literal
 from pydantic import Field, field_validator, model_validator
 
 from agente_comprobantes.control_financiero.archivos import REFERENCIA
-
 from agente_comprobantes.control_financiero.auditoria_importacion import (
     _referencias,
 )
