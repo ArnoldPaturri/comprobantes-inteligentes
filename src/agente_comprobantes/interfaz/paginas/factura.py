@@ -54,6 +54,13 @@ def mostrar_factura() -> None:
         "una o varias imágenes de la factura."
     )
 
+    st.info(
+        "Paso 2 de 3. Selecciona primero la cotización correcta. La aplicación "
+        "comparará sus importes con la factura; una diferencia es una alerta para "
+        "revisar, no una corrección automática. Después de guardar, abre Control "
+        "financiero y crea el expediente de esa factura. Para OCR, convierte los PDF a PNG/JPG."
+    )
+
     last_result = st.session_state.get(_RESULT_KEY)
 
     if isinstance(last_result, dict):

@@ -11,6 +11,9 @@ from agente_comprobantes.configuracion import Configuracion
 from agente_comprobantes.control_financiero.conciliacion_pagos import (
     construir_resumen_pagos,
 )
+from agente_comprobantes.control_financiero.integracion import (
+    crear_borrador_desde_repositorio,
+)
 from agente_comprobantes.control_financiero.modelos import (
     OperacionFlete,
     SituacionControl,
@@ -27,6 +30,7 @@ from agente_comprobantes.control_financiero.repositorio_json import (
 )
 from agente_comprobantes.control_financiero.revisiones import guardar_revision
 from agente_comprobantes.dominio.enumeraciones import Moneda
+from agente_comprobantes.fabrica import crear_repositorio
 from agente_comprobantes.interfaz.componentes.ajustes_financieros import (
     mostrar_ajustes_financieros,
 )
@@ -50,6 +54,103 @@ from agente_comprobantes.interfaz.estilos import mostrar_cabecera
 
 CLASIFICACIONES = ("Sin clasificar", "Flete confirmado", "Otra operación")
 DETRACCIONES = ("Por determinar", "Corresponde", "No corresponde")
+
+
+def _mostrar_creacion_expediente_desde_factura(
+    ruta_control: Path,
+    operaciones_existentes: list[OperacionFlete],
+) -> None:
+    """Crea desde la interfaz el expediente complementario de una factura OCR."""
+    try:
+        documentos = crear_repositorio(Configuracion())
+        documentos.inicializar()
+        facturas = documentos.listar_facturas()
+    except (OSError, ValueError) as error:
+        st.error(f"No se pudieron consultar las facturas del Excel: {error}")
+        return
+
+    ids_existentes = {
+        operacion.identificador.strip().casefold()
+        for operacion in operaciones_existentes
+    }
+    pares_existentes = {
+        (
+            operacion.numero_factura.strip().casefold(),
+            (operacion.proveedor or "").strip().casefold(),
+        )
+        for operacion in operaciones_existentes
+    }
+    pendientes = []
+    for factura in facturas:
+        numero = (factura.invoice_number or "").strip()
+        proveedor = (factura.provider or "").strip()
+        par = (numero.casefold(), proveedor.casefold())
+        if factura.invoice_id.strip().casefold() in ids_existentes:
+            continue
+        # Evita duplicar una factura importada con otro ID de expediente,
+        # pero con el mismo número y proveedor.
+        if numero and par in pares_existentes:
+            continue
+        pendientes.append(factura)
+
+    with st.expander(
+        "Crear expediente financiero desde una factura registrada",
+        expanded=not operaciones_existentes,
+    ):
+        st.caption(
+            "Este paso vincula el registro OCR con el control financiero. "
+            "Solo crea un borrador: no clasifica automáticamente el flete, "
+            "no acredita pagos y no valida información bancaria ni tributaria."
+        )
+        if not facturas:
+            st.info(
+                "Todavía no hay facturas en el Excel. Registra primero una "
+                "cotización y luego su factura desde el menú Documentos."
+            )
+            return
+        if not pendientes:
+            st.success("Todas las facturas registradas ya tienen un expediente financiero.")
+            return
+
+        por_id = {factura.invoice_id: factura for factura in pendientes}
+
+        def etiqueta_factura(invoice_id: str) -> str:
+            factura = por_id[invoice_id]
+            numero = factura.invoice_number or factura.invoice_id
+            proveedor = factura.provider or "Proveedor no identificado"
+            moneda = factura.currency.value if factura.currency else "Moneda pendiente"
+            importe = (
+                f"{factura.invoiced_amount:,.2f}"
+                if factura.invoiced_amount is not None
+                else "importe pendiente"
+            )
+            return f"{numero} | {proveedor} | {moneda} {importe} | ID: {invoice_id}"
+
+        seleccionado = st.selectbox(
+            "Factura ya registrada en el Excel",
+            options=list(por_id),
+            format_func=etiqueta_factura,
+            key="factura_origen_expediente_financiero",
+            help="Elige la factura que quieres incorporar al control financiero.",
+        )
+        if st.button(
+            "Crear expediente financiero",
+            type="primary",
+            use_container_width=True,
+            key="crear_expediente_desde_factura",
+        ):
+            try:
+                borrador = crear_borrador_desde_repositorio(documentos, seleccionado)
+                RepositorioControlFletes(ruta_control).agregar(borrador.operacion)
+            except (OSError, ValueError) as error:
+                st.error(f"No se pudo crear el expediente: {error}")
+                return
+
+            st.session_state["_mensaje_creacion_expediente"] = (
+                f"Expediente creado para {borrador.operacion.numero_factura}."
+            )
+            st.session_state["_advertencias_creacion_expediente"] = borrador.advertencias
+            st.rerun()
 
 
 def _mostrar_metricas(tablero: TableroFletes, moneda: Moneda) -> None:
@@ -336,6 +437,11 @@ def mostrar_control_fletes() -> None:
     )
     if mensaje := st.session_state.pop("_mensaje_revision", None):
         st.success(mensaje)
+    if mensaje := st.session_state.pop("_mensaje_creacion_expediente", None):
+        st.success(mensaje)
+    for advertencia in st.session_state.pop("_advertencias_creacion_expediente", []):
+        st.caption(f"• {advertencia}")
+
     ruta: Path = Configuracion().ruta_archivo_excel().with_name("control_fletes.json")
     try:
         tablero = cargar_tablero(ruta)
@@ -343,12 +449,20 @@ def mostrar_control_fletes() -> None:
         st.error(f"No se pudieron leer los controles: {error}")
         return
 
+    _mostrar_creacion_expediente_desde_factura(ruta, tablero.operaciones)
+
     if not tablero.operaciones:
         st.info(
-            "No hay expedientes registrados. Importa una factura con "
-            "python principal.py flete-borrador --factura ID_FACTURA "
-            "o utiliza el importador de Excel."
+            "Todavía no hay expedientes financieros. Si ya registraste una factura, "
+            "créalo en el bloque anterior; si tus datos vienen de un Excel previo, "
+            "puedes usar el importador masivo."
         )
+        with st.expander("Alternativa por consola (opcional)"):
+            st.code(
+                ".\\.venv\\Scripts\\python.exe principal.py "
+                "flete-borrador --factura ID_INTERNO_FACTURA",
+                language="powershell",
+            )
         mostrar_importador_excel()
         return
 
