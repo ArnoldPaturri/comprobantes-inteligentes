@@ -12,6 +12,9 @@ from agente_comprobantes.control_financiero.auditoria_importacion import (
     _referencias,
 )
 from agente_comprobantes.control_financiero.modelos import OperacionFlete
+from agente_comprobantes.control_financiero.movimientos_centrales import (
+    MovimientoBancarioCentral,
+)
 from agente_comprobantes.control_financiero.tipos_referencia import (
     indicador_efectivo,
 )
@@ -22,6 +25,7 @@ def validar_cotejo_pago(
     indice: int,
     *,
     otros_expedientes: list[OperacionFlete] | None = None,
+    movimientos_centrales: list[MovimientoBancarioCentral] | None = None,
 ) -> None:
     """Rechaza evidencias ambiguas antes de declarar revisión aprobada.
 
@@ -54,6 +58,15 @@ def validar_cotejo_pago(
         raise ValueError("La moneda del movimiento no coincide con la factura.")
 
     ref = partes[0]
+    for movimiento in movimientos_centrales or []:
+        if (
+            ref in _referencias(movimiento.referencia)
+            or pago.documento_respaldo == movimiento.respaldo
+        ):
+            raise ValueError(
+                "El voucher ya está en el registro central. "
+                "No acredites otro pago histórico para la misma operación."
+            )
     operaciones = otros_expedientes if otros_expedientes is not None else [operacion]
     for existente in operaciones:
         for posicion, otro_pago in enumerate(existente.movimientos_bancarios):
