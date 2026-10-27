@@ -50,7 +50,7 @@ class RevisionMovimientoCentral(ModeloDominio):
     """Decisión humana registrada sin afirmar confirmación bancaria."""
 
     fecha: datetime = Field(default_factory=lambda: datetime.now(UTC))
-    accion: Literal["VINCULAR_EVIDENCIA", "REDISTRIBUIR", "DOCUMENTAR"]
+    accion: Literal["VINCULAR_EVIDENCIA", "REDISTRIBUIR", "DOCUMENTAR", "REABRIR"]
     motivo: str
     cambios: dict[str, str] = Field(default_factory=dict)
 
