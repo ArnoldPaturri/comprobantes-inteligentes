@@ -425,3 +425,29 @@ requiere conocer el importe total del movimiento y sus aplicaciones.
 **Precaución:** esta herramienta modifica `control_fletes.json` después
 de la confirmación del operador; conserva el Excel original sin cambios.
 Para pruebas, conviene respaldar el JSON y trabajar con documentos ficticios.
+
+
+## Validación documental individual de vouchers después del desglose
+
+El sistema ya contaba con la pestaña **Revisar pagos** y el almacenamiento
+de adjuntos PDF/PNG/JPG por huella SHA-256. Se añaden validaciones de
+seguridad antes de marcar un pago como **acreditado documentalmente**:
+
+- Se exige un comprobante guardado mediante el almacén interno
+  (`adjunto:<SHA-256>.pdf/png/jpg`), no solo un nombre escrito.
+- No se acredita una etiqueta `EFECTIVO` o `EFECTIVO?`, ni una celda
+  con varias referencias sin desglosar.
+- Se rechaza una referencia bancaria repetida entre movimientos de
+  una misma factura o entre facturas distintas, y un mismo archivo
+  de voucher vinculado a más de un movimiento. Una transferencia
+  realmente compartida requerirá un módulo de aplicaciones globales.
+- La pantalla muestra el bloqueo antes de confirmar; el backend
+  vuelve a ejecutar las mismas reglas al guardar el cambio.
+- **Retirar una validación** sigue permitido cuando aparecen nuevas
+  inconsistencias. Esta revisión manual no representa confirmación
+  automática del banco y no altera las hojas Excel originales.
+
+El registro de expedientes anteriormente acreditados no se modifica
+automáticamente. La protección se aplica a nuevas decisiones; antes de
+cerrar una conciliación de expedientes históricos debe revisarse
+la existencia de pagos compartidos o indebidamente acreditados.
