@@ -250,3 +250,68 @@ def test_no_se_aplica_un_movimiento_sin_revisar_documentacion(ambiente):
     with pytest.raises(ValueError, match="documenta"):
         aplicar(control, central, almacen, movimiento)
     assert central.obtener(movimiento.identificador).estado == "BORRADOR"
+
+
+def test_reintento_finaliza_aplicacion_si_falla_actualizacion_central(ambiente):
+    _, control, central, almacen = ambiente
+    creado = preparar_documentado(control, central, almacen)
+    actualizar_original = central.actualizar
+
+    def fallo_controlado(*args, **kwargs):
+        raise OSError("fallo simulado al guardar estado central")
+
+    central.actualizar = fallo_controlado
+    with pytest.raises(OSError, match="simulado"):
+        aplicar(control, central, almacen, creado)
+    central.actualizar = actualizar_original
+
+    assert central.obtener(creado.identificador).estado == "DOCUMENTADO"
+    assert all(
+        control.obtener(codigo).movimientos_bancarios[0].verificada
+        for codigo in ("FAC-1", "FAC-2")
+    )
+    recuperado = aplicar(control, central, almacen, creado)
+    assert recuperado.estado == "APLICADO"
+    assert all(
+        len(control.obtener(codigo).movimientos_bancarios) == 1
+        for codigo in ("FAC-1", "FAC-2")
+    )
+
+
+def test_reintento_finaliza_reversion_si_falla_actualizacion_central(ambiente):
+    _, control, central, almacen = ambiente
+    creado = preparar_documentado(control, central, almacen)
+    aplicado = aplicar(control, central, almacen, creado)
+    actualizar_original = central.actualizar
+
+    def fallo_controlado(*args, **kwargs):
+        raise OSError("fallo simulado al guardar estado central")
+
+    central.actualizar = fallo_controlado
+    with pytest.raises(OSError, match="simulado"):
+        revertir_aplicacion_central(
+            central, control, aplicado.identificador,
+            motivo="Se revierte para recuperar una asignación errónea",
+            confirmacion=True,
+            huella_control=control.huella(),
+            huella_central=central.huella(),
+        )
+    central.actualizar = actualizar_original
+
+    assert central.obtener(creado.identificador).estado == "APLICADO"
+    assert all(
+        not control.obtener(codigo).movimientos_bancarios[0].verificada
+        for codigo in ("FAC-1", "FAC-2")
+    )
+    recuperado = revertir_aplicacion_central(
+        central, control, aplicado.identificador,
+        motivo="Se finaliza la reversión previamente registrada",
+        confirmacion=True,
+        huella_control=control.huella(),
+        huella_central=central.huella(),
+    )
+    assert recuperado.estado == "REVERTIDO"
+    assert all(
+        len(control.obtener(codigo).movimientos_bancarios) == 1
+        for codigo in ("FAC-1", "FAC-2")
+    )
