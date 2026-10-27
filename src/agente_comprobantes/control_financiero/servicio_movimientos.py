@@ -181,6 +181,7 @@ def _cotejar_distribucion(
         previos=[
             item for item in previos if item.identificador != actual.identificador
         ],
+        identificador=actual.identificador,
     )
     return borrador.aplicaciones
 
