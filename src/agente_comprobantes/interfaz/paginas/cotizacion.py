@@ -34,6 +34,12 @@ def mostrar_cotizacion() -> None:
         "la misma cotización."
     )
 
+    st.info(
+        "Paso 1 de 3. Asigna un código interno único, carga las páginas de una "
+        "sola cotización y pulsa «Analizar». Antes de guardar, comprueba proveedor, "
+        "fecha, moneda e importe. No subas un PDF aquí: convierte sus páginas a PNG/JPG."
+    )
+
     last_result = st.session_state.get(_RESULT_KEY)
 
     if last_result is not None:
