@@ -7,6 +7,7 @@ manualmente: no se consulta la cuenta bancaria ni se verifica SUNAT.
 from __future__ import annotations
 
 from datetime import UTC, datetime
+from pathlib import Path
 
 from agente_comprobantes.control_financiero.modelos import (
     OperacionFlete,
@@ -14,6 +15,9 @@ from agente_comprobantes.control_financiero.modelos import (
 )
 from agente_comprobantes.control_financiero.repositorio_json import (
     RepositorioControlFletes,
+)
+from agente_comprobantes.control_financiero.repositorio_movimientos import (
+    RepositorioMovimientosCentrales,
 )
 from agente_comprobantes.control_financiero.validacion_bancarizaciones import (
     validar_cotejo_pago,
@@ -29,6 +33,7 @@ def preparar_revision_pago(
     confirmacion: bool,
     version_esperada: int,
     otros_expedientes: list[OperacionFlete] | None = None,
+    movimientos_centrales: list | None = None,
 ) -> OperacionFlete:
     """Cambia la revisión documental de un pago, sin editar sus importes."""
     if len(operacion.revisiones) != version_esperada:
@@ -49,7 +54,8 @@ def preparar_revision_pago(
 
     if acreditar:
         validar_cotejo_pago(
-            operacion, indice, otros_expedientes=otros_expedientes
+            operacion, indice, otros_expedientes=otros_expedientes,
+            movimientos_centrales=movimientos_centrales,
         )
 
     nuevos_pagos = [
@@ -102,6 +108,9 @@ def guardar_revision_pago(
         confirmacion=confirmacion,
         version_esperada=version_esperada,
         otros_expedientes=expedientes,
+        movimientos_centrales=RepositorioMovimientosCentrales(
+            Path(repositorio.ubicacion).with_name("movimientos_bancarios_centrales.json")
+        ).listar() if acreditar else [],
     )
     repositorio.actualizar(revisado)
     return revisado
