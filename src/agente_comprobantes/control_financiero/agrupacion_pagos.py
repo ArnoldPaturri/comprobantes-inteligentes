@@ -19,6 +19,9 @@ from agente_comprobantes.control_financiero.importacion_masiva import (
     _importe,
     _normalizar,
 )
+from agente_comprobantes.control_financiero.tipos_referencia import (
+    indicador_efectivo,
+)
 
 
 @dataclass(frozen=True, slots=True)
@@ -60,7 +63,11 @@ def proponer_agrupaciones(vista: VistaPrevia) -> tuple[PropuestaAgrupacion, ...]
             referencia = _campo(raw, "referencia")
             referencias.append(referencia)
             partes = _referencias(referencia)
-            if len(partes) != 1:
+            if indicador_efectivo(referencia):
+                observaciones.append(
+                    f"Fila {fila.fila}: EFECTIVO no identifica una operación bancaria."
+                )
+            elif len(partes) != 1:
                 observaciones.append(
                     f"Fila {fila.fila}: referencia ausente o múltiple."
                 )
