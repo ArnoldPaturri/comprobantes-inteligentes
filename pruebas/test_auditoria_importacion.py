@@ -131,3 +131,49 @@ def test_referencias_numericas_solo_se_normalizan_para_busqueda() -> None:
     assert normalizar_referencia_para_busqueda("6417006.0") == "6417006"
     assert normalizar_referencia_para_busqueda("00123") == "00123"
     assert normalizar_referencia_para_busqueda("AB-12.0") == "AB-12.0"
+
+
+
+def test_efectivo_repetido_en_varias_facturas_no_es_referencia_compartida(
+    tmp_path,
+) -> None:
+    previa, repo = vista(tmp_path, excel(
+        registro("EFECTIVO", factura="F001-21"),
+        registro("EFECTIVO", factura="F001-22"),
+        registro("EFECTIVO?", factura="F001-23"),
+    ))
+    auditoria = auditar_importacion(previa)
+    assert "REFERENCIA_COMPARTIDA" not in codigos(auditoria)
+    assert "EFECTIVO_SIN_OPERACION" in codigos(auditoria)
+    assert "EFECTIVO_POR_CONFIRMAR" in codigos(auditoria)
+    assert not auditoria.bloquea_importacion
+    assert all(not op.movimientos_bancarios for op in previa.listas)
+    assert all(op.datos_origen is not None for op in previa.listas)
+    assert all(
+        op.datos_origen.campos["Monto bancarizado"] == "7000"
+        for op in previa.listas
+    )
+    assert confirmar_importacion(previa, repo) == 3
+    assert all(not op.movimientos_bancarios for op in repo.listar())
+
+
+def test_bancarizacion_real_compartida_sigue_bloqueando(tmp_path) -> None:
+    previa, repo = vista(tmp_path, excel(
+        registro("74200111", factura="F001-31"),
+        registro("74200111", factura="F001-32"),
+    ))
+    auditoria = auditar_importacion(previa)
+    assert "REFERENCIA_COMPARTIDA" in codigos(auditoria)
+    assert auditoria.bloquea_importacion
+    with pytest.raises(ValueError, match="agrupación"):
+        confirmar_importacion(previa, repo)
+
+
+def test_efectivo_con_interrogacion_no_se_asume_confirmado(tmp_path) -> None:
+    previa, _ = vista(tmp_path, excel(
+        registro("EFECTIVO?", factura="F001-40", pago=40, facturado=40),
+    ))
+    hallazgos = auditar_importacion(previa).hallazgos
+    assert [h.codigo for h in hallazgos] == ["EFECTIVO_POR_CONFIRMAR"]
+    assert not previa.listas[0].movimientos_bancarios
+    assert previa.listas[0].datos_origen.campos["NRO. BANCARIZACIÓN"] == "EFECTIVO?"

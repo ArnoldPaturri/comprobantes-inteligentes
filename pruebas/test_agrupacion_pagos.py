@@ -88,3 +88,17 @@ def test_referencia_repetida_no_se_toma_como_segundo_pago_confiable(tmp_path) ->
     grupo = proponer_agrupaciones(previa)[0]
     assert grupo.condicion == "REQUIERE ACLARACIÓN"
     assert any("repite" in m for m in grupo.observaciones)
+
+
+
+def test_efectivo_repetido_no_es_referencia_unica_en_agrupacion(
+    tmp_path,
+) -> None:
+    previa = vista(tmp_path, [
+        ["EFECTIVO", "F001-10", "Transportes Sur", "PEN", 1000, 400],
+        ["EFECTIVO?", "F001-10", "Transportes Sur", "PEN", 1000, 600],
+    ])
+    grupo = proponer_agrupaciones(previa)[0]
+    assert grupo.condicion == "REQUIERE ACLARACIÓN"
+    assert any("EFECTIVO no identifica" in mensaje for mensaje in grupo.observaciones)
+    assert grupo.referencias_originales == ("EFECTIVO", "EFECTIVO?")
