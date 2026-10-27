@@ -42,18 +42,37 @@ def auditar_expedientes(
         actuales = [
             movimiento.referencia or "" for movimiento in op.movimientos_bancarios
         ]
-        candidatos = [original, *actuales]
+        # El dato fuente permanece inmutable, pero una corrección documentada
+        # permite que deje de figurar como incidencia ACTIVA.
+        tiene_revision_de_origen = any(
+            revision.cambios.get("accion") in {
+                "desglose_declarado", "reclasificar_efectivo"
+            }
+            and revision.cambios.get("referencia_original") == original
+            for revision in op.revisiones
+        )
+        candidatos = ([original] if original and not tiene_revision_de_origen
+                      else []) + actuales
+
+        for pendiente in op.declaraciones_por_aclarar:
+            hallazgos.append(IncidenciaExpediente(
+                op.identificador, op.numero_factura, op.proveedor or "",
+                "DECLARACIÓN DE PAGO POR ACLARAR",
+                pendiente.referencia_original,
+                f"Importe declarado: {pendiente.importe_declarado} "
+                f"{pendiente.moneda.value}. No es una bancarización acreditada.",
+                "Verificar medio de pago, constancia y clasificación. "
+                "No aplicar el importe automáticamente.",
+            ))
         for valor in candidatos:
             if not valor.strip() or indicador_efectivo(valor):
                 continue
             for parte in _referencias(valor):
                 referencias[parte].add(op.identificador)
 
-        if indicador_efectivo(original) or any(
-            indicador_efectivo(valor) for valor in actuales
-        ):
-            ref = original if indicador_efectivo(original) else next(
-                valor for valor in actuales if indicador_efectivo(valor)
+        if any(indicador_efectivo(valor) for valor in candidatos):
+            ref = next(
+                valor for valor in candidatos if indicador_efectivo(valor)
             )
             hallazgos.append(IncidenciaExpediente(
                 op.identificador, op.numero_factura, op.proveedor or "",
