@@ -30,6 +30,9 @@ from agente_comprobantes.interfaz.componentes.ajustes_financieros import (
 from agente_comprobantes.interfaz.componentes.importacion_excel import (
     mostrar_importador_excel,
 )
+from agente_comprobantes.interfaz.componentes.incidencias_existentes import (
+    mostrar_incidencias_existentes,
+)
 from agente_comprobantes.interfaz.componentes.panel_evidencias import mostrar_evidencias
 from agente_comprobantes.interfaz.componentes.revision_pagos import (
     mostrar_revision_pagos,
@@ -252,6 +255,7 @@ def mostrar_control_fletes() -> None:
 
     _mostrar_metricas(tablero, moneda)
     mostrar_importador_excel()
+    mostrar_incidencias_existentes(tablero.operaciones)
     st.subheader("Expedientes")
     filtro_estado = None if estado == "Todos" else SituacionControl(estado)
     filas = tablero.filas(moneda, filtro_estado, busqueda)
