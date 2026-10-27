@@ -21,6 +21,7 @@ from agente_comprobantes.control_financiero.servicio_movimientos import (
     documentar_movimiento_central,
     guardar_borrador_central,
     redistribuir_movimiento_central,
+    reabrir_movimiento_central,
 )
 from agente_comprobantes.dominio.enumeraciones import Moneda
 from agente_comprobantes.interfaz.componentes.visor_adjuntos import mostrar_respaldo
@@ -335,5 +336,30 @@ def _gestionar_existentes(
                 else:
                     st.session_state["_mensaje_revision"] = (
                         "Movimiento documentado. No se alteraron los saldos oficiales."
+                    )
+                    st.rerun()
+
+        if elegido.estado == "DOCUMENTADO":
+            with st.form(f"reabrir_central_{elegido.identificador}"):
+                motivo_reapertura = st.text_area("Motivo de la reapertura")
+                confirmar_reapertura = st.checkbox(
+                    "Confirmo la revocación de la revisión documental. "
+                    "Se conservará el voucher y el historial."
+                )
+                reapertura = st.form_submit_button("Reabrir para correcciones")
+            if reapertura:
+                try:
+                    reabrir_movimiento_central(
+                        registro, control, elegido.identificador,
+                        motivo=motivo_reapertura,
+                        confirmacion=confirmar_reapertura,
+                        huella_central=huella_central,
+                        huella_control=huella_control,
+                    )
+                except (ValueError, OSError) as exc:
+                    st.error(str(exc))
+                else:
+                    st.session_state["_mensaje_revision"] = (
+                        "Revisión revocada. Movimiento nuevamente en borrador."
                     )
                     st.rerun()
