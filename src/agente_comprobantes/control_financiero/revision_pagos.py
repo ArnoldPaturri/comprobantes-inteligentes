@@ -49,6 +49,11 @@ def preparar_revision_pago(
         raise ValueError("Describe el sustento de la revisión (mínimo 10 caracteres).")
 
     pago = operacion.movimientos_bancarios[indice]
+    if pago.movimiento_central_id:
+        raise ValueError(
+            "Este pago pertenece a un movimiento central. "
+            "Aplícalo o revierte su aplicación desde Movimientos compartidos."
+        )
     if pago.verificada == acreditar:
         raise ValueError("La acreditación documental seleccionada ya está registrada.")
 
