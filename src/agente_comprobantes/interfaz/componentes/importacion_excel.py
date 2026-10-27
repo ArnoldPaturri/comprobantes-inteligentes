@@ -3,6 +3,9 @@
 import streamlit as st
 
 from agente_comprobantes.configuracion import Configuracion
+from agente_comprobantes.control_financiero.agrupacion_pagos import (
+    proponer_agrupaciones,
+)
 from agente_comprobantes.control_financiero.auditoria_importacion import (
     auditar_importacion,
 )
@@ -109,6 +112,45 @@ def mostrar_importador_excel() -> None:
             st.dataframe(
                 originales, hide_index=True, use_container_width=True
             )
+
+        agrupaciones = proponer_agrupaciones(vista)
+        if agrupaciones:
+            with st.expander(
+                f"Posibles pagos parciales · {len(agrupaciones)} facturas",
+                expanded=True,
+            ):
+                st.caption(
+                    "Diagnóstico: agrupa visualmente por número de factura y "
+                    "proveedor. No acredita, distribuye ni guarda movimientos."
+                )
+                st.dataframe(
+                    [
+                        {
+                            "Factura": grupo.factura,
+                            "Proveedor": grupo.proveedor,
+                            "Moneda": grupo.moneda,
+                            "Filas": ", ".join(map(str, grupo.filas)),
+                            "Referencias originales": " | ".join(
+                                grupo.referencias_originales
+                            ),
+                            "Monto factura": (
+                                str(grupo.facturado_referencia)
+                                if grupo.facturado_referencia is not None else ""
+                            ),
+                            "Pagos declarados": str(grupo.pagos_declarados),
+                            "Evaluación": grupo.condicion,
+                            "Qué revisar": " · ".join(grupo.observaciones),
+                        }
+                        for grupo in agrupaciones
+                    ],
+                    hide_index=True,
+                    use_container_width=True,
+                )
+                st.warning(
+                    "Una propuesta candidata NO es una conciliación aprobada. "
+                    "Las facturas repetidas aún requieren reglas de "
+                    "agrupación antes de poder importarse."
+                )
 
         auditoria = auditar_importacion(vista)
         if auditoria.hallazgos:

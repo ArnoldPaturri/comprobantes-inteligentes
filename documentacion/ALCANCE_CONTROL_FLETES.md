@@ -343,3 +343,22 @@ porque podrían explicarse por detracciones, notas de crédito o condiciones
 particulares. Los datos de origen siguen disponibles íntegramente; la
 normalización de referencias numéricas con `.0` se utiliza solo para
 comparaciones, no para reescribir la información original.
+
+
+## Vista previa de pagos parciales por factura
+
+La sección **Posibles pagos parciales** agrupa **solo visualmente** las
+filas que contienen la misma factura y el mismo proveedor. Se presentan
+las referencias bancarias originales de cada fila, el importe facturado
+de referencia, la suma de pagos declarados y los números de fila del Excel.
+
+- Muestra **Candidata a revisión** cuando las monedas e importes de
+  factura son coherentes y las referencias no están repetidas.
+- Marca **Requiere aclaración** si hay referencias compuestas, repetidas,
+  importes de factura incompatibles, varias monedas o importes declarados
+  que exceden el facturado.
+- No crea pagos, no divide referencias bancarias, no confirma
+  acreditaciones y no modifica los archivos existentes.
+- El bloqueo de importación por facturas repetidas permanece activo:
+  esta función es un diagnóstico para definir la regla de agrupación
+  con el área responsable antes de automatizar el registro.
