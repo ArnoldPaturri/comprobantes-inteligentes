@@ -96,6 +96,35 @@ class RepositorioControlFletes:
         self._validar_unicidad(conjunto)
         self._guardar_atomico(conjunto)
 
+    def actualizar_lote(
+        self,
+        operaciones: list[OperacionFlete],
+        *,
+        huella_esperada: str,
+    ) -> None:
+        """Actualiza varios expedientes en una única escritura atómica y versionada."""
+        if not operaciones:
+            raise ValueError("No hay expedientes que actualizar.")
+        if self.huella() != huella_esperada:
+            raise ValueError("El archivo de control cambió; vuelve a revisar.")
+        codigos = [op.identificador.strip().upper() for op in operaciones]
+        if len(codigos) != len(set(codigos)):
+            raise ValueError("El lote contiene expedientes repetidos.")
+        actuales = self.listar()
+        posiciones = {
+            op.identificador.strip().upper(): indice
+            for indice, op in enumerate(actuales)
+        }
+        faltantes = [codigo for codigo in codigos if codigo not in posiciones]
+        if faltantes:
+            raise ValueError(
+                "No existen los expedientes: " + ", ".join(faltantes)
+            )
+        for codigo, nueva in zip(codigos, operaciones, strict=True):
+            actuales[posiciones[codigo]] = nueva
+        self._validar_unicidad(actuales)
+        self._guardar_atomico(actuales, huella_esperada=huella_esperada)
+
     def actualizar(self, operacion: OperacionFlete) -> None:
         operaciones = self.listar()
         codigo = operacion.identificador.strip().upper()
@@ -116,7 +145,14 @@ class RepositorioControlFletes:
                 raise ValueError(f"Ya existe el control de flete {codigo}.")
             identificadores.add(codigo)
 
-    def _guardar_atomico(self, operaciones: list[OperacionFlete]) -> None:
+    def _guardar_atomico(
+        self,
+        operaciones: list[OperacionFlete],
+        *,
+        huella_esperada: str | None = None,
+    ) -> None:
+        if huella_esperada is not None and self.huella() != huella_esperada:
+            raise ValueError("El archivo de control cambió antes de escribir.")
         self._ruta.parent.mkdir(parents=True, exist_ok=True)
         contenido = {
             "version": self.VERSION,
@@ -138,6 +174,8 @@ class RepositorioControlFletes:
                 json.dump(contenido, archivo, ensure_ascii=False, indent=2)
                 archivo.flush()
                 os.fsync(archivo.fileno())
+            if huella_esperada is not None and self.huella() != huella_esperada:
+                raise ValueError("El archivo de control cambió durante el guardado.")
             os.replace(temporal, self._ruta)
         finally:
             if temporal is not None and os.path.exists(temporal):
