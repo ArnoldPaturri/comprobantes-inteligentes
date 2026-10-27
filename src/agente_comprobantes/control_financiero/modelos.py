@@ -60,6 +60,20 @@ class MovimientoBancario(EvidenciaFinanciera):
         return importe_positivo(valor)
 
 
+class DeclaracionPagoPorAclarar(ModeloDominio):
+    """Importe declarado que no constituye movimiento bancario acreditable."""
+
+    referencia_original: str
+    moneda: Moneda
+    importe_declarado: Decimal
+    respaldo_original: str | None = None
+
+    @field_validator("importe_declarado", mode="before")
+    @classmethod
+    def validar_importe(cls, valor: object) -> Decimal:
+        return importe_positivo(valor)
+
+
 class DepositoDetraccion(EvidenciaFinanciera):
     """Depósito acreditado a la cuenta de detracciones del proveedor."""
     importe: Decimal
@@ -122,6 +136,9 @@ class OperacionFlete(ModeloDominio):
     detraccion_aplica: bool | None = None
     es_flete: bool | None = None
     movimientos_bancarios: list[MovimientoBancario] = Field(default_factory=list)
+    declaraciones_por_aclarar: list[DeclaracionPagoPorAclarar] = Field(
+        default_factory=list
+    )
     depositos_detraccion: list[DepositoDetraccion] = Field(default_factory=list)
     notas_credito: list[NotaCredito] = Field(default_factory=list)
     conciliacion_cerrada: bool = False
