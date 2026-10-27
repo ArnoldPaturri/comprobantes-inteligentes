@@ -8,6 +8,8 @@ from typing import Literal
 
 from pydantic import Field, field_validator, model_validator
 
+from agente_comprobantes.control_financiero.archivos import REFERENCIA
+
 from agente_comprobantes.control_financiero.auditoria_importacion import (
     _referencias,
 )
@@ -45,6 +47,15 @@ class AplicacionBancaria(ModeloDominio):
         return _dinero(valor)
 
 
+class RevisionMovimientoCentral(ModeloDominio):
+    """Decisión humana registrada sin afirmar confirmación bancaria."""
+
+    fecha: datetime = Field(default_factory=lambda: datetime.now(UTC))
+    accion: Literal["VINCULAR_EVIDENCIA", "REDISTRIBUIR", "DOCUMENTAR"]
+    motivo: str
+    cambios: dict[str, str] = Field(default_factory=dict)
+
+
 class MovimientoBancarioCentral(ModeloDominio):
     """Un voucher y sus aplicaciones en BORRADOR sin acreditación."""
 
@@ -56,7 +67,9 @@ class MovimientoBancarioCentral(ModeloDominio):
     fecha_operacion: date | None = None
     aplicaciones: list[AplicacionBancaria] = Field(default_factory=list)
     sustento: str
-    estado: Literal["BORRADOR"] = "BORRADOR"
+    estado: Literal["BORRADOR", "DOCUMENTADO"] = "BORRADOR"
+    respaldo: str | None = None
+    revisiones: list[RevisionMovimientoCentral] = Field(default_factory=list)
     creado_utc: datetime = Field(default_factory=lambda: datetime.now(UTC))
 
     @field_validator("identificador", "banco", "referencia")
@@ -96,6 +109,10 @@ class MovimientoBancarioCentral(ModeloDominio):
             raise ValueError("La suma asignada supera el importe total del voucher.")
         if not self.aplicaciones:
             raise ValueError("El borrador requiere al menos una aplicación.")
+        if self.respaldo is not None and not REFERENCIA.fullmatch(self.respaldo):
+            raise ValueError("El respaldo central debe ser un adjunto interno válido.")
+        if self.estado == "DOCUMENTADO" and not self.respaldo:
+            raise ValueError("No se puede documentar un movimiento sin voucher adjunto.")
         return self
 
     @property
