@@ -14,6 +14,29 @@ def mostrar_inicio() -> None:
         "Centraliza tus documentos, revisa conciliaciones y detecta excepciones.",
         seccion="Panel / Resumen general",
     )
+    with st.expander("Guía rápida: de documento a conciliación", expanded=True):
+        st.markdown(
+            """
+            **Sigue este orden para evitar registros huérfanos:**
+
+            1. **Registrar cotización:** sube la imagen, revisa los datos extraídos y confirma.
+            2. **Registrar factura:** elige la cotización relacionada y revisa diferencias de importe.
+            3. **Registrar pago (si corresponde):** sube la imagen del comprobante y revisa el resultado.
+            4. **Control financiero:** crea el expediente desde la factura, clasifica la operación y añade sus evidencias.
+            5. **Conciliar:** acredita únicamente los importes cuyo respaldo hayas revisado y genera los reportes.
+            """
+        )
+        st.info(
+            "Formatos: cotizaciones, facturas y pagos por OCR aceptan imágenes "
+            "(PNG/JPG y formatos indicados en cada pantalla); la importación masiva "
+            "acepta XLSX; los PDF se usan como evidencias y adjuntos financieros."
+        )
+        st.warning(
+            "Importante: que la IA lea un importe o que un pago aparezca en Excel "
+            "no significa que esté acreditado. La revisión documental es manual; "
+            "la aplicación no consulta bancos ni SUNAT."
+        )
+
     ruta = Configuracion().ruta_archivo_excel().with_name("control_fletes.json")
     try:
         tablero = cargar_tablero(ruta)
