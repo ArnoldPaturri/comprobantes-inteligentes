@@ -2,22 +2,22 @@
 
 ## Objetivo y límites
 
-Un movimiento bancario es una transferencia única identificada por banco,
+Un movimiento bancario representa una transferencia única, identificada por banco,
 referencia normalizada y moneda. Sus **aplicaciones** son importes independientes
-asignados a uno o varios expedientes/facturas.
+asignados a una o varias facturas.
 
-Se trabaja en `feature/control-financiero-fletes`, sin modificar `main`.
-El registro se guarda en `movimientos_bancarios_centrales.json`, junto al
-Excel configurado. **No modifica** `registros.xlsx` ni `control_fletes.json`.
+El registro central se guarda en `movimientos_bancarios_centrales.json`, junto al
+Excel configurado. No modifica `registros.xlsx`. La preparación y revisión
+documental tampoco alteran los saldos de `control_fletes.json`; estos solo cambian
+cuando una persona confirma explícitamente **Aplicar a facturas** o **Revertir aplicación**.
 
-La vinculación del voucher **no acredita** el movimiento. El estado
-`DOCUMENTADO` confirma solo que un operador declaró haber cotejado los
-documentos; no es consulta a la entidad bancaria, ni se traslada a los
-indicadores o saldos oficiales del control de fletes.
+La marca de aplicación significa que un operador cotejó la evidencia y autorizó
+su reflejo en el control financiero. **No consulta la entidad bancaria, no valida
+SUNAT y no es una confirmación bancaria automática.**
 
 ## Formato
 
-La versión 2 separa la cabecera del movimiento y sus aplicaciones:
+La versión 2 separa cabecera y aplicaciones:
 
 ```json
 {
@@ -29,9 +29,9 @@ La versión 2 separa la cabecera del movimiento y sus aplicaciones:
       "referencia": "OP-123",
       "moneda": "PEN",
       "importe_total": "1000",
-      "sustento": "Transferencia verificada con voucher original",
-      "estado": "BORRADOR",
-      "respaldo": null,
+      "sustento": "Transferencia cotejada con el voucher original",
+      "estado": "DOCUMENTADO",
+      "respaldo": "adjunto:<sha256>.pdf",
       "revisiones": []
     }
   ],
@@ -42,51 +42,73 @@ La versión 2 separa la cabecera del movimiento y sus aplicaciones:
 }
 ```
 
-El ejemplo ilustra la estructura; el sistema agrega `creado_utc` y otros
-campos del modelo. No edites el JSON a mano.
+El ejemplo ilustra la estructura; el sistema agrega `creado_utc` y otros campos.
+No edites el JSON manualmente.
+
+## Ciclo de vida
+
+- `BORRADOR`: distribución editable; no afecta los saldos.
+- `DOCUMENTADO`: voucher original adjunto y cotejo humano registrado; todavía no
+  afecta los saldos oficiales.
+- `APLICADO`: las aplicaciones se han reflejado en los expedientes y entran en
+  el cálculo de conciliación como evidencia documental revisada.
+- `REVERTIDO`: se retiró el efecto de conciliación, pero el movimiento, sus
+  aplicaciones, el voucher y el historial se conservan.
+- Un movimiento `APLICADO` debe revertirse antes de corregir su distribución.
+  Después puede reabrirse, redistribuirse, documentarse de nuevo y reaplicarse.
 
 ## Reglas de negocio
 
-- La suma de aplicaciones de un movimiento no excede su importe.
+- La suma aplicada no supera el total del movimiento; cada importe es positivo y
+  usa máximo dos decimales.
 - La factura y el movimiento deben usar la misma moneda.
-- Se comprueba el saldo que aún no ha sido declarado en el expediente y los
-  importes reservados en otros movimientos centrales.
-- No se admite una misma factura dos veces dentro de un movimiento.
-- Se bloquean referencias de pago compuestas, marcas de efectivo y referencias
-  ya presentes en el registro histórico o en otro movimiento central.
-- Se bloquea acreditar desde el módulo antiguo un pago cuyo número de
-  operación o adjunto se encuentre en el registro central.
-- Los adjuntos reutilizan el almacén inmutable por huella SHA-256.
-  No se puede asociar el mismo adjunto a dos movimientos centrales.
-- Los cambios registran hora UTC, motivo y valores anteriores/nuevos.
-- Las escrituras JSON son atómicas y tienen comprobación de huellas para
-  rechazar vistas obsoletas. Es un flujo local, no una base de datos multiusuario.
+- La disponibilidad considera pagos históricos y aplicaciones de otros movimientos
+  centrales, evitando contar dos veces una aplicación central ya registrada.
+- Se bloquean referencias compuestas, marcas de efectivo, referencias históricas
+  duplicadas y vouchers reutilizados en movimientos diferentes.
+- Cada pago originado por el registro central conserva `movimiento_central_id`.
+  El módulo de revisión individual, el editor de incidencias y la edición de
+  adjuntos no pueden modificarlo: debe gestionarse desde Movimientos compartidos.
+- La aplicación o reversión actualiza todos los expedientes implicados en una
+  sola escritura atómica de `control_fletes.json`; después actualiza el estado
+  central. Las operaciones son idempotentes para poder finalizar el estado si
+  el proceso se interrumpe después de guardar el lote.
+- Si falla la actualización del estado central tras escribir el lote, vuelve a
+  cargar la pantalla y repite la misma acción. El servicio detecta las
+  aplicaciones existentes y evita añadir pagos duplicados.
+- Las revisiones guardan hora UTC, motivo, referencia, importes y cambios. Revertir
+  una aplicación no borra los registros: marca sus pagos como no verificados.
+- Los JSON usan escritura atómica y huellas para rechazar vistas obsoletas. Es un
+  flujo local de un operador; no sustituye una base de datos multiusuario.
 
 ## Flujo en Streamlit
 
-1. En **Control financiero**, abre **Movimientos compartidos** y crea el borrador
-   indicando banco, referencia, moneda, total y asignaciones.
-2. Abre **Gestionar movimiento existente** y distribuye o corrige los importes.
-   El **saldo sin asignar** se mantiene disponible, sin duplicar la transferencia.
-3. Carga el voucher bancario original desde el registro central.
-4. Revisa manualmente referencia, moneda, total y cada factura, y marca
-   `DOCUMENTADO` cuando corresponda.
-5. Si hallas un error, **Reabrir para correcciones** revierte la revisión
-   documental sin eliminar el voucher ni el historial.
-6. Las facturas históricas continúan con su conciliación previa; este registro
-   no se convierte automáticamente en pago acreditado.
+1. En **Control financiero → Movimientos bancarios compartidos**, crea el borrador
+   indicando banco, referencia, moneda, total y asignaciones por factura.
+2. Gestiona la distribución y comprueba el importe sin asignar.
+3. Adjunta el voucher bancario original desde el registro central.
+4. Contrasta manualmente banco, referencia, fecha, importe, moneda y facturas;
+   marca `DOCUMENTADO`.
+5. Revisa nuevamente la distribución y selecciona **Aplicar a facturas**. El
+   sistema crea o actualiza un movimiento vinculado en cada expediente y registra
+   la revisión humana.
+6. Si detectas un error, selecciona **Revertir aplicación**. Los importes dejan
+   de computar en la conciliación, sin borrar la evidencia ni la auditoría.
+7. Para corregir la asignación, reabre el movimiento revertido, redistribuye,
+   documenta y aplica nuevamente. No uses el formulario individual de pagos para
+   cambiar aplicaciones centrales.
 
 ## Compatibilidad y recuperación
 
-- Se leen archivos centrales v1 con aplicaciones anidadas.
-- En la primera escritura exitosa se guarda v2 con movimientos y aplicaciones
-  separados. La lectura de v1 por sí sola no transforma el archivo.
-- Antes de usar datos reales, haz una copia de
-  `movimientos_bancarios_centrales.json` y `control_fletes.json` fuera
-  de las carpetas sincronizadas.
-- No abras con código antiguo un registro ya convertido a v2: para regresar
-  deberías recuperar la copia previa. Los registros existentes de
-  `control_fletes.json` no requieren migración.
+- Se leen archivos centrales v1 con aplicaciones anidadas. La primera escritura
+  válida los migra a v2 con cabecera y aplicaciones separadas.
+- `MovimientoBancario.movimiento_central_id` es opcional para los registros
+  históricos; los JSON existentes de `control_fletes.json` siguen siendo válidos.
+- Antes de usar datos reales, respalda `movimientos_bancarios_centrales.json`,
+  `control_fletes.json` y la carpeta `adjuntos_financieros` fuera de carpetas
+  sincronizadas.
+- No abras un registro v2 con código antiguo: recupera el respaldo previo si
+  necesitas volver a una versión anterior.
 
 ## Verificación
 
@@ -98,5 +120,6 @@ streamlit run aplicacion.py
 ```
 
 Pruebas específicas: `pruebas/test_movimientos_centrales.py`,
-`pruebas/test_ciclo_movimientos_centrales.py` y
+`pruebas/test_ciclo_movimientos_centrales.py`,
+`pruebas/test_aplicacion_movimientos_centrales.py` y
 `pruebas/test_bloqueo_cruce_bancario.py`.
