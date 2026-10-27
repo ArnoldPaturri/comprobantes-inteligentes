@@ -20,6 +20,7 @@ from agente_comprobantes.control_financiero.servicio_movimientos import (
     documentar_movimiento_central,
     guardar_borrador_central,
     redistribuir_movimiento_central,
+    reabrir_movimiento_central,
 )
 from agente_comprobantes.dominio.enumeraciones import Moneda
 
@@ -241,3 +242,26 @@ def test_revision_obsoleta_no_reescribe_movimiento(ambiente):
             huella_central=antigua,
         )
     assert central.ruta.read_bytes() == antes
+
+
+def test_reapertura_conserva_adjuntos_e_historial(ambiente):
+    _, control, central, almacen = ambiente
+    creado = crear(control, central)
+    adjuntar(control, central, almacen, creado.identificador)
+    documentar(control, central, almacen, creado.identificador)
+    reabierto = reabrir_movimiento_central(
+        central, control, creado.identificador,
+        motivo="El importe de la segunda factura necesita corrección",
+        confirmacion=True,
+        huella_control=control.huella(), huella_central=central.huella(),
+    )
+    assert reabierto.estado == "BORRADOR"
+    assert reabierto.respaldo is not None
+    assert [r.accion for r in reabierto.revisiones] == [
+        "VINCULAR_EVIDENCIA", "DOCUMENTAR", "REABRIR",
+    ]
+    corregido = distribuir(control, central, creado.identificador, [
+        ("FAC-1", "450"), ("FAC-2", "550"),
+    ])
+    assert corregido.sin_asignar == 0
+    assert len(central.listar()) == 1
