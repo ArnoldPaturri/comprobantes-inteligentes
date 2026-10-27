@@ -72,7 +72,7 @@ def mostrar_movimientos_centrales(operaciones: list[OperacionFlete]) -> None:
                 hide_index=True,
                 use_container_width=True,
             )
-            with st.expander("Consultar distribución de borradores"):
+            with st.popover("Consultar distribución de borradores"):
                 seleccion = st.selectbox(
                     "Movimiento",
                     existentes,
@@ -189,7 +189,8 @@ def _gestionar_existentes(
     huella_control: str,
 ) -> None:
     """Editar una distribución y revisar su voucher sin generar pagos duplicados."""
-    with st.expander("Gestionar movimiento existente · distribución y voucher"):
+    with st.container(border=True):
+        st.markdown("**Gestionar movimiento existente · distribución y voucher**")
         elegido = st.selectbox(
             "Movimiento registrado",
             movimientos,
@@ -205,7 +206,7 @@ def _gestionar_existentes(
         )
         mostrar_respaldo(elegido.respaldo, clave=f"central_{elegido.identificador}")
         if elegido.revisiones:
-            with st.expander(f"Historial de revisiones ({len(elegido.revisiones)})"):
+            with st.popover(f"Historial de revisiones ({len(elegido.revisiones)})"):
                 for revision in reversed(elegido.revisiones):
                     st.write(revision.fecha.strftime("%Y-%m-%d %H:%M UTC"))
                     st.caption(f"{revision.accion}: {revision.motivo}")
