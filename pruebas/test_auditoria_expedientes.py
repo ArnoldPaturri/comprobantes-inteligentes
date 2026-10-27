@@ -5,6 +5,10 @@ from decimal import Decimal
 from agente_comprobantes.control_financiero.auditoria_expedientes import (
     auditar_expedientes,
 )
+from agente_comprobantes.control_financiero.editor_incidencias import (
+    preparar_desglose,
+    preparar_reclasificacion_efectivo,
+)
 from agente_comprobantes.control_financiero.modelos import (
     DatosOrigenExcel,
     MovimientoBancario,
@@ -82,3 +86,37 @@ def test_referencias_multiples_conservan_dato_original() -> None:
 
 def test_sin_referencias_ambiguas_no_hay_hallazgos() -> None:
     assert auditar_expedientes([op("F001-23", "74200111")]) == ()
+
+
+
+def test_desglosado_ya_no_tiene_alarma_historica_activa() -> None:
+    op = op("F001-25", "6537194 Y 340464")
+    corregido = preparar_desglose(
+        op,
+        indice=0,
+        asignaciones=[("6537194", "300"), ("340464", "200")],
+        motivo="Se distribuyó el importe conforme a vouchers individuales",
+        confirmacion=True,
+        version_esperada=0,
+    )
+    assert auditar_expedientes([corregido]) == ()
+    assert corregido.datos_origen is None
+    assert corregido.revisiones[0].cambios["referencia_original"] == (
+        "6537194 Y 340464"
+    )
+
+
+def test_efectivo_reclasificado_sigue_en_revision_no_bancaria() -> None:
+    antes = op("F001-26", "EFECTIVO?")
+    corregido = preparar_reclasificacion_efectivo(
+        antes,
+        indice=0,
+        motivo="El pago aún no cuenta con constancia bancaria",
+        confirmacion=True,
+        version_esperada=0,
+    )
+    hallazgos = auditar_expedientes([corregido])
+    assert len(hallazgos) == 1
+    assert hallazgos[0].tipo == "DECLARACIÓN DE PAGO POR ACLARAR"
+    assert corregido.declaraciones_por_aclarar[0].importe_declarado == 500
+    assert corregido.movimientos_bancarios == []

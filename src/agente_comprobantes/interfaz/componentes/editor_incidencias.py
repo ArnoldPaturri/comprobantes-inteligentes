@@ -42,7 +42,6 @@ def _guardado(identificador: str) -> None:
 def _desglose_formulario(
     op: OperacionFlete, indice: int, referencia: str,
 ) -> None:
-    original = op.movimientos_bancarios[indice]
     partes = _referencias(referencia)
     if len(partes) < 2 or len(partes) > 10:
         st.warning("La referencia no admite un desglose de 2 a 10 movimientos.")

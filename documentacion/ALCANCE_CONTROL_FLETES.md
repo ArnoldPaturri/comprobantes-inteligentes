@@ -392,3 +392,36 @@ de esta corrección. Reimportar la misma factura está bloqueado y no
 debe utilizarse como mecanismo para sobrescribir registros.
 
 Esta revisión asistida no constituye validación bancaria ni tributaria.
+
+
+## Editor de incidencias de expedientes ya registrados
+
+Desde **Incidencias de expedientes ya registrados**, seleccionar un caso
+permite modificar **únicamente datos declarados que no estén acreditados**
+y cuya conciliación permanezca abierta.
+
+**Referencias múltiples:** el operador introduce un importe separado
+para cada referencia identificada. Debe coincidir exactamente el conjunto
+de referencias y la suma de sus importes con el movimiento original.
+Las nuevas aplicaciones se guardan sin acreditación y sin heredar
+automáticamente el respaldo del movimiento anterior. La referencia
+compuesta, su valor total y el respaldo anterior permanecen en el historial.
+Se impide el desglose si alguna referencia coincide con un movimiento
+de otro expediente.
+
+**EFECTIVO / EFECTIVO?:** el importe previamente registrado como movimiento
+bancario se reclasifica a `declaraciones_por_aclarar` sin perder importe,
+referencia ni respaldo anterior. Deja de contabilizarse como pago bancario
+declarado, pero permanece visible en **Documentación y diferencias**
+hasta aclarar el medio real del pago.
+
+**Condiciones:** cada cambio exige un motivo, aceptación explícita y
+una versión vigente del expediente. No se puede modificar un movimiento
+acreditado sin retirar antes su validación documental, y ninguna acción
+confirma bancos o SUNAT. Esta versión no permite distribuir una
+referencia bancaria compartida entre varias facturas: esa asignación
+requiere conocer el importe total del movimiento y sus aplicaciones.
+
+**Precaución:** esta herramienta modifica `control_fletes.json` después
+de la confirmación del operador; conserva el Excel original sin cambios.
+Para pruebas, conviene respaldar el JSON y trabajar con documentos ficticios.
