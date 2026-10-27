@@ -345,15 +345,17 @@ def reabrir_movimiento_central(
     huella_central: str,
     huella_control: str,
 ) -> MovimientoBancarioCentral:
-    """Revierte una revisión documental conservando voucher y auditoría."""
+    """Reabre un movimiento documentado o revertido conservando evidencia y auditoría."""
     if not confirmacion:
         raise ValueError("Confirma la reapertura del movimiento.")
     _validar_versiones(banco_repo, control_repo, huella_central, huella_control)
     actual = banco_repo.obtener(identificador)
     if actual is None:
         raise ValueError("No existe el movimiento central.")
-    if actual.estado != "DOCUMENTADO":
-        raise ValueError("Solo pueden reabrirse movimientos documentados.")
+    if actual.estado not in ("DOCUMENTADO", "REVERTIDO"):
+        raise ValueError(
+            "Solo pueden reabrirse movimientos documentados o con su aplicación revertida."
+        )
     revision = _revision(
         "REABRIR",
         motivo,
