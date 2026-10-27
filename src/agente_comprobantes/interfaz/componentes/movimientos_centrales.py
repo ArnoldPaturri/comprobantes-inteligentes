@@ -1,4 +1,4 @@
-"""Prototipo seguro de movimientos centrales: solo borradores no acreditados."""
+"""Interfaz para registrar, revisar, aplicar y revertir movimientos bancarios compartidos."""
 
 from __future__ import annotations
 
@@ -18,10 +18,12 @@ from agente_comprobantes.control_financiero.repositorio_movimientos import (
 )
 from agente_comprobantes.control_financiero.servicio_movimientos import (
     adjuntar_voucher_central,
+    aplicar_movimiento_central,
     documentar_movimiento_central,
     guardar_borrador_central,
     reabrir_movimiento_central,
     redistribuir_movimiento_central,
+    revertir_aplicacion_central,
 )
 from agente_comprobantes.dominio.enumeraciones import Moneda
 from agente_comprobantes.interfaz.componentes.visor_adjuntos import mostrar_respaldo
@@ -35,11 +37,11 @@ def mostrar_movimientos_centrales(operaciones: list[OperacionFlete]) -> None:
     registro = RepositorioMovimientosCentrales(
         ruta_excel.with_name("movimientos_bancarios_centrales.json")
     )
-    with st.expander("Movimientos compartidos · borradores (piloto)"):
+    with st.expander("Movimientos bancarios compartidos"):
         st.caption(
             "Registra un voucher una sola vez y distribuye importes entre "
-            "facturas. Esta sección es independiente de los pagos anteriores "
-            "y NO afecta los saldos, acreditaciones o indicadores financieros."
+            "facturas. Solo las acciones de aplicación y reversión actualizan "
+            "el control financiero; la revisión sigue siendo documental y humana."
         )
         try:
             existentes = registro.listar()
@@ -72,7 +74,7 @@ def mostrar_movimientos_centrales(operaciones: list[OperacionFlete]) -> None:
                 hide_index=True,
                 use_container_width=True,
             )
-            with st.popover("Consultar distribución de borradores"):
+            with st.popover("Consultar distribución del movimiento"):
                 seleccion = st.selectbox(
                     "Movimiento",
                     existentes,
@@ -86,7 +88,11 @@ def mostrar_movimientos_centrales(operaciones: list[OperacionFlete]) -> None:
                         {
                             "Expediente": item.expediente,
                             "Importe asignado": str(item.importe),
-                            "Estado": "Declarado, no acreditado",
+                            "Estado": (
+                                "Aplicado al control (revisión humana)"
+                                if seleccion.estado == "APLICADO"
+                                else "Pendiente de aplicación"
+                            ),
                         }
                         for item in seleccion.aplicaciones
                     ],
@@ -341,6 +347,74 @@ def _gestionar_existentes(
                     st.rerun()
 
         if elegido.estado == "DOCUMENTADO":
+            st.markdown("**Aplicación al control financiero**")
+            st.caption(
+                "Esta acción registra las aplicaciones como revisadas en cada factura "
+                "y actualiza los saldos calculados. No consulta directamente al banco."
+            )
+            with st.form(f"aplicar_central_{elegido.identificador}"):
+                motivo_aplicacion = st.text_area(
+                    "Motivo de aplicación a las facturas"
+                )
+                confirmar_aplicacion = st.checkbox(
+                    "Confirmo que revisé la distribución y autorizo aplicarla "
+                    "al control financiero."
+                )
+                aplicar = st.form_submit_button("Aplicar a facturas")
+            if aplicar:
+                try:
+                    aplicar_movimiento_central(
+                        registro, control,
+                        almacen_para_excel(Configuracion().ruta_archivo_excel()),
+                        elegido.identificador,
+                        motivo=motivo_aplicacion,
+                        confirmacion=confirmar_aplicacion,
+                        huella_central=huella_central,
+                        huella_control=huella_control,
+                    )
+                except (ValueError, OSError) as exc:
+                    st.error(str(exc))
+                else:
+                    st.session_state["_mensaje_revision"] = (
+                        "Aplicación guardada en el control financiero. "
+                        "El movimiento bancario no se ha verificado automáticamente."
+                    )
+                    st.rerun()
+
+        if elegido.estado == "APLICADO":
+            st.markdown("**Aplicación registrada en los saldos**")
+            st.info(
+                "Las facturas contienen las aplicaciones vinculadas a este movimiento. "
+                "La marca representa revisión humana, no confirmación directa del banco."
+            )
+            with st.form(f"revertir_central_{elegido.identificador}"):
+                motivo_reversion = st.text_area(
+                    "Motivo de la reversión de aplicaciones"
+                )
+                confirmar_reversion = st.checkbox(
+                    "Confirmo retirar el efecto de estas aplicaciones en las facturas. "
+                    "No estoy anulando la transferencia bancaria."
+                )
+                revertir = st.form_submit_button("Revertir aplicación")
+            if revertir:
+                try:
+                    revertir_aplicacion_central(
+                        registro, control, elegido.identificador,
+                        motivo=motivo_reversion,
+                        confirmacion=confirmar_reversion,
+                        huella_central=huella_central,
+                        huella_control=huella_control,
+                    )
+                except (ValueError, OSError) as exc:
+                    st.error(str(exc))
+                else:
+                    st.session_state["_mensaje_revision"] = (
+                        "Aplicación revertida. Se conservan el movimiento, "
+                        "el voucher y el historial."
+                    )
+                    st.rerun()
+
+        if elegido.estado in ("DOCUMENTADO", "REVERTIDO"):
             with st.form(f"reabrir_central_{elegido.identificador}"):
                 motivo_reapertura = st.text_area("Motivo de la reapertura")
                 confirmar_reapertura = st.checkbox(
