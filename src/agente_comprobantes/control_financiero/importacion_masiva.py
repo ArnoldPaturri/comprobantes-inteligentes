@@ -25,6 +25,9 @@ from agente_comprobantes.control_financiero.modelos import (
 from agente_comprobantes.control_financiero.repositorio_json import (
     RepositorioControlFletes,
 )
+from agente_comprobantes.control_financiero.tipos_referencia import (
+    indicador_efectivo,
+)
 from agente_comprobantes.dominio.enumeraciones import Moneda
 
 MAX_ARCHIVO = 8 * 1024 * 1024
@@ -258,13 +261,21 @@ def _convertir(
     ]
     movimientos = []
     valor_pago = datos.get("pago")
+    referencia_pago = _texto(datos.get("referencia"))
     if valor_pago is not None and _texto(valor_pago):
         bancarizado = _importe(valor_pago, permitir_cero=True)
-        if bancarizado > 0:
+        if bancarizado > 0 and indicador_efectivo(referencia_pago):
+            # El importe original se preserva en datos_origen. Una marca
+            # EFECTIVO no es evidencia de una operación bancaria.
+            advertencias.append(
+                "La celda indica EFECTIVO: monto conservado en datos originales, "
+                "sin crear un movimiento bancario ni acreditar el pago."
+            )
+        elif bancarizado > 0:
             movimientos = [MovimientoBancario(
                 moneda=moneda,
                 importe_aplicado=bancarizado,
-                referencia=_texto(datos.get("referencia")) or None,
+                referencia=referencia_pago or None,
                 verificada=False,
                 documento_respaldo=None,
             )]
