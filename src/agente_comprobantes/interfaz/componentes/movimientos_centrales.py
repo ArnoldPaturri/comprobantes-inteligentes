@@ -280,39 +280,42 @@ def _gestionar_existentes(
             )
 
         st.markdown("**Vinculación del voucher central**")
-        with st.form(f"adjuntar_central_{elegido.identificador}"):
-            archivo = st.file_uploader(
-                "Voucher bancario (PDF, PNG o JPG)",
-                type=["pdf", "png", "jpg", "jpeg"],
-                key=f"central_archivo_{elegido.identificador}",
-            )
-            motivo_archivo = st.text_area("Motivo de la vinculación o reemplazo")
-            confirma_archivo = st.checkbox(
-                "Confirmo que el archivo corresponde a este movimiento."
-            )
-            guardar_archivo = st.form_submit_button("Guardar voucher")
-        if guardar_archivo:
-            if archivo is None:
-                st.error("Selecciona un archivo válido.")
-            else:
-                try:
-                    adjuntar_voucher_central(
-                        registro, control,
-                        almacen_para_excel(Configuracion().ruta_archivo_excel()),
-                        elegido.identificador,
-                        nombre=archivo.name,
-                        contenido=archivo.getvalue(),
-                        motivo=motivo_archivo,
-                        confirmacion=confirma_archivo,
-                        huella_central=huella_central, huella_control=huella_control,
-                    )
-                except (ValueError, OSError) as exc:
-                    st.error(str(exc))
+        if elegido.estado == "APLICADO":
+            st.info("Para reemplazar el voucher, revierte primero la aplicación.")
+        else:
+            with st.form(f"adjuntar_central_{elegido.identificador}"):
+                archivo = st.file_uploader(
+                    "Voucher bancario (PDF, PNG o JPG)",
+                    type=["pdf", "png", "jpg", "jpeg"],
+                    key=f"central_archivo_{elegido.identificador}",
+                )
+                motivo_archivo = st.text_area("Motivo de la vinculación o reemplazo")
+                confirma_archivo = st.checkbox(
+                    "Confirmo que el archivo corresponde a este movimiento."
+                )
+                guardar_archivo = st.form_submit_button("Guardar voucher")
+            if guardar_archivo:
+                if archivo is None:
+                    st.error("Selecciona un archivo válido.")
                 else:
-                    st.session_state["_mensaje_revision"] = (
-                        "Voucher central vinculado; falta revisión documental."
-                    )
-                    st.rerun()
+                    try:
+                        adjuntar_voucher_central(
+                            registro, control,
+                            almacen_para_excel(Configuracion().ruta_archivo_excel()),
+                            elegido.identificador,
+                            nombre=archivo.name,
+                            contenido=archivo.getvalue(),
+                            motivo=motivo_archivo,
+                            confirmacion=confirma_archivo,
+                            huella_central=huella_central, huella_control=huella_control,
+                        )
+                    except (ValueError, OSError) as exc:
+                        st.error(str(exc))
+                    else:
+                        st.session_state["_mensaje_revision"] = (
+                            "Voucher central vinculado; falta revisión documental."
+                        )
+                        st.rerun()
 
         if elegido.estado == "BORRADOR":
             st.markdown("**Revisión documental del movimiento**")
