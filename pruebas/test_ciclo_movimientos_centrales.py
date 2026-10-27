@@ -19,8 +19,8 @@ from agente_comprobantes.control_financiero.servicio_movimientos import (
     adjuntar_voucher_central,
     documentar_movimiento_central,
     guardar_borrador_central,
-    redistribuir_movimiento_central,
     reabrir_movimiento_central,
+    redistribuir_movimiento_central,
 )
 from agente_comprobantes.dominio.enumeraciones import Moneda
 
