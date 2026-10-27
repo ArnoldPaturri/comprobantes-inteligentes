@@ -8,6 +8,9 @@ from pathlib import Path
 import streamlit as st
 
 from agente_comprobantes.configuracion import Configuracion
+from agente_comprobantes.control_financiero.conciliacion_pagos import (
+    construir_resumen_pagos,
+)
 from agente_comprobantes.control_financiero.modelos import (
     OperacionFlete,
     SituacionControl,
@@ -85,6 +88,110 @@ def _mostrar_metricas(tablero: TableroFletes, moneda: Moneda) -> None:
     st.caption(
         "Solo fletes confirmados · Presupuestos no duplicados · "
         "Diferencias todavía sujetas a revisión."
+    )
+
+
+
+def _mostrar_conciliacion_pagos(
+    tablero: TableroFletes, moneda: Moneda, busqueda: str
+) -> None:
+    operaciones_por_id = {op.identificador: op for op in tablero.operaciones}
+    filtro = busqueda.strip().casefold()
+    filas = [
+        fila
+        for fila in construir_resumen_pagos(tablero.operaciones, tablero.resultados)
+        if fila.moneda == moneda
+        and (
+            not filtro
+            or any(
+                filtro in (campo or "").casefold()
+                for campo in (
+                    fila.identificador,
+                    fila.factura,
+                    fila.proveedor,
+                    operaciones_por_id[fila.identificador].numero_guia,
+                    operaciones_por_id[fila.identificador].codigo_cotizacion,
+                )
+            )
+        )
+    ]
+
+    st.subheader("Conciliación de pagos por factura")
+    st.caption(
+        "Compara lo facturado con pagos y detracciones que cuentan con evidencia "
+        "revisada. Los importes registrados sin acreditar se muestran aparte."
+    )
+    if not filas:
+        st.info("No hay facturas para los filtros seleccionados.")
+        return
+
+    facturado_neto = sum((fila.facturado_neto for fila in filas), Decimal("0"))
+    total_acreditado = sum((fila.total_acreditado for fila in filas), Decimal("0"))
+    saldo_pendiente = sum((fila.pendiente for fila in filas), Decimal("0"))
+    exceso_total = sum((fila.exceso for fila in filas), Decimal("0"))
+
+    metricas = st.columns(4)
+    metricas[0].metric("Facturado neto", formatear_importe(facturado_neto, moneda))
+    metricas[1].metric("Total acreditado", formatear_importe(total_acreditado, moneda))
+    metricas[2].metric("Saldo pendiente", formatear_importe(saldo_pendiente, moneda))
+    metricas[3].metric("Exceso detectado", formatear_importe(exceso_total, moneda))
+
+    pendientes = sum(fila.pendiente > Decimal("0") for fila in filas)
+    sobrepagadas = sum(fila.exceso > Decimal("0") for fila in filas)
+    por_revisar = sum(fila.comprobantes_por_revisar > 0 for fila in filas)
+    st.caption(
+        f"{pendientes} facturas con saldo pendiente · "
+        f"{sobrepagadas} sobrepagadas · "
+        f"{por_revisar} con comprobantes por revisar."
+    )
+
+    estados = [
+        "PENDIENTE",
+        "PAGO PARCIAL",
+        "PAGADA",
+        "SOBREPAGADA",
+        "CUBIERTA POR AJUSTES",
+        "REVISAR AJUSTES",
+    ]
+    estado_pago = st.selectbox(
+        "Filtrar por estado de pago",
+        ["Todos", *estados],
+        key="filtro_estado_pago_factura",
+    )
+    visibles = (
+        filas if estado_pago == "Todos"
+        else [fila for fila in filas if fila.estado == estado_pago]
+    )
+    if not visibles:
+        st.info("No hay facturas con ese estado de pago.")
+        return
+
+    st.dataframe(
+        [
+            {
+                "ID": fila.identificador,
+                "Factura": fila.factura,
+                "Proveedor": fila.proveedor,
+                "Facturado neto": formatear_importe(fila.facturado_neto, moneda),
+                "Banco acreditado": formatear_importe(fila.pago_bancario, moneda),
+                "Detracción": formatear_importe(fila.detraccion, moneda),
+                "Total acreditado": formatear_importe(fila.total_acreditado, moneda),
+                "Saldo pendiente": formatear_importe(fila.pendiente, moneda),
+                "Exceso": formatear_importe(fila.exceso, moneda),
+                "Registrado sin acreditar": formatear_importe(
+                    fila.registrado_sin_acreditar, moneda
+                ),
+                "Comprobantes por revisar": fila.comprobantes_por_revisar,
+                "Estado de pago": fila.estado,
+            }
+            for fila in visibles
+        ],
+        hide_index=True,
+        use_container_width=True,
+    )
+    st.caption(
+        "El saldo pendiente es documental, no una confirmación automática de deuda. "
+        "Los pagos sin referencia, respaldo o revisión no se cuentan como acreditados."
     )
 
 
@@ -260,6 +367,7 @@ def mostrar_control_fletes() -> None:
         "Buscar", placeholder="Factura, proveedor, guía o cotización..."
     )
 
+    _mostrar_conciliacion_pagos(tablero, moneda, busqueda)
     _mostrar_metricas(tablero, moneda)
     mostrar_importador_excel()
     mostrar_incidencias_existentes(tablero.operaciones)
