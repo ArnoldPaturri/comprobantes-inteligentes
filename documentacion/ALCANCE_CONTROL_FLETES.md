@@ -362,3 +362,33 @@ de referencia, la suma de pagos declarados y los números de fila del Excel.
 - El bloqueo de importación por facturas repetidas permanece activo:
   esta función es un diagnóstico para definir la regla de agrupación
   con el área responsable antes de automatizar el registro.
+
+
+## Resolución de alertas de bancarización: efectivo y duplicados
+
+La auditoría distingue **EFECTIVO** y **EFECTIVO?** de una referencia
+numérica bancaria. Esas etiquetas genéricas no vuelven a producir la alerta
+`REFERENCIA_COMPARTIDA` entre distintas facturas. Se muestran en cambio
+como `EFECTIVO_SIN_OPERACION` o `EFECTIVO_POR_CONFIRMAR`, solicitando
+revisión del medio de pago y su respaldo. El importe importado se conserva
+en `datos_origen` y **no se transforma en un movimiento bancario**.
+
+La pantalla de revisión muestra una columna **Acción sugerida**:
+
+- **Referencias múltiples:** obtener los comprobantes individuales y
+  sus importes, sin repartir de forma automática el total declarado.
+- **Referencia compartida real:** revisar el importe bancario total y
+  sus aplicaciones a cada factura, sin duplicarlo.
+- **Factura en varias filas:** revisar pagos parciales y consolidar
+  el encabezado de factura una sola vez.
+- **Diferencia:** cotejar la fórmula de la hoja y las evidencias.
+- **EFECTIVO / EFECTIVO?:** determinar el medio real y el sustento;
+  el indicador no demuestra bancarización.
+
+**Datos ya importados:** este ajuste no modifica automáticamente los
+expedientes que estén guardados en `control_fletes.json`. Esos expedientes
+requieren una revisión independiente de los movimientos creados antes
+de esta corrección. Reimportar la misma factura está bloqueado y no
+debe utilizarse como mecanismo para sobrescribir registros.
+
+Esta revisión asistida no constituye validación bancaria ni tributaria.
