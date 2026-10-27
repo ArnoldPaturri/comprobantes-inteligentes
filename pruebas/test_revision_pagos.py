@@ -232,3 +232,22 @@ def test_se_puede_revocar_aun_si_la_referencia_se_volvio_ambigua() -> None:
         confirmacion=True, version_esperada=1,
     )
     assert not revocada.movimientos_bancarios[0].verificada
+
+
+def test_bloquear_mismo_voucher_con_distintas_referencias(tmp_path) -> None:
+    repo = RepositorioControlFletes(tmp_path / "control_fletes.json")
+    primera = operacion()
+    otros_datos = primera.model_dump(mode="python")
+    otros_datos["identificador"] = "FAC-03"
+    otros_datos["numero_factura"] = "F001-23"
+    otros_datos["movimientos_bancarios"][0]["referencia"] = "OP-OTRO"
+    otra = OperacionFlete.model_validate(otros_datos)
+    repo.agregar(primera)
+    repo.agregar(otra)
+    with pytest.raises(ValueError, match="mismo comprobante"):
+        guardar_revision_pago(
+            repo, "FAC-01", indice=0, acreditar=True,
+            motivo="Revisión documental del voucher compartido",
+            confirmacion=True, version_esperada=0,
+        )
+    assert not repo.obtener("FAC-01").movimientos_bancarios[0].verificada
