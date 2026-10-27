@@ -51,8 +51,9 @@ class EvidenciaFinanciera(ModeloDominio):
 
 
 class MovimientoBancario(EvidenciaFinanciera):
-    """Importe aplicado a esta factura; no necesariamente todo el movimiento."""
+    """Importe aplicado a una factura, posiblemente desde un movimiento compartido."""
     importe_aplicado: Decimal
+    movimiento_central_id: str | None = None
 
     @field_validator("importe_aplicado", mode="before")
     @classmethod
