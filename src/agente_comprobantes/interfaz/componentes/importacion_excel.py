@@ -37,7 +37,9 @@ def mostrar_importador_excel() -> None:
             Configuracion().ruta_archivo_excel().with_name("control_fletes.json")
         )
         try:
-            vista = preparar_importacion(archivo.getvalue(), destino)
+            vista = preparar_importacion(
+                archivo.getvalue(), destino, nombre_archivo=archivo.name
+            )
         except (OSError, ValueError, KeyError) as exc:
             st.error(f"No se pudo preparar la importación: {exc}")
             return
@@ -52,6 +54,21 @@ def mostrar_importador_excel() -> None:
         col2.metric("Duplicadas", vista.duplicadas)
         col3.metric("Con errores", vista.errores)
         col4.metric("Omitidas sin importes", vista.omitidas)
+
+        reconocidas = (
+            len(vista.columnas_origen) - len(vista.columnas_no_reconocidas)
+        )
+        st.caption(
+            f"Columnas del origen: {len(vista.columnas_origen)} · "
+            f"Reconocidas: {reconocidas} · "
+            f"Adicionales: {len(vista.columnas_no_reconocidas)}. "
+            "Se conservarán los valores disponibles de todas ellas."
+        )
+        if vista.columnas_no_reconocidas:
+            st.info(
+                "Columnas adicionales conservadas sin interpretación automática: "
+                + ", ".join(vista.columnas_no_reconocidas)
+            )
 
         if vista.filas:
             tabla = [
@@ -75,10 +92,28 @@ def mostrar_importador_excel() -> None:
         else:
             st.info("La hoja encontrada no contiene operaciones.")
 
+        with st.expander("Revisar todos los campos originales del Excel"):
+            st.caption(
+                "Conservamos la fotografía de cada fila (incluidos valores "
+                "de estado, diferencia, detracción y observaciones). "
+                "Las fórmulas sin resultado calculado pueden aparecer vacías."
+            )
+            originales = [
+                {"Fila": item.fila, "Estado de importación": item.estado,
+                 **item.valores_origen}
+                for item in vista.filas[:200]
+            ]
+            st.dataframe(
+                originales, hide_index=True, use_container_width=True
+            )
+
         st.warning(
-            "La importación NO declara fletes confirmados, NO acredita pagos "
-            "y NO registra detracciones como verificadas, incluso cuando "
-            "la hoja de origen indique Conforme o SI."
+            "La importación NO confirma fletes, NO acredita pagos y NO valida "
+            "detracciones o notas de crédito. Las diferencias, estados y "
+            "observaciones originales se conservan para auditoría, pero no "
+            "se convierten automáticamente en resultados financieros. "
+            "Si una factura figura en varias filas con distintos pagos, "
+            "es necesario revisar cómo agruparlos antes de confirmar el lote."
         )
         confirmar = st.checkbox(
             "Revisé la vista previa y autorizo incorporar únicamente las "

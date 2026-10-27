@@ -260,3 +260,69 @@ def test_filas_sin_factura_pero_con_proveedor_no_se_omiten(tmp_path) -> None:
     assert previa.errores == 1
     assert previa.omitidas == 0
     assert not previa.listas
+
+
+def test_conserva_las_trece_columnas_reales_y_su_procedencia(tmp_path) -> None:
+    repo = RepositorioControlFletes(tmp_path / "control.json")
+    encabezados = [
+        "NRO. BANCARIZACIÓN", "DETRACCION", "Nro DE GUIA", "Proveedor",
+        "Fecha Factura", "N° Factura", "Moneda", "Monto bancarizado",
+        "Monto Facturado", "Diferencia", "Estado",
+        "Acción / Observaciones", "Nota de Crédito",
+    ]
+    datos = [
+        "OP-991", "SI", "EG07-642", "Transportes Arequipa SAC",
+        "2026-10-20", "F001-100", "PEN (S/.)", 7000,
+        7100, 100, "Conforme", "Verificar pago complementario",
+        "NC01-52",
+    ]
+    original = excel([encabezados, datos], "Detalle")
+    previa = preparar_importacion(
+        original, repo, nombre_archivo="FLETES Y DETRACCIONES.xlsx"
+    )
+    assert len(previa.columnas_origen) == 13
+    assert previa.columnas_no_reconocidas == ()
+    assert len(previa.listas) == 1
+    op = previa.listas[0]
+    assert op.monto_facturado == Decimal("7100")
+    assert op.movimientos_bancarios[0].importe_aplicado == Decimal("7000")
+    assert not op.movimientos_bancarios[0].verificada
+    assert op.es_flete is None
+    assert op.detraccion_aplica is None
+    assert op.depositos_detraccion == []
+    assert op.notas_credito == []
+    origen = op.datos_origen
+    assert origen.archivo == "FLETES Y DETRACCIONES.xlsx"
+    assert origen.hoja == "Detalle"
+    assert origen.fila == 5
+    assert len(origen.huella_archivo) == 64
+    assert origen.campos["Diferencia"] == "100"
+    assert origen.campos["Estado"] == "Conforme"
+    assert origen.campos["DETRACCION"] == "SI"
+    assert origen.campos["Acción / Observaciones"] == "Verificar pago complementario"
+    assert origen.campos["Nota de Crédito"] == "NC01-52"
+    assert confirmar_importacion(previa, repo) == 1
+    restaurado = repo.obtener(op.identificador)
+    assert restaurado.datos_origen == origen
+    assert restaurado.movimientos_bancarios[0].verificada is False
+
+
+def test_conserva_columnas_desconocidas_sin_inferir_su_significado(tmp_path) -> None:
+    repo = RepositorioControlFletes(tmp_path / "control.json")
+    titulos = [
+        "Factura", "Proveedor", "Moneda", "Monto Facturado",
+        "Código interno de operaciones", "Comentario libre",
+    ]
+    raw = excel([
+        titulos,
+        ["F001-98", "Transportes y Cargas", "PEN", 1200,
+         "AB-901", "Aguardando autorización"],
+    ], "Detalle")
+    previa = preparar_importacion(raw, repo)
+    assert previa.columnas_no_reconocidas == (
+        "Código interno de operaciones", "Comentario libre"
+    )
+    assert previa.filas[0].valores_origen["Código interno de operaciones"] == "AB-901"
+    assert previa.listas[0].datos_origen.campos["Comentario libre"] == (
+        "Aguardando autorización"
+    )

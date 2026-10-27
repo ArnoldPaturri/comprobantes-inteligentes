@@ -303,3 +303,23 @@ Las filas sin factura, proveedor ni importes se marcan **OMITIDA**
 (posible nota o pie de tabla) en vez de contarse como errores.
 Las filas con importes o datos parciales de una operación siguen
 sujetas a validación y pueden conservar el estado **ERROR**.
+
+
+### Conservación de todos los campos originales
+
+La importación guarda una fotografía de los valores disponibles por fila
+en `operacion.datos_origen` (nombre del archivo, huella SHA-256, hoja,
+número de fila y encabezados originales). Esto incluye `Diferencia`,
+`Estado`, `Acción / Observaciones`, `DETRACCION` y `Nota de Crédito`,
+además de columnas no reconocidas por el modelo financiero.
+
+**Importante:** conservar los datos no significa aplicarlos automáticamente:
+la diferencia de la hoja no se toma como cálculo acreditado, el estado
+«Conforme» no aprueba el pago y las marcas de detracción o nota de crédito
+no se convierten en evidencia validada. Para operaciones repetidas por
+varios pagos o guías, la versión actual todavía no fusiona filas; requiere
+un criterio de agrupación antes de confirmar el lote.
+
+Las fórmulas del Excel sin resultados previamente calculados pueden verse
+como valores en blanco al leer con `openpyxl` en modo `data_only`;
+se mantiene la huella del archivo de origen para cotejo posterior.
