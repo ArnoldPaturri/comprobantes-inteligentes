@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from datetime import date
+from datetime import UTC, date, datetime
 from decimal import Decimal
 from uuid import uuid4
 
@@ -10,7 +10,11 @@ from agente_comprobantes.control_financiero.archivos import AlmacenAdjuntos, pre
 from agente_comprobantes.control_financiero.auditoria_importacion import (
     _referencias,
 )
-from agente_comprobantes.control_financiero.modelos import OperacionFlete
+from agente_comprobantes.control_financiero.modelos import (
+    MovimientoBancario,
+    OperacionFlete,
+    RevisionExpediente,
+)
 from agente_comprobantes.control_financiero.movimientos_centrales import (
     AplicacionBancaria,
     MovimientoBancarioCentral,
@@ -36,10 +40,11 @@ def preparar_borrador_central(
     facturas: list[OperacionFlete],
     previos: list[MovimientoBancarioCentral],
     fecha_operacion: date | None = None,
+    identificador: str | None = None,
 ) -> MovimientoBancarioCentral:
     """Comprobar saldos declarados y referencias sin tocar registros existentes."""
     borrador = MovimientoBancarioCentral(
-        identificador="MB-" + uuid4().hex[:12].upper(),
+        identificador=identificador or "MB-" + uuid4().hex[:12].upper(),
         banco=banco,
         referencia=referencia,
         moneda=moneda,
@@ -54,7 +59,7 @@ def preparar_borrador_central(
     objetivo = _referencias(borrador.referencia)[0]
     for expediente in facturas:
         for pago in expediente.movimientos_bancarios:
-            if objetivo in _referencias(pago.referencia or ""):
+            if (pago.movimiento_central_id != borrador.identificador\n                    and objetivo in _referencias(pago.referencia or "")):
                 raise ValueError(
                     "La referencia ya está presente en un expediente histórico. "
                     "Primero revisa el registro existente; no crees otro pago."
@@ -342,7 +347,7 @@ def reabrir_movimiento_central(
     revision = _revision(
         "REABRIR",
         motivo,
-        {"estado_anterior": "DOCUMENTADO", "estado_nuevo": "BORRADOR"},
+        {"estado_anterior": actual.estado, "estado_nuevo": "BORRADOR"},
     )
     reabierto = actual.model_copy(update={
         "estado": "BORRADOR",
@@ -351,3 +356,303 @@ def reabrir_movimiento_central(
     _validar_versiones(banco_repo, control_repo, huella_central, huella_control)
     banco_repo.actualizar(reabierto, huella_esperada=huella_central)
     return reabierto
+
+
+def _preparar_operacion_con_revision(
+    operacion: OperacionFlete,
+    pagos: list[MovimientoBancario],
+    *,
+    motivo: str,
+    cambios: dict[str, str],
+) -> OperacionFlete:
+    revision = RevisionExpediente(
+        fecha=datetime.now(UTC),
+        motivo=motivo,
+        cambios=cambios,
+    )
+    datos = operacion.model_dump(mode="python")
+    datos["movimientos_bancarios"] = pagos
+    datos["revisiones"] = [*operacion.revisiones, revision]
+    datos["conciliacion_cerrada"] = False
+    return OperacionFlete.model_validate(datos)
+
+
+def aplicar_movimiento_central(
+    banco_repo: RepositorioMovimientosCentrales,
+    control_repo: RepositorioControlFletes,
+    almacen: AlmacenAdjuntos,
+    identificador: str,
+    *,
+    motivo: str,
+    confirmacion: bool,
+    huella_central: str,
+    huella_control: str,
+) -> MovimientoBancarioCentral:
+    """Aplica un movimiento documentado a varios expedientes en un lote atómico.
+
+    La escritura del control es idempotente: si el proceso se interrumpe después
+    de guardar las aplicaciones pero antes de cambiar el estado central, la
+    siguiente ejecución reconoce las aplicaciones existentes y finaliza el estado.
+    """
+    if not confirmacion:
+        raise ValueError("Confirma la aplicación a los saldos del control financiero.")
+    motivo = motivo.strip()
+    if len(motivo) < 10:
+        raise ValueError("El motivo de aplicación requiere al menos diez caracteres.")
+    _validar_versiones(banco_repo, control_repo, huella_central, huella_control)
+    movimientos = banco_repo.listar()
+    actual = next((m for m in movimientos if m.identificador == identificador), None)
+    if actual is None:
+        raise ValueError("No existe el movimiento central.")
+    if actual.estado == "APLICADO":
+        raise ValueError("Este movimiento ya está aplicado a los expedientes.")
+    if actual.estado != "DOCUMENTADO":
+        raise ValueError("Primero documenta el movimiento antes de aplicarlo.")
+    if not actual.respaldo:
+        raise ValueError("El movimiento no tiene voucher original vinculado.")
+    almacen.abrir(actual.respaldo)
+
+    operaciones = control_repo.listar()
+    aplicaciones = _cotejar_distribucion(
+        actual,
+        operaciones,
+        movimientos,
+        [(item.expediente, str(item.importe)) for item in actual.aplicaciones],
+    )
+    referencias = _referencias(actual.referencia)
+    for operacion in operaciones:
+        for pago in operacion.movimientos_bancarios:
+            if pago.movimiento_central_id == identificador:
+                continue
+            if (
+                any(ref in _referencias(pago.referencia or "") for ref in referencias)
+                or pago.documento_respaldo == actual.respaldo
+            ):
+                raise ValueError(
+                    "La referencia o el voucher ya figura en un pago ajeno al "
+                    "movimiento central. Revisa el posible duplicado antes de aplicar."
+                )
+
+    por_expediente = {item.expediente: item for item in aplicaciones}
+    nuevas_operaciones: list[OperacionFlete] = []
+    for operacion in operaciones:
+        pagos = list(operacion.movimientos_bancarios)
+        posiciones = [
+            indice for indice, pago in enumerate(pagos)
+            if pago.movimiento_central_id == identificador
+        ]
+        if len(posiciones) > 1:
+            raise ValueError(
+                f"El expediente {operacion.identificador} contiene aplicaciones "
+                "duplicadas del mismo movimiento central."
+            )
+        cambios: dict[str, str] = {}
+        aplicacion = por_expediente.get(operacion.identificador)
+        if aplicacion is not None:
+            valores = {
+                "importe_aplicado": aplicacion.importe,
+                "moneda": actual.moneda,
+                "referencia": actual.referencia,
+                "documento_respaldo": actual.respaldo,
+                "fecha": actual.fecha_operacion,
+                "verificada": True,
+                "movimiento_central_id": identificador,
+            }
+            if posiciones:
+                indice = posiciones[0]
+                anterior = pagos[indice]
+                for campo, nuevo_valor in valores.items():
+                    viejo_valor = getattr(anterior, campo)
+                    if viejo_valor != nuevo_valor:
+                        cambios[f"movimientos_bancarios[{indice}].{campo}"] = (
+                            f"{viejo_valor!s} → {nuevo_valor!s}"
+                        )
+                if cambios:
+                    pagos[indice] = anterior.model_copy(update=valores)
+            else:
+                indice = len(pagos)
+                pagos.append(MovimientoBancario(**valores))
+                cambios[f"movimientos_bancarios[{indice}]"] = (
+                    f"Aplicación central {identificador}: "
+                    f"{actual.referencia} · {aplicacion.importe} {actual.moneda.value}"
+                )
+        elif posiciones:
+            indice = posiciones[0]
+            anterior = pagos[indice]
+            if anterior.verificada:
+                pagos[indice] = anterior.model_copy(update={"verificada": False})
+                cambios[f"movimientos_bancarios[{indice}].verificada"] = (
+                    "True → False (la factura ya no pertenece a la distribución actual)"
+                )
+        if cambios:
+            cambios["movimiento_central_id"] = identificador
+            nuevas_operaciones.append(_preparar_operacion_con_revision(
+                operacion,
+                pagos,
+                motivo=f"Aplicación del movimiento central {identificador}: {motivo}",
+                cambios=cambios,
+            ))
+
+    huella_control_final = huella_control
+    if nuevas_operaciones:
+        control_repo.actualizar_lote(
+            nuevas_operaciones,
+            huella_esperada=huella_control,
+        )
+        huella_control_final = control_repo.huella()
+
+    if banco_repo.huella() != huella_central:
+        raise ValueError(
+            "El control financiero contiene la aplicación, pero cambió el registro "
+            "central. Actualiza la vista y repite la operación para finalizar el estado."
+        )
+    if control_repo.huella() != huella_control_final:
+        raise ValueError(
+            "Los expedientes cambiaron después de guardar. Revisa el movimiento "
+            "antes de volver a aplicar."
+        )
+    revision = _revision(
+        "APLICAR",
+        motivo,
+        {
+            "estado_anterior": "DOCUMENTADO",
+            "estado_nuevo": "APLICADO",
+            "referencia": actual.referencia,
+            "respaldo": actual.respaldo,
+            "aplicaciones": ", ".join(
+                f"{item.expediente}:{item.importe}" for item in actual.aplicaciones
+            ),
+        },
+    )
+    aplicado = actual.model_copy(update={
+        "estado": "APLICADO",
+        "revisiones": [*actual.revisiones, revision],
+    })
+    banco_repo.actualizar(aplicado, huella_esperada=huella_central)
+    return aplicado
+
+
+def revertir_aplicacion_central(
+    banco_repo: RepositorioMovimientosCentrales,
+    control_repo: RepositorioControlFletes,
+    identificador: str,
+    *,
+    motivo: str,
+    confirmacion: bool,
+    huella_central: str,
+    huella_control: str,
+) -> MovimientoBancarioCentral:
+    """Retira el efecto de conciliación; no anula ni elimina la transferencia bancaria."""
+    if not confirmacion:
+        raise ValueError("Confirma que deseas revertir la aplicación en los expedientes.")
+    motivo = motivo.strip()
+    if len(motivo) < 10:
+        raise ValueError("El motivo de reversión requiere al menos diez caracteres.")
+    _validar_versiones(banco_repo, control_repo, huella_central, huella_control)
+    movimientos = banco_repo.listar()
+    actual = next((m for m in movimientos if m.identificador == identificador), None)
+    if actual is None:
+        raise ValueError("No existe el movimiento central.")
+    if actual.estado == "REVERTIDO":
+        raise ValueError("La aplicación de este movimiento ya fue revertida.")
+    if actual.estado != "APLICADO":
+        raise ValueError("Solo se puede revertir un movimiento aplicado.")
+
+    operaciones = control_repo.listar()
+    aplicaciones = {item.expediente: item for item in actual.aplicaciones}
+    registros: dict[str, tuple[OperacionFlete, int, MovimientoBancario]] = {}
+    for operacion in operaciones:
+        indices = [
+            indice for indice, pago in enumerate(operacion.movimientos_bancarios)
+            if pago.movimiento_central_id == identificador
+        ]
+        if len(indices) > 1:
+            raise ValueError(
+                f"El expediente {operacion.identificador} tiene aplicaciones "
+                "duplicadas de este movimiento."
+            )
+        if not indices:
+            continue
+        indice = indices[0]
+        pago = operacion.movimientos_bancarios[indice]
+        if operacion.identificador not in aplicaciones:
+            if pago.verificada:
+                raise ValueError(
+                    "Hay una aplicación activa fuera de la distribución central actual."
+                )
+            continue
+        aplicacion = aplicaciones[operacion.identificador]
+        if (
+            pago.importe_aplicado != aplicacion.importe
+            or pago.moneda != actual.moneda
+            or pago.referencia != actual.referencia
+            or pago.documento_respaldo != actual.respaldo
+        ):
+            raise ValueError(
+                f"La aplicación de {operacion.identificador} ya no coincide con "
+                "el registro central. Requiere conciliación manual."
+            )
+        registros[operacion.identificador] = (operacion, indice, pago)
+
+    if set(registros) != set(aplicaciones):
+        raise ValueError(
+            "Faltan aplicaciones en los expedientes; no se puede revertir de forma segura."
+        )
+    estados = [registro[2].verificada for registro in registros.values()]
+    if any(estados) and not all(estados):
+        raise ValueError(
+            "Las aplicaciones tienen estados mixtos. Revisa manualmente antes de revertir."
+        )
+
+    nuevas_operaciones: list[OperacionFlete] = []
+    if all(estados):
+        for operacion, indice, pago in registros.values():
+            pagos = list(operacion.movimientos_bancarios)
+            pagos[indice] = pago.model_copy(update={"verificada": False})
+            nuevas_operaciones.append(_preparar_operacion_con_revision(
+                operacion,
+                pagos,
+                motivo=f"Reversión de aplicación central {identificador}: {motivo}",
+                cambios={
+                    f"movimientos_bancarios[{indice}].verificada": "True → False",
+                    f"movimientos_bancarios[{indice}].movimiento_central_id": identificador,
+                    "importe_revertido": str(pago.importe_aplicado),
+                    "referencia": actual.referencia,
+                },
+            ))
+    huella_control_final = huella_control
+    if nuevas_operaciones:
+        control_repo.actualizar_lote(
+            nuevas_operaciones,
+            huella_esperada=huella_control,
+        )
+        huella_control_final = control_repo.huella()
+
+    if banco_repo.huella() != huella_central:
+        raise ValueError(
+            "La reversión está guardada en los expedientes, pero cambió el registro "
+            "central. Actualiza la vista y repite la operación para finalizar el estado."
+        )
+    if control_repo.huella() != huella_control_final:
+        raise ValueError(
+            "Los expedientes cambiaron después de la reversión; revisa el registro central."
+        )
+    revision = _revision(
+        "REVERTIR_APLICACION",
+        motivo,
+        {
+            "estado_anterior": "APLICADO",
+            "estado_nuevo": "REVERTIDO",
+            "referencia": actual.referencia,
+            "aplicaciones": ", ".join(
+                f"{item.expediente}:{item.importe}" for item in actual.aplicaciones
+            ),
+            "nota": "Se retiró el efecto en conciliación; el movimiento bancario permanece.",
+        },
+    )
+    revertido = actual.model_copy(update={
+        "estado": "REVERTIDO",
+        "revisiones": [*actual.revisiones, revision],
+    })
+    banco_repo.actualizar(revertido, huella_esperada=huella_central)
+    return revertido
