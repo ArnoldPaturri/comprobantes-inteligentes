@@ -5,7 +5,11 @@ from __future__ import annotations
 import streamlit as st
 
 from agente_comprobantes.configuracion import Configuracion
+from agente_comprobantes.control_financiero.archivos import almacen_para_excel
 from agente_comprobantes.control_financiero.modelos import OperacionFlete
+from agente_comprobantes.control_financiero.movimientos_centrales import (
+    MovimientoBancarioCentral,
+)
 from agente_comprobantes.control_financiero.repositorio_json import (
     RepositorioControlFletes,
 )
@@ -13,8 +17,12 @@ from agente_comprobantes.control_financiero.repositorio_movimientos import (
     RepositorioMovimientosCentrales,
 )
 from agente_comprobantes.control_financiero.servicio_movimientos import (
+    adjuntar_voucher_central,
+    documentar_movimiento_central,
     guardar_borrador_central,
+    redistribuir_movimiento_central,
 )
+from agente_comprobantes.interfaz.componentes.visor_adjuntos import mostrar_respaldo
 from agente_comprobantes.dominio.enumeraciones import Moneda
 
 
@@ -84,6 +92,12 @@ def mostrar_movimientos_centrales(operaciones: list[OperacionFlete]) -> None:
                     hide_index=True,
                     use_container_width=True,
                 )
+        if existentes:
+            _gestionar_existentes(
+                existentes, operaciones, registro, control,
+                huella_central=huella_central, huella_control=huella_control,
+            )
+
         monedas = sorted(
             {op.moneda for op in operaciones if op.moneda != Moneda.OTHER},
             key=lambda m: m.value,
@@ -162,3 +176,164 @@ def mostrar_movimientos_centrales(operaciones: list[OperacionFlete]) -> None:
             "Ningún saldo financiero ha cambiado."
         )
         st.rerun()
+
+
+def _gestionar_existentes(
+    movimientos: list[MovimientoBancarioCentral],
+    operaciones: list[OperacionFlete],
+    registro: RepositorioMovimientosCentrales,
+    control: RepositorioControlFletes,
+    *,
+    huella_central: str,
+    huella_control: str,
+) -> None:
+    """Editar una distribución y revisar su voucher sin generar pagos duplicados."""
+    with st.expander("Gestionar movimiento existente · distribución y voucher"):
+        elegido = st.selectbox(
+            "Movimiento registrado",
+            movimientos,
+            format_func=lambda m: (
+                f"{m.referencia} · {m.moneda.value} · {m.estado}"
+            ),
+            key="central_movimiento_gestion",
+        )
+        st.caption(
+            f"Total: {elegido.importe_total} · "
+            f"Distribuido: {elegido.importe_total - elegido.sin_asignar} · "
+            f"Sin asignar: {elegido.sin_asignar}"
+        )
+        mostrar_respaldo(elegido.respaldo, clave=f"central_{elegido.identificador}")
+        if elegido.revisiones:
+            with st.expander(f"Historial de revisiones ({len(elegido.revisiones)})"):
+                for revision in reversed(elegido.revisiones):
+                    st.write(revision.fecha.strftime("%Y-%m-%d %H:%M UTC"))
+                    st.caption(f"{revision.accion}: {revision.motivo}")
+                    st.json(revision.cambios)
+
+        st.markdown("**Distribución entre facturas**")
+        if elegido.estado == "BORRADOR":
+            candidatas = {
+                op.identificador: op
+                for op in operaciones if op.moneda == elegido.moneda
+            }
+            seleccion = st.multiselect(
+                "Facturas de la misma moneda",
+                list(candidatas),
+                default=[
+                    a.expediente for a in elegido.aplicaciones
+                    if a.expediente in candidatas
+                ],
+                format_func=lambda codigo: (
+                    f"{candidatas[codigo].numero_factura} · "
+                    f"{candidatas[codigo].proveedor or 'Sin proveedor'}"
+                ),
+                key=f"central_editar_facturas_{elegido.identificador}",
+            )
+            existentes = {
+                a.expediente: a.importe for a in elegido.aplicaciones
+            }
+            with st.form(f"redistribuir_{elegido.identificador}"):
+                importes = [
+                    (
+                        identificador,
+                        st.text_input(
+                            f"Importe para {candidatas[identificador].numero_factura}",
+                            value=str(existentes.get(identificador, "")),
+                            key=f"central_editar_importe_{elegido.identificador}_{identificador}",
+                        ),
+                    )
+                    for identificador in seleccion
+                ]
+                motivo = st.text_area("Motivo de la redistribución")
+                confirmar = st.checkbox(
+                    "Confirmo los importes y que aún no son pagos acreditados."
+                )
+                enviado = st.form_submit_button(
+                    "Guardar nueva distribución", disabled=not seleccion
+                )
+            if enviado:
+                try:
+                    redistribuir_movimiento_central(
+                        registro, control, elegido.identificador,
+                        aplicaciones=importes, motivo=motivo, confirmacion=confirmar,
+                        huella_central=huella_central, huella_control=huella_control,
+                    )
+                except (ValueError, OSError) as exc:
+                    st.error(str(exc))
+                else:
+                    st.session_state["_mensaje_revision"] = (
+                        "Distribución corregida; ningún pago fue acreditado."
+                    )
+                    st.rerun()
+        else:
+            st.info(
+                "Movimiento ya documentado. La distribución no puede editarse "
+                "sin un proceso explícito de reversión."
+            )
+
+        st.markdown("**Vinculación del voucher central**")
+        with st.form(f"adjuntar_central_{elegido.identificador}"):
+            archivo = st.file_uploader(
+                "Voucher bancario (PDF, PNG o JPG)",
+                type=["pdf", "png", "jpg", "jpeg"],
+                key=f"central_archivo_{elegido.identificador}",
+            )
+            motivo_archivo = st.text_area("Motivo de la vinculación o reemplazo")
+            confirma_archivo = st.checkbox(
+                "Confirmo que el archivo corresponde a este movimiento."
+            )
+            guardar_archivo = st.form_submit_button("Guardar voucher")
+        if guardar_archivo:
+            if archivo is None:
+                st.error("Selecciona un archivo válido.")
+            else:
+                try:
+                    adjuntar_voucher_central(
+                        registro, control,
+                        almacen_para_excel(Configuracion().ruta_archivo_excel()),
+                        elegido.identificador,
+                        nombre=archivo.name,
+                        contenido=archivo.getvalue(),
+                        motivo=motivo_archivo,
+                        confirmacion=confirma_archivo,
+                        huella_central=huella_central, huella_control=huella_control,
+                    )
+                except (ValueError, OSError) as exc:
+                    st.error(str(exc))
+                else:
+                    st.session_state["_mensaje_revision"] = (
+                        "Voucher central vinculado; falta revisión documental."
+                    )
+                    st.rerun()
+
+        if elegido.estado == "BORRADOR":
+            st.markdown("**Revisión documental del movimiento**")
+            st.caption(
+                "DOCUMENTADO significa cotejo humano del voucher y la distribución. "
+                "No implica confirmación bancaria ni modifica los saldos oficiales."
+            )
+            with st.form(f"documentar_central_{elegido.identificador}"):
+                motivo_revision = st.text_area("Resultado y sustento del cotejo")
+                confirma_revision = st.checkbox(
+                    "He examinado el voucher original y contrastado banco, "
+                    "referencia, importe, moneda y aplicaciones."
+                )
+                revisar = st.form_submit_button(
+                    "Marcar como documentado", disabled=not elegido.respaldo
+                )
+            if revisar:
+                try:
+                    documentar_movimiento_central(
+                        registro, control,
+                        almacen_para_excel(Configuracion().ruta_archivo_excel()),
+                        elegido.identificador,
+                        motivo=motivo_revision, confirmacion=confirma_revision,
+                        huella_central=huella_central, huella_control=huella_control,
+                    )
+                except (ValueError, OSError) as exc:
+                    st.error(str(exc))
+                else:
+                    st.session_state["_mensaje_revision"] = (
+                        "Movimiento documentado. No se alteraron los saldos oficiales."
+                    )
+                    st.rerun()
