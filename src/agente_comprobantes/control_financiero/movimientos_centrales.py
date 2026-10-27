@@ -50,7 +50,7 @@ class RevisionMovimientoCentral(ModeloDominio):
     """Decisión humana registrada sin afirmar confirmación bancaria."""
 
     fecha: datetime = Field(default_factory=lambda: datetime.now(UTC))
-    accion: Literal["VINCULAR_EVIDENCIA", "REDISTRIBUIR", "DOCUMENTAR", "REABRIR"]
+    accion: Literal["VINCULAR_EVIDENCIA", "REDISTRIBUIR", "DOCUMENTAR", "REABRIR", "APLICAR", "REVERTIR_APLICACION"]
     motivo: str
     cambios: dict[str, str] = Field(default_factory=dict)
 
@@ -66,7 +66,7 @@ class MovimientoBancarioCentral(ModeloDominio):
     fecha_operacion: date | None = None
     aplicaciones: list[AplicacionBancaria] = Field(default_factory=list)
     sustento: str
-    estado: Literal["BORRADOR", "DOCUMENTADO"] = "BORRADOR"
+    estado: Literal["BORRADOR", "DOCUMENTADO", "APLICADO", "REVERTIDO"] = "BORRADOR"
     respaldo: str | None = None
     revisiones: list[RevisionMovimientoCentral] = Field(default_factory=list)
     creado_utc: datetime = Field(default_factory=lambda: datetime.now(UTC))
@@ -110,7 +110,7 @@ class MovimientoBancarioCentral(ModeloDominio):
             raise ValueError("El borrador requiere al menos una aplicación.")
         if self.respaldo is not None and not REFERENCIA.fullmatch(self.respaldo):
             raise ValueError("El respaldo central debe ser un adjunto interno válido.")
-        if self.estado == "DOCUMENTADO" and not self.respaldo:
+        if self.estado in ("DOCUMENTADO", "APLICADO", "REVERTIDO") and not self.respaldo:
             raise ValueError("No se puede documentar un movimiento sin voucher adjunto.")
         return self
 
