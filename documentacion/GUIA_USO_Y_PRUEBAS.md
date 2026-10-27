@@ -6,10 +6,15 @@ Esta guía cubre el recorrido funcional de Comprobantes Inteligentes desde la pr
 
 ## 1. Preparación
 
-Desde PowerShell, en la carpeta del proyecto:
+Desde PowerShell, en la carpeta del proyecto, ejecuta primero:
 
 ```powershell
 git status --short --branch
+```
+
+Si aparecen cambios locales sin guardar, detente y respáldalos antes de cambiar de rama. Si el árbol está limpio, ejecuta:
+
+```powershell
 git switch feature/ux-guia-y-pruebas
 git pull --ff-only origin feature/ux-guia-y-pruebas
 .\.venv\Scripts\python.exe -m pip install -e ".[dev]"
