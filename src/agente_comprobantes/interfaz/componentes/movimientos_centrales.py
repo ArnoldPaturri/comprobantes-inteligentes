@@ -22,8 +22,8 @@ from agente_comprobantes.control_financiero.servicio_movimientos import (
     guardar_borrador_central,
     redistribuir_movimiento_central,
 )
-from agente_comprobantes.interfaz.componentes.visor_adjuntos import mostrar_respaldo
 from agente_comprobantes.dominio.enumeraciones import Moneda
+from agente_comprobantes.interfaz.componentes.visor_adjuntos import mostrar_respaldo
 
 
 def mostrar_movimientos_centrales(operaciones: list[OperacionFlete]) -> None:
