@@ -57,6 +57,11 @@ def preparar_vinculacion(
         raise ValueError("Confirma la vinculación e indica un motivo de al menos 10 caracteres.")
 
     anterior = items[indice]
+    if destino == "pago" and anterior.movimiento_central_id:
+        raise ValueError(
+            "Este voucher pertenece al registro central. "
+            "Gestiona su evidencia desde Movimientos compartidos."
+        )
     if anterior.documento_respaldo == referencia_archivo:
         raise ValueError("Ese mismo archivo ya está vinculado a la evidencia.")
     datos = operacion.model_dump(mode="python")
