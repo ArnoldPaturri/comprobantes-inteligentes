@@ -323,3 +323,23 @@ un criterio de agrupación antes de confirmar el lote.
 Las fórmulas del Excel sin resultados previamente calculados pueden verse
 como valores en blanco al leer con `openpyxl` en modo `data_only`;
 se mantiene la huella del archivo de origen para cotejo posterior.
+
+
+## Auditoría de referencias antes de confirmar importación
+
+La vista previa identifica operaciones que requieren revisar su **asignación
+bancaria**, sin alterar valores fuente:
+
+- Varias referencias en una misma celda (por ejemplo, `6537194 Y 340464`).
+- Una misma factura y proveedor en varias filas (posibles pagos parciales);
+  no puede descartarse una fila como duplicada financiera sin revisarla.
+- Una referencia compartida por facturas distintas (posible pago en lote).
+- Diferencia declarada distinta de Facturado menos Bancarizado; este control
+  es una comparación aritmética, no la conciliación tributaria definitiva.
+
+Los tres primeros casos **bloquean la importación en lote** hasta contar
+con reglas de agrupación. Las diferencias se presentan como advertencias
+porque podrían explicarse por detracciones, notas de crédito o condiciones
+particulares. Los datos de origen siguen disponibles íntegramente; la
+normalización de referencias numéricas con `.0` se utiliza solo para
+comparaciones, no para reescribir la información original.

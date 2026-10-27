@@ -443,7 +443,17 @@ def confirmar_importacion(
     repositorio: RepositorioControlFletes,
 ) -> int:
     """Registra el lote en una sola escritura, revalidando el destino."""
+    from agente_comprobantes.control_financiero.auditoria_importacion import (
+        auditar_importacion,
+    )
+
     if not previa.listas:
         raise ValueError("No hay operaciones nuevas para importar.")
+    auditoria = auditar_importacion(previa)
+    if auditoria.bloquea_importacion:
+        raise ValueError(
+            "Hay referencias o facturas que necesitan agrupación y revisión "
+            "manual antes de importar. Consulta los hallazgos de la vista previa."
+        )
     repositorio.agregar_lote(previa.listas, huella_esperada=previa.huella_destino)
     return len(previa.listas)

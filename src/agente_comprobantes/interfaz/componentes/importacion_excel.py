@@ -3,6 +3,9 @@
 import streamlit as st
 
 from agente_comprobantes.configuracion import Configuracion
+from agente_comprobantes.control_financiero.auditoria_importacion import (
+    auditar_importacion,
+)
 from agente_comprobantes.control_financiero.importacion_masiva import (
     confirmar_importacion,
     preparar_importacion,
@@ -107,6 +110,28 @@ def mostrar_importador_excel() -> None:
                 originales, hide_index=True, use_container_width=True
             )
 
+        auditoria = auditar_importacion(vista)
+        if auditoria.hallazgos:
+            st.markdown("**Revisión previa de bancarizaciones y diferencias**")
+            datos_alertas = [
+                {
+                    "Tipo": alerta.codigo.replace("_", " ").title(),
+                    "Filas": ", ".join(str(n) for n in alerta.filas),
+                    "Requiere resolver": "Sí" if alerta.bloquea else "Revisar",
+                    "Explicación": alerta.detalle,
+                }
+                for alerta in auditoria.hallazgos
+            ]
+            st.dataframe(
+                datos_alertas, hide_index=True, use_container_width=True
+            )
+        if auditoria.bloquea_importacion:
+            st.error(
+                "Importación bloqueada: hay facturas repetidas, referencias "
+                "compartidas o celdas con varias bancarizaciones. "
+                "Primero debemos acordar cómo agrupar y asignar esos pagos."
+            )
+
         st.warning(
             "La importación NO confirma fletes, NO acredita pagos y NO valida "
             "detracciones o notas de crédito. Las diferencias, estados y "
@@ -123,7 +148,10 @@ def mostrar_importador_excel() -> None:
         if st.button(
             f"Importar {disponibles} operaciones",
             type="primary",
-            disabled=not confirmar or disponibles == 0,
+            disabled=(
+                not confirmar or disponibles == 0
+                or auditoria.bloquea_importacion
+            ),
             key="confirmar_importacion_fletes",
         ):
             try:
