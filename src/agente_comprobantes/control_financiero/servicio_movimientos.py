@@ -318,3 +318,36 @@ def documentar_movimiento_central(
     _validar_versiones(banco_repo, control_repo, huella_central, huella_control)
     banco_repo.actualizar(cambiado, huella_esperada=huella_central)
     return cambiado
+
+
+def reabrir_movimiento_central(
+    banco_repo: RepositorioMovimientosCentrales,
+    control_repo: RepositorioControlFletes,
+    identificador: str,
+    *,
+    motivo: str,
+    confirmacion: bool,
+    huella_central: str,
+    huella_control: str,
+) -> MovimientoBancarioCentral:
+    """Revierte una revisión documental conservando voucher y auditoría."""
+    if not confirmacion:
+        raise ValueError("Confirma la reapertura del movimiento.")
+    _validar_versiones(banco_repo, control_repo, huella_central, huella_control)
+    actual = banco_repo.obtener(identificador)
+    if actual is None:
+        raise ValueError("No existe el movimiento central.")
+    if actual.estado != "DOCUMENTADO":
+        raise ValueError("Solo pueden reabrirse movimientos documentados.")
+    revision = _revision(
+        "REABRIR",
+        motivo,
+        {"estado_anterior": "DOCUMENTADO", "estado_nuevo": "BORRADOR"},
+    )
+    reabierto = actual.model_copy(update={
+        "estado": "BORRADOR",
+        "revisiones": [*actual.revisiones, revision],
+    })
+    _validar_versiones(banco_repo, control_repo, huella_central, huella_control)
+    banco_repo.actualizar(reabierto, huella_esperada=huella_central)
+    return reabierto
