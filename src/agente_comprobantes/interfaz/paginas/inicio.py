@@ -19,11 +19,16 @@ def mostrar_inicio() -> None:
             """
             **Sigue este orden para evitar registros huérfanos:**
 
-            1. **Registrar cotización:** sube la imagen, revisa los datos extraídos y confirma.
-            2. **Registrar factura:** elige la cotización relacionada y revisa diferencias de importe.
-            3. **Registrar pago (si corresponde):** sube la imagen del comprobante y revisa el resultado.
-            4. **Control financiero:** crea el expediente desde la factura, clasifica la operación y añade sus evidencias.
-            5. **Conciliar:** acredita únicamente los importes cuyo respaldo hayas revisado y genera los reportes.
+            1. **Registrar cotización:** sube la imagen, revisa los datos
+               extraídos y confirma.
+            2. **Registrar factura:** elige la cotización relacionada y revisa
+               las diferencias de importe.
+            3. **Registrar pago (opcional):** sube la imagen del comprobante
+               y revisa el resultado.
+            4. **Control financiero:** crea el expediente desde la factura,
+               clasifica la operación y añade sus evidencias.
+            5. **Conciliar:** acredita solo los importes cuyo respaldo hayas
+               revisado y genera los reportes.
             """
         )
         st.info(
