@@ -50,6 +50,11 @@ def _seleccionar_pago(operacion: OperacionFlete, indice: int) -> MovimientoBanca
     if not 0 <= indice < len(operacion.movimientos_bancarios):
         raise ValueError("El movimiento seleccionado no existe.")
     pago = operacion.movimientos_bancarios[indice]
+    if pago.movimiento_central_id:
+        raise ValueError(
+            "Este pago pertenece a un movimiento central. "
+            "Corrige o revierte su aplicación desde Movimientos compartidos."
+        )
     if pago.verificada:
         raise ValueError(
             "Primero retira la acreditación documental existente desde Revisar pagos."
