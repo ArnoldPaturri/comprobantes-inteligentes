@@ -1,4 +1,4 @@
-"""Modelos del registro bancario central: no integrados aún con saldos."""
+"""Modelos del registro bancario central y sus aplicaciones documentales."""
 
 from __future__ import annotations
 
@@ -50,13 +50,20 @@ class RevisionMovimientoCentral(ModeloDominio):
     """Decisión humana registrada sin afirmar confirmación bancaria."""
 
     fecha: datetime = Field(default_factory=lambda: datetime.now(UTC))
-    accion: Literal["VINCULAR_EVIDENCIA", "REDISTRIBUIR", "DOCUMENTAR", "REABRIR", "APLICAR", "REVERTIR_APLICACION"]
+    accion: Literal[
+        "VINCULAR_EVIDENCIA",
+        "REDISTRIBUIR",
+        "DOCUMENTAR",
+        "REABRIR",
+        "APLICAR",
+        "REVERTIR_APLICACION",
+    ]
     motivo: str
     cambios: dict[str, str] = Field(default_factory=dict)
 
 
 class MovimientoBancarioCentral(ModeloDominio):
-    """Un voucher y sus aplicaciones en BORRADOR sin acreditación."""
+    """Un movimiento bancario y sus aplicaciones trazables a los expedientes."""
 
     identificador: str
     banco: str
