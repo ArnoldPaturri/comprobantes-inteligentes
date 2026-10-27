@@ -58,6 +58,13 @@ def mostrar_revision_pagos(operacion: OperacionFlete) -> None:
         seleccionado.documento_respaldo,
         clave=f"pago_{operacion.identificador}_{indice}",
     )
+    if seleccionado.movimiento_central_id:
+        st.info(
+            "Este pago proviene del movimiento central "
+            f"{seleccionado.movimiento_central_id}. Gestiona su revisión, "
+            "evidencia o reversión desde Control financiero → Movimientos compartidos."
+        )
+        return
     if not (seleccionado.documento_respaldo or "").startswith("adjunto:"):
         st.warning(
             "Primero adjunta el comprobante real. El OCR y el nombre del archivo "
