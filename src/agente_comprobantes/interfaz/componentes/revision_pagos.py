@@ -15,6 +15,9 @@ from agente_comprobantes.control_financiero.repositorio_json import (
 from agente_comprobantes.control_financiero.revision_pagos import (
     guardar_revision_pago,
 )
+from agente_comprobantes.control_financiero.repositorio_movimientos import (
+    RepositorioMovimientosCentrales,
+)
 from agente_comprobantes.control_financiero.validacion_bancarizaciones import (
     validar_cotejo_pago,
 )
@@ -73,6 +76,11 @@ def mostrar_revision_pagos(operacion: OperacionFlete) -> None:
                 operacion,
                 indice,
                 otros_expedientes=destino.listar(),
+                movimientos_centrales=RepositorioMovimientosCentrales(
+                    Configuracion().ruta_archivo_excel().with_name(
+                        "movimientos_bancarios_centrales.json"
+                    )
+                ).listar(),
             )
         except (ValueError, OSError) as error:
             st.warning(
