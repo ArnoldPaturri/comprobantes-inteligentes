@@ -1,4 +1,4 @@
-"""Servicio de aplicaciones bancarias, todavía sin impacto en conciliación."""
+"""Servicio de movimientos bancarios centrales y su aplicación documental."""
 
 from __future__ import annotations
 
@@ -59,7 +59,10 @@ def preparar_borrador_central(
     objetivo = _referencias(borrador.referencia)[0]
     for expediente in facturas:
         for pago in expediente.movimientos_bancarios:
-            if (pago.movimiento_central_id != borrador.identificador\n                    and objetivo in _referencias(pago.referencia or "")):
+            if (
+                pago.movimiento_central_id != borrador.identificador
+                and objetivo in _referencias(pago.referencia or "")
+            ):
                 raise ValueError(
                     "La referencia ya está presente en un expediente histórico. "
                     "Primero revisa el registro existente; no crees otro pago."
@@ -86,8 +89,14 @@ def preparar_borrador_central(
             ),
             Decimal("0"),
         )
+        ids_centrales = {item.identificador for item in previos}
+        ids_centrales.add(borrador.identificador)
         declarado = sum(
-            (pago.importe_aplicado for pago in factura.movimientos_bancarios),
+            (
+                pago.importe_aplicado
+                for pago in factura.movimientos_bancarios
+                if pago.movimiento_central_id not in ids_centrales
+            ),
             Decimal("0"),
         )
         disponible = factura.monto_facturado - declarado - prev_borradores
