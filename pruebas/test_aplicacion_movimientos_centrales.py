@@ -150,7 +150,10 @@ def test_reversion_resta_del_saldo_sin_borrar_evidencia(ambiente):
             == creado.identificador
         )
         assert conciliar_flete(factura).bancarizado_acreditado == 0
-        assert "verificada" in factura.revisiones[-1].cambios
+        assert any(
+            clave.endswith(".verificada")
+            for clave in factura.revisiones[-1].cambios
+        )
 
 
 def test_reaplicar_tras_reversion_actualiza_importes_sin_nuevos_pagos(ambiente):
