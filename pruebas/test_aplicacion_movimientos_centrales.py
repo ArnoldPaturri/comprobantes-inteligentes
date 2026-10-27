@@ -9,9 +9,6 @@ from PIL import Image
 from agente_comprobantes.control_financiero.archivos import almacen_para_excel
 from agente_comprobantes.control_financiero.conciliacion import conciliar_flete
 from agente_comprobantes.control_financiero.modelos import MovimientoBancario, OperacionFlete
-from agente_comprobantes.control_financiero.movimientos_centrales import (
-    MovimientoBancarioCentral,
-)
 from agente_comprobantes.control_financiero.repositorio_json import (
     RepositorioControlFletes,
 )
@@ -125,7 +122,10 @@ def test_aplicacion_central_actualiza_varias_facturas_sin_duplicar(ambiente):
         assert pago.documento_respaldo == aplicado.respaldo
         assert pago.movimiento_central_id == aplicado.identificador
         assert conciliar_flete(factura).bancarizado_acreditado == importe
-        assert factura.revisiones[-1].cambios["movimiento_central_id"] == aplicado.identificador
+        assert (
+            factura.revisiones[-1].cambios["movimiento_central_id"]
+            == aplicado.identificador
+        )
 
 
 def test_reversion_resta_del_saldo_sin_borrar_evidencia(ambiente):
@@ -145,7 +145,10 @@ def test_reversion_resta_del_saldo_sin_borrar_evidencia(ambiente):
         factura = control.obtener(codigo)
         assert len(factura.movimientos_bancarios) == 1
         assert factura.movimientos_bancarios[0].verificada is False
-        assert factura.movimientos_bancarios[0].movimiento_central_id == creado.identificador
+        assert (
+            factura.movimientos_bancarios[0].movimiento_central_id
+            == creado.identificador
+        )
         assert conciliar_flete(factura).bancarizado_acreditado == 0
         assert "verificada" in factura.revisiones[-1].cambios
 
