@@ -90,9 +90,9 @@ def test_sin_referencias_ambiguas_no_hay_hallazgos() -> None:
 
 
 def test_desglosado_ya_no_tiene_alarma_historica_activa() -> None:
-    op = op("F001-25", "6537194 Y 340464")
+    expediente = op("F001-25", "6537194 Y 340464")
     corregido = preparar_desglose(
-        op,
+        expediente,
         indice=0,
         asignaciones=[("6537194", "300"), ("340464", "200")],
         motivo="Se distribuyó el importe conforme a vouchers individuales",
