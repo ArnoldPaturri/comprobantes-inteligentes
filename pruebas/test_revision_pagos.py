@@ -35,7 +35,7 @@ def operacion(**cambios: object) -> OperacionFlete:
                 importe_aplicado=Decimal("1000"),
                 moneda=Moneda.PEN,
                 referencia="OP-123",
-                documento_respaldo="voucher.pdf",
+                documento_respaldo="adjunto:" + "a" * 64 + ".pdf",
                 verificada=False,
             )
         ],
@@ -87,7 +87,7 @@ def test_revocar_acreditacion_resta_importe_e_historial() -> None:
     [
         ("referencia", None, "número de operación"),
         ("referencia", "  ", "número de operación"),
-        ("documento_respaldo", None, "archivo de respaldo"),
+        ("documento_respaldo", None, "comprobante original"),
         ("moneda", Moneda.USD, "moneda"),
     ],
 )
@@ -151,3 +151,84 @@ def test_guardar_revision_json_no_modifica_excel(tmp_path) -> None:
             version_esperada=0,
         )
     assert ruta.read_bytes() == original_json
+
+
+def test_no_acreditar_efectivo_aunque_tenga_adjunto() -> None:
+    documento = operacion()
+    pago = documento.movimientos_bancarios[0].model_copy(
+        update={"referencia": "EFECTIVO?"}
+    )
+    documento = documento.model_copy(update={"movimientos_bancarios": [pago]})
+    with pytest.raises(ValueError, match="EFECTIVO"):
+        revisar(documento)
+
+
+def test_no_acreditar_referencia_compuesta_aunque_tenga_adjunto() -> None:
+    documento = operacion()
+    pago = documento.movimientos_bancarios[0].model_copy(
+        update={"referencia": "6537194 Y 340464"}
+    )
+    documento = documento.model_copy(update={"movimientos_bancarios": [pago]})
+    with pytest.raises(ValueError, match="desglosa"):
+        revisar(documento)
+
+
+def test_no_acreditar_voucher_nominal_sin_adjunto_interno() -> None:
+    documento = operacion()
+    pago = documento.movimientos_bancarios[0].model_copy(
+        update={"documento_respaldo": "voucher.pdf"}
+    )
+    documento = documento.model_copy(update={"movimientos_bancarios": [pago]})
+    with pytest.raises(ValueError, match="Adjunta"):
+        revisar(documento)
+
+
+def test_bloquear_referencia_compartida_en_dos_expedientes(tmp_path) -> None:
+    repo = RepositorioControlFletes(tmp_path / "control_fletes.json")
+    primera = operacion()
+    datos_segunda = operacion().model_dump(mode="python")
+    datos_segunda["identificador"] = "FAC-02"
+    datos_segunda["numero_factura"] = "F001-22"
+    segunda = OperacionFlete.model_validate(datos_segunda)
+    repo.agregar(primera)
+    repo.agregar(segunda)
+    anterior = (tmp_path / "control_fletes.json").read_bytes()
+    with pytest.raises(ValueError, match="otro movimiento"):
+        guardar_revision_pago(
+            repo, "FAC-01", indice=0, acreditar=True,
+            motivo="Vouchers revisados manualmente por el responsable",
+            confirmacion=True, version_esperada=0,
+        )
+    assert (tmp_path / "control_fletes.json").read_bytes() == anterior
+
+
+def test_no_acreditar_referencia_repetida_en_una_factura() -> None:
+    original = operacion()
+    repetido = original.movimientos_bancarios[0].model_copy(deep=True)
+    duplicada = original.model_copy(
+        update={"movimientos_bancarios": [
+            original.movimientos_bancarios[0], repetido
+        ]}
+    )
+    with pytest.raises(ValueError, match="otro movimiento"):
+        preparar_revision_pago(
+            duplicada, indice=0, acreditar=True,
+            motivo="El pago fue comparado con los documentos",
+            confirmacion=True, version_esperada=0,
+        )
+
+
+def test_se_puede_revocar_aun_si_la_referencia_se_volvio_ambigua() -> None:
+    acreditada = revisar(operacion())
+    pago = acreditada.movimientos_bancarios[0].model_copy(
+        update={"referencia": "EFECTIVO?"}
+    )
+    acreditada = acreditada.model_copy(
+        update={"movimientos_bancarios": [pago]}
+    )
+    revocada = preparar_revision_pago(
+        acreditada, indice=0, acreditar=False,
+        motivo="Se revoca por inconsistencias de la referencia original",
+        confirmacion=True, version_esperada=1,
+    )
+    assert not revocada.movimientos_bancarios[0].verificada
