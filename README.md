@@ -51,6 +51,20 @@ python -m pip install -e ".[dev]"
 
 Si todavía no tienes tu archivo `.env`, crea uno desde `.env.example` y configura las API keys necesarias. Nunca subas el archivo `.env` ni credenciales de Google o documentos privados.
 
+## Recorrido recomendado
+
+1. Abre **Inicio** y sigue la guía rápida que aparece en pantalla.
+2. Registra primero la cotización y revisa los campos extraídos antes de guardar.
+3. Registra la factura y selecciona su cotización; las diferencias quedan para revisión.
+4. Si existe un pago, regístralo desde su imagen y verifica sus datos.
+5. En **Control financiero**, usa **Crear expediente financiero desde una factura registrada**. Ya no necesitas ir a la consola para este paso.
+6. Adjunta los vouchers y documentos de sustento. Un importe registrado por OCR no se considera acreditado hasta revisar su evidencia.
+7. Usa la importación XLSX para lotes; revisa la vista previa, duplicados y advertencias antes de confirmar.
+
+**Formatos:** el OCR de cotizaciones, facturas y pagos trabaja con imágenes aceptadas por cada pantalla. Convierte los PDF a PNG/JPG para esos flujos. Los PDF se pueden usar como evidencia financiera y el importador masivo recibe XLSX.
+
+Consulta [la guía de uso y pruebas de aceptación](documentacion/GUIA_USO_Y_PRUEBAS.md) para el recorrido completo y los resultados esperados.
+
 ## Ejecutar
 
 Interfaz gráfica:
