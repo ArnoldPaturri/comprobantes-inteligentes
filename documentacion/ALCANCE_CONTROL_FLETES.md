@@ -451,3 +451,36 @@ El registro de expedientes anteriormente acreditados no se modifica
 automáticamente. La protección se aplica a nuevas decisiones; antes de
 cerrar una conciliación de expedientes históricos debe revisarse
 la existencia de pagos compartidos o indebidamente acreditados.
+
+
+## Registro central de movimientos y aplicaciones (piloto de borradores)
+
+La pantalla Control financiero agrega **Movimientos compartidos · borradores
+(piloto)**. Su unidad es un movimiento individual del banco, con un importe
+total y varias **aplicaciones** propuestas a facturas existentes.
+
+- Se guarda en `movimientos_bancarios_centrales.json`, archivo **separado**
+  de `control_fletes.json`, `registros.xlsx` y los adjuntos.
+- Cada borrador almacena banco, referencia, moneda, importe total, sustento,
+  fecha opcional e importes asignados por expediente.
+- La suma de aplicaciones nunca puede exceder el importe total del
+  movimiento; la parte sin distribuir permanece explícita.
+- No admite `EFECTIVO`, referencias compuestas ni una referencia que ya
+  esté presente en movimientos históricos, ni una referencia duplicada en
+  otros borradores centrales. El registro histórico se conserva intacto.
+- Las aplicaciones exigen facturas existentes, en la misma moneda,
+  sin superar el saldo de factura disponible frente a pagos **declarados**
+  previamente y aplicaciones de otros borradores.
+- Se rechaza guardar desde una vista desactualizada mediante huellas
+  del archivo de control y del archivo de movimientos centrales.
+- **Todos los movimientos de esta etapa quedan en estado BORRADOR.**
+  No tienen acreditación bancaria o documental, no se agregan a
+  `OperacionFlete.movimientos_bancarios` ni afectan el tablero, sus saldos
+  o el reporte ejecutivo.
+
+**Limitación:** todavía no se permite asociar el voucher directamente al
+movimiento central ni aprobar la distribución; este es un primer flujo
+de captura y validación de aplicaciones, no una migración ni un registro
+contable aprobado. Requiere revisar los pagos existentes antes de reutilizar
+una referencia histórica. La escritura atómica está pensada para un solo
+operador local, no para múltiples usuarios concurrentes.
