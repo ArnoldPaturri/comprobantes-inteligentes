@@ -27,6 +27,9 @@ from agente_comprobantes.dominio.enumeraciones import Moneda
 from agente_comprobantes.interfaz.componentes.ajustes_financieros import (
     mostrar_ajustes_financieros,
 )
+from agente_comprobantes.interfaz.componentes.editor_incidencias import (
+    mostrar_declaraciones_pendientes,
+)
 from agente_comprobantes.interfaz.componentes.importacion_excel import (
     mostrar_importador_excel,
 )
@@ -133,6 +136,7 @@ def _mostrar_expediente(tablero: TableroFletes, identificador: str) -> None:
         )
         st.markdown("**Evidencias asociadas**")
         mostrar_evidencias(operacion)
+        mostrar_declaraciones_pendientes(operacion)
         st.markdown("**Observaciones del control**")
         if resultado.observaciones:
             for observacion in resultado.observaciones:
