@@ -18,6 +18,34 @@ from agente_comprobantes.control_financiero.repositorio_json import (
 )
 
 
+ACCIONES_HALLAZGO = {
+    "REFERENCIAS_MULTIPLES": (
+        "Reunir los vouchers de cada operación; registrar referencia, fecha, "
+        "moneda e importe individual. No dividir el total sin respaldo."
+    ),
+    "REFERENCIA_COMPARTIDA": (
+        "Verificar si es un abono para varias facturas. Identificar el importe "
+        "aplicado a cada una y comprobar que las aplicaciones no excedan el abono."
+    ),
+    "FACTURA_EN_VARIAS_FILAS": (
+        "Revisar las bancarizaciones por separado y consolidarlas bajo una "
+        "sola factura, sin sumar varias veces el monto facturado."
+    ),
+    "DIFERENCIA_POR_REVISAR": (
+        "Contrastar fórmula original, pagos, detracciones y notas de crédito. "
+        "Una diferencia no demuestra por sí sola una deuda."
+    ),
+    "EFECTIVO_SIN_OPERACION": (
+        "Solicitar sustento del medio de pago y clasificarlo; no acreditarlo "
+        "como bancarización por el texto EFECTIVO."
+    ),
+    "EFECTIVO_POR_CONFIRMAR": (
+        "Confirmar primero si hubo pago y cómo se realizó. "
+        "El signo de interrogación indica información incierta."
+    ),
+}
+
+
 def mostrar_importador_excel() -> None:
     """Nunca modifica el Excel subido ni el libro operativo del agente."""
     with st.expander("Importar operaciones desde Excel (.xlsx)"):
@@ -60,6 +88,13 @@ def mostrar_importador_excel() -> None:
         col2.metric("Duplicadas", vista.duplicadas)
         col3.metric("Con errores", vista.errores)
         col4.metric("Omitidas sin importes", vista.omitidas)
+        if vista.duplicadas and not disponibles:
+            st.info(
+                "No hay facturas nuevas para importar. Las coincidencias ya "
+                "se encuentran en el archivo de control o se repiten en la hoja. "
+                "Revisa los expedientes existentes: volver a importar el lote "
+                "no actualizaría los pagos ni resolvería las observaciones."
+            )
 
         reconocidas = (
             len(vista.columnas_origen) - len(vista.columnas_no_reconocidas)
@@ -161,6 +196,9 @@ def mostrar_importador_excel() -> None:
                     "Filas": ", ".join(str(n) for n in alerta.filas),
                     "Requiere resolver": "Sí" if alerta.bloquea else "Revisar",
                     "Explicación": alerta.detalle,
+                    "Acción sugerida": ACCIONES_HALLAZGO.get(
+                        alerta.codigo, "Revisar evidencia y contrastar el Excel original."
+                    ),
                 }
                 for alerta in auditoria.hallazgos
             ]
