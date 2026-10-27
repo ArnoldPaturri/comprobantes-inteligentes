@@ -17,6 +17,10 @@ from agente_comprobantes.control_financiero.importacion_masiva import (
     _importe,
     _normalizar,
 )
+from agente_comprobantes.control_financiero.tipos_referencia import (
+    efectivo_por_confirmar,
+    indicador_efectivo,
+)
 
 
 @dataclass(frozen=True, slots=True)
@@ -75,7 +79,26 @@ def auditar_importacion(vista: VistaPrevia) -> AuditoriaImportacion:
         clave = f"{_normalizar(fila.factura)}|{_normalizar(fila.proveedor)}"
         agrupadas[clave].append(fila.fila)
         raw = fila.valores_origen
-        identificadores = _referencias(_campo(raw, "referencia"))
+        etiqueta = _campo(raw, "referencia")
+        if indicador_efectivo(etiqueta):
+            incierto = efectivo_por_confirmar(etiqueta)
+            hallazgos.append(
+                HallazgoImportacion(
+                    "EFECTIVO_POR_CONFIRMAR" if incierto else "EFECTIVO_SIN_OPERACION",
+                    (fila.fila,),
+                    (
+                        "La celda dice EFECTIVO? y requiere aclarar el medio de pago. "
+                        "No es una referencia bancaria."
+                        if incierto else
+                        "La celda dice EFECTIVO, pero no identifica una operación "
+                        "bancaria. Revisar el sustento del pago."
+                    ),
+                    bloquea=False,
+                )
+            )
+            identificadores = []
+        else:
+            identificadores = _referencias(etiqueta)
         if len(identificadores) > 1:
             hallazgos.append(
                 HallazgoImportacion(
